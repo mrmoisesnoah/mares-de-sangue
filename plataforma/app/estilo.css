@@ -52,3 +52,16 @@ img.capa{max-width:100%;border-radius:8px;border:1px solid var(--borda);margin:1
 .login .btn{width:100%;margin-top:8px;text-align:center}
 .linkbtn{background:none;border:0;color:var(--sangue);cursor:pointer;font-family:inherit;font-size:14px;text-decoration:underline}
 @media(max-width:820px){.lateral{display:none}.conteudo{padding:18px}}
+
+/* corpo de markdown renderizado */
+.corpo{font-size:18.5px;max-width:760px}
+.corpo h1,.corpo h2,.corpo h3{font-family:'Cinzel',serif;color:var(--tinta);line-height:1.25;margin-top:1.3em;border:0}
+.corpo h2{border-bottom:1px solid var(--borda);padding-bottom:4px}
+.corpo img{max-width:100%;height:auto;border-radius:8px;border:1px solid var(--borda)}
+.corpo blockquote{border-left:4px solid var(--ouro);margin:1em 0;padding:.4em 1.1em;background:var(--perg);color:var(--tinta2);font-style:italic;border-radius:0 8px 8px 0}
+.corpo table{border-collapse:collapse;width:100%;margin:1em 0;font-size:16px}
+.corpo th,.corpo td{border:1px solid var(--borda);padding:7px 10px;text-align:left}
+.corpo th{background:var(--perg2);font-family:'Cinzel',serif}
+.corpo code{background:var(--perg2);padding:1px 5px;border-radius:4px;font-size:.85em}
+.corpo hr{border:0;border-top:1px solid var(--borda);margin:1.6em 0}
+.corpo a{border-bottom:1px dotted var(--sangue)}

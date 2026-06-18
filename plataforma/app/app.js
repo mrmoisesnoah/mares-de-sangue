@@ -8,6 +8,45 @@ function visChip(v){ return '<span class="chip c-'+v+'">'+esc((v||"").replace("_
 function val(id){ var e=document.getElementById(id); return e?e.value:""; }
 function go(t,arg){ S.view={t:t,arg:arg}; S.msg=""; window.scrollTo(0,0); render(); }
 function erro(e){ S.msg='<div class="aviso">'+esc(e&&e.message?e.message:e)+'</div>'; render(); }
+function md(s){ return (window.marked ? marked.parse(s||"") : esc(s||"").replace(/\n/g,"<br>")); }
+function resumo(c){ var t=(c||"").replace(/[#*`>\[\]_]/g,"").replace(/\s+/g," ").trim(); return t.length>130?t.slice(0,130)+"…":t; }
+
+// agrupa publicacoes em blocos por tipo
+function secaoDe(tipo){
+  var t=(tipo||"").toLowerCase();
+  if(t==="jornal") return [5,"Jornais"];
+  if(t==="canone"||t==="cânone") return [1,"Cânone do Mundo"];
+  if(t==="conto") return [6,"Contos e Narrativas"];
+  if(t==="mapa") return [7,"Mapas"];
+  if(["cidade","região","regiao","reino","local"].indexOf(t)>=0) return [3,"Lugares"];
+  if(["facção","faccao","organização","organizacao","família","familia","clã","cla","religião","religiao"].indexOf(t)>=0) return [4,"Facções, Organizações & Religiões"];
+  if(t==="criatura") return [8,"Criaturas"];
+  if(t==="item") return [9,"Itens"];
+  if(["evento histórico","evento historico","era"].indexOf(t)>=0) return [2,"Eventos & Eras"];
+  if(["lore","história do mundo","historia do mundo"].indexOf(t)>=0) return [2,"Textos Históricos & Lore"];
+  if(["sessao","sessão","resumo de sessão","resumo de sessao","resumo","crônica","cronica"].indexOf(t)>=0) return [10,"Sessões & Crônicas"];
+  if(t==="planejamento do mestre") return [20,"Planejamento do Mestre"];
+  if(["background","diário de personagem","diario de personagem","personagem"].indexOf(t)>=0) return [11,"Personagens & Histórias"];
+  if(["anotação privada","anotacao privada"].indexOf(t)>=0) return [21,"Anotações privadas"];
+  return [50,"Outros"];
+}
+function cardPub(p){
+  return '<div class="card clic" onclick="go(\'pub\',\''+p.id+'\')">'
+    +'<h3>'+esc(p.titulo)+'</h3>'
+    +'<p style="margin:.2em 0">'+'<span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+'</p>'
+    +'<p class="res">'+esc(resumo(p.corpo))+'</p></div>';
+}
+function blocos(pubs){
+  var grupos={};
+  pubs.forEach(function(p){ var s=secaoDe(p.tipo); var k=s[0]+"|"+s[1]; (grupos[k]=grupos[k]||[]).push(p); });
+  var chaves=Object.keys(grupos).sort(function(a,b){return parseInt(a)-parseInt(b);});
+  if(!chaves.length) return '<div class="empty">Nada visível ainda.</div>';
+  return chaves.map(function(k){
+    var label=k.split("|")[1]; var lista=grupos[k];
+    return '<h2>'+esc(label)+' <span style="font-size:13px;color:var(--ouro)">'+lista.length+'</span></h2>'
+      +'<div class="cards">'+lista.map(cardPub).join("")+'</div>';
+  }).join("");
+}
 
 // ---------- auth ----------
 async function init(){
@@ -28,7 +67,7 @@ async function criarConta(){
   var r = await sb.auth.signUp({email:val("email"), password:val("senha"), options:{data:{nome:val("nome")||"Aventureiro"}}});
   if(r.error) return erro(r.error);
   if(r.data.session){ S.user=r.data.user; await carregar(); }
-  else { S.msg='<div class="ok">Conta criada! Se o projeto exige confirmação de e-mail, confirme e depois entre. Caso contrário, é só entrar.</div>'; S.view={t:"login"}; render(); }
+  else { S.msg='<div class="ok">Conta criada! Se o projeto exige confirmação de e-mail, confirme e depois entre.</div>'; S.view={t:"login"}; render(); }
 }
 async function sair(){ await sb.auth.signOut(); S.user=null; S.profile=null; S.mundo=null; render(); }
 
@@ -50,7 +89,7 @@ async function carregarMesas(){
   S.mesas = r.error?[]:(r.data||[]);
 }
 async function pubsDaMesa(mesaId){
-  var r = await sb.from("publicacoes").select("*").eq("mesa_id",mesaId).order("criado_em",{ascending:false});
+  var r = await sb.from("publicacoes").select("*").eq("mesa_id",mesaId).order("titulo");
   return r.error?[]:(r.data||[]);
 }
 async function loreDoMundo(){
@@ -60,21 +99,18 @@ async function loreDoMundo(){
 
 // ---------- telas ----------
 function telaLogin(novo){
-  app.innerHTML = '<div class="login"><h1>Mares de Sangue</h1><p class="sub">O Mundo de Skard</p>'
-    + S.msg
+  app.innerHTML = '<div class="login"><h1>Mares de Sangue</h1><p class="sub">O Mundo de Skard</p>'+ S.msg
     + (novo?'<input id="nome" placeholder="Seu nome de aventureiro">':'')
-    + '<input id="email" type="email" placeholder="E-mail">'
-    + '<input id="senha" type="password" placeholder="Senha">'
+    + '<input id="email" type="email" placeholder="E-mail"><input id="senha" type="password" placeholder="Senha">'
     + (novo
         ? '<button class="btn" onclick="criarConta()">Criar conta</button><p style="text-align:center;margin-top:12px"><button class="linkbtn" onclick="go(\'login\')">Já tenho conta — entrar</button></p>'
         : '<button class="btn" onclick="login()">Entrar</button><p style="text-align:center;margin-top:12px"><button class="linkbtn" onclick="go(\'signup\')">Criar uma conta</button></p>')
     + '</div>';
 }
-
 function layout(conteudo){
   var nav = '<a class="nav-home" onclick="go(\'home\')">⌂ '+esc(S.mundo?S.mundo.nome:"Mares de Sangue")+'</a>';
   if(S.mundo){
-    nav += '<a onclick="go(\'lore\')">Lore do mundo</a><h4>Mesas</h4>';
+    nav += '<a onclick="go(\'lore\')">📖 Enciclopédia do mundo</a><h4>Mesas</h4>';
     nav += S.mesas.length ? S.mesas.map(function(m){return '<a onclick="go(\'mesa\',\''+m.id+'\')">'+esc(m.nome)+'</a>';}).join("")
                           : '<a class="empty" style="cursor:default">nenhuma ainda</a>';
     nav += '<a onclick="go(\'novaMesa\')">+ Nova mesa</a>';
@@ -84,45 +120,35 @@ function layout(conteudo){
     + ' &nbsp;<button class="linkbtn" style="color:#cbb892" onclick="sair()">sair</button></div></header>'
     + '<div class="layout"><aside class="lateral">'+nav+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>';
 }
-
 function telaHome(){
   if(!S.mundo){
     layout('<h1>Bem-vindo!</h1><p>Você ainda não tem um mundo. Crie o primeiro cenário para começar.</p>'
       +'<div class="form"><label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: Mares de Sangue">'
-      +'<label>Descrição</label><textarea id="m_desc" placeholder="Uma linha sobre o cenário"></textarea>'
+      +'<label>Descrição</label><textarea id="m_desc"></textarea>'
       +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundo()">Criar mundo</button></p></div>'); return;
   }
   var cards = S.mesas.map(function(m){return '<div class="card clic" onclick="go(\'mesa\',\''+m.id+'\')"><h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("");
   layout('<div class="bread">Mundo</div><h1>'+esc(S.mundo.nome)+'</h1><p>'+esc(S.mundo.descricao||"")+'</p>'
-    +'<h2>Mesas</h2><div class="cards">'+(cards||'<div class="empty">Nenhuma mesa. Crie uma no menu lateral.</div>')+'</div>'
-    +'<p style="margin-top:16px"><a class="btn sec" onclick="go(\'lore\')">Ver lore do mundo</a></p>');
+    +'<p><a class="btn" onclick="go(\'lore\')">📖 Abrir enciclopédia do mundo</a></p>'
+    +'<h2>Mesas <span style="font-size:13px;color:var(--ouro)">'+S.mesas.length+'</span></h2>'
+    +'<div class="cards">'+(cards||'<div class="empty">Nenhuma mesa. Crie uma no menu lateral.</div>')+'</div>');
 }
-
 async function telaLore(){
   layout('<p>Carregando…</p>');
   var lore = await loreDoMundo();
-  var html = '<div class="bread">Mundo › Lore</div><h1>Lore de '+esc(S.mundo.nome)+'</h1>'
+  layout('<div class="bread">Mundo › Enciclopédia</div><h1>Enciclopédia de '+esc(S.mundo.nome)+'</h1>'
     +'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Nova publicação de mundo</a></p>'
-    +'<ul class="lista">'+(lore.length?lore.map(itemLi).join(""):'<li class="empty">Nada ainda.</li>')+'</ul>';
-  layout(html);
+    + blocos(lore));
 }
-
 async function telaMesa(id){
   layout('<p>Carregando…</p>');
   var mesa = S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada.</div>'); return; }
   var pubs = await pubsDaMesa(id);
-  var html = '<div class="bread">Mundo › '+esc(mesa.nome)+'</div><h1>'+esc(mesa.nome)+'</h1><p>'+esc(mesa.descricao||"")+'</p>'
+  layout('<div class="bread">Mundo › '+esc(mesa.nome)+'</div><h1>'+esc(mesa.nome)+'</h1><p>'+esc(mesa.descricao||"")+'</p>'
     +'<p><a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Nova publicação</a></p>'
-    +'<h2>Publicações</h2><ul class="lista">'+(pubs.length?pubs.map(itemLi).join(""):'<li class="empty">Nada visível ainda.</li>')+'</ul>';
-  layout(html);
+    + blocos(pubs));
 }
-function itemLi(p){
-  return '<li><a onclick="go(\'pub\',\''+p.id+'\')"><strong>'+esc(p.titulo)+'</strong></a> '
-    +'<span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)
-    +(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+'</li>';
-}
-
 async function telaPub(id){
   layout('<p>Carregando…</p>');
   var r = await sb.from("publicacoes").select("*").eq("id",id).maybeSingle();
@@ -133,16 +159,14 @@ async function telaPub(id){
   if(mid.data){ mid.data.forEach(function(m){
     media += (m.tipo==="video")? '<p class="vis-leg">🎬 <a href="'+esc(m.url)+'" target="_blank">'+esc(m.legenda||m.url)+'</a></p>'
                                : '<img class="capa" src="'+esc(m.url)+'" alt="">'; }); }
-  var corpoHtml = (window.marked ? marked.parse(p.corpo||"") : esc(p.corpo||"").replace(/\n/g,"<br>"));
-  layout('<div class="bread">Publicação</div><h1>'+esc(p.titulo)+'</h1>'
+  layout('<div class="bread"><a onclick="go(\''+(p.mesa_id?"mesa','"+p.mesa_id:"lore")+'\')">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+'</p>'
     +(p.tags&&p.tags.length?'<p class="vis-leg">'+p.tags.map(esc).join(", ")+'</p>':'')
-    +media+'<div>'+corpoHtml+'</div>');
+    +media+'<div class="corpo">'+md(p.corpo)+'</div>');
 }
-
 function telaNova(arg){
   var mesaId = arg?arg.mesa:null;
-  var tipos=['conto','background','diário de personagem','mapa','cidade','facção','região','reino','criatura','item','evento histórico','história do mundo','resumo de sessão','crônica','planejamento do mestre','anotação privada'];
+  var tipos=['conto','background','diário de personagem','mapa','cidade','facção','região','reino','religião','criatura','item','evento histórico','história do mundo','resumo de sessão','crônica','planejamento do mestre','anotação privada'];
   var visOpts = mesaId
     ? '<option value="mesa">mesa (todos da campanha)</option><option value="publico">público (todos)</option><option value="autor_mestre">autor + mestre</option><option value="privado">privado (só eu)</option><option value="mestre">só mestre</option>'
     : '<option value="publico">público (todos)</option><option value="privado">privado (só eu)</option>';
@@ -150,61 +174,51 @@ function telaNova(arg){
     +'<div class="form">'
     +'<label>Tipo</label><select id="f_tipo">'+tipos.map(function(t){return '<option>'+t+'</option>';}).join("")+'</select>'
     +'<label>Título</label><input id="f_titulo">'
-    +'<label>Texto</label><textarea id="f_corpo"></textarea>'
+    +'<label>Texto (aceita Markdown)</label><textarea id="f_corpo"></textarea>'
     +'<div class="row"><div><label>Tags (vírgula)</label><input id="f_tags"></div>'
-    +'<div><label>Estado</label><select id="f_estado"><option value="rascunho">rascunho</option><option value="publicado">publicado</option></select></div>'
+    +'<div><label>Estado</label><select id="f_estado"><option value="publicado">publicado</option><option value="rascunho">rascunho</option></select></div>'
     +'<div><label>Visibilidade</label><select id="f_vis">'+visOpts+'</select></div></div>'
     +'<label>Imagem/vídeo — link (opcional)</label><input id="f_midia" placeholder="https://…">'
     +'<p style="margin-top:16px"><button class="btn" onclick="salvarPub(\''+(mesaId||"")+'\')">Publicar</button> '
     +'<button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>');
 }
-
 function telaNovaMesa(){
   layout('<div class="bread">Nova mesa</div><h1>Nova mesa</h1>'
-    +'<div class="form"><label>Nome da mesa/campanha</label><input id="me_nome" placeholder="Ex.: Ecos na Cidade dos Corvos">'
+    +'<div class="form"><label>Nome da mesa/campanha</label><input id="me_nome">'
     +'<label>Descrição</label><textarea id="me_desc"></textarea>'
     +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesa()">Criar mesa</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>');
 }
 
 // ---------- gravações ----------
 async function salvarMundo(){
-  try{
-    var nome=val("m_nome").trim(); if(!nome) return erro("Dê um nome ao mundo.");
+  try{ var nome=val("m_nome").trim(); if(!nome) return erro("Dê um nome ao mundo.");
     var r = await sb.from("mundos").insert({nome:nome, slug:slug(nome), descricao:val("m_desc"), dono_id:S.user.id, publico:true}).select().single();
-    if(r.error) throw r.error;
-    S.mundos=[r.data]; S.mundo=r.data; await carregarMesas(); go("home");
+    if(r.error) throw r.error; S.mundos=[r.data]; S.mundo=r.data; await carregarMesas(); go("home");
   }catch(e){ erro(e); }
 }
 async function salvarMesa(){
-  try{
-    var nome=val("me_nome").trim(); if(!nome) return erro("Dê um nome à mesa.");
+  try{ var nome=val("me_nome").trim(); if(!nome) return erro("Dê um nome à mesa.");
     var r = await sb.from("mesas").insert({mundo_id:S.mundo.id, nome:nome, slug:slug(nome), descricao:val("me_desc"), mestre_id:S.user.id}).select().single();
-    if(r.error) throw r.error;
-    await carregarMesas(); go("mesa", r.data.id);
+    if(r.error) throw r.error; await carregarMesas(); go("mesa", r.data.id);
   }catch(e){ erro(e); }
 }
 async function salvarPub(mesaId){
-  try{
-    var titulo=val("f_titulo").trim(); if(!titulo) return erro("Dê um título.");
-    var reg={ mundo_id:S.mundo.id, mesa_id:mesaId||null, autor_id:S.user.id,
-      tipo:val("f_tipo"), titulo:titulo, slug:slug(titulo), corpo:val("f_corpo"),
-      tags:val("f_tags").split(",").map(function(s){return s.trim();}).filter(Boolean),
+  try{ var titulo=val("f_titulo").trim(); if(!titulo) return erro("Dê um título.");
+    var reg={ mundo_id:S.mundo.id, mesa_id:mesaId||null, autor_id:S.user.id, tipo:val("f_tipo"), titulo:titulo, slug:slug(titulo),
+      corpo:val("f_corpo"), tags:val("f_tags").split(",").map(function(s){return s.trim();}).filter(Boolean),
       estado:val("f_estado"), visibilidade:val("f_vis") };
     var r = await sb.from("publicacoes").insert(reg).select().single();
     if(r.error) throw r.error;
     var midia=val("f_midia").trim();
-    if(midia){ await sb.from("midias").insert({publicacao_id:r.data.id, mundo_id:S.mundo.id, autor_id:S.user.id,
-      tipo:(midia.indexOf("youtu")>=0?"video":"imagem"), url:midia}); }
+    if(midia){ await sb.from("midias").insert({publicacao_id:r.data.id, mundo_id:S.mundo.id, autor_id:S.user.id, tipo:(midia.indexOf("youtu")>=0?"video":"imagem"), url:midia}); }
     go("pub", r.data.id);
   }catch(e){ erro(e); }
 }
 
-// ---------- router ----------
 function render(){
   if(!S.user){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
-  if(t==="home") telaHome();
-  else if(t==="lore") telaLore();
+  if(t==="lore") telaLore();
   else if(t==="mesa") telaMesa(S.view.arg);
   else if(t==="pub") telaPub(S.view.arg);
   else if(t==="nova") telaNova(S.view.arg);
