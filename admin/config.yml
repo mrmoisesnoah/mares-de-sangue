@@ -1,0 +1,93 @@
+# Configuração do Decap CMS (painel web de edição) — Fase 4.
+# Decap edita os mesmos arquivos .md e faz commit no Git; o site é reconstruído.
+# Docs: https://decapcms.org/docs/
+#
+# IMPORTANTE: ajuste 'repo' para o seu repositório e confira os caminhos das
+# pastas conforme a raiz do repositório (ver docs/FASE4-HOSPEDAGEM.md).
+
+backend:
+  name: github
+  repo: SEU-USUARIO/mares-de-sangue   # <-- troque pelo seu repositório GitHub
+  branch: main
+  # Alternativa sem app OAuth próprio: usar Netlify Identity + git-gateway
+  # name: git-gateway
+
+# Fluxo editorial: rascunho -> em revisão -> publicado (casa com status do projeto)
+publish_mode: editorial_workflow
+
+locale: 'pt'
+
+# Pasta onde imagens enviadas pelo CMS serão salvas
+media_folder: "conteudo/_midia"
+public_folder: "/_midia"
+
+# Campos reaproveitados entre coleções
+# (status/audiencia controlam a visibilidade no site)
+collections:
+  - name: lore
+    label: "Lore do Universo"
+    label_singular: "Artigo de lore"
+    folder: "conteudo/02 - Lore Original (Textos Historicos)"
+    create: true
+    slug: "{{slug}}"
+    fields:
+      - { label: "Título", name: "titulo", widget: "string" }
+      - { label: "Tipo", name: "tipo", widget: "hidden", default: "lore" }
+      - { label: "Cenário", name: "cenario", widget: "string", default: "Mar de Sangue" }
+      - { label: "Status", name: "status", widget: "select", options: ["rascunho", "privado", "publico"], default: "rascunho" }
+      - { label: "Audiência", name: "audiencia", widget: "select", options: ["jogadores", "mestre"], default: "jogadores" }
+      - { label: "Tags", name: "tags", widget: "list", required: false }
+      - { label: "Texto", name: "body", widget: "markdown" }
+
+  - name: canone
+    label: "Cânone do Mundo"
+    folder: "conteudo/01 - Canone Atual"
+    create: true
+    fields:
+      - { label: "Título", name: "titulo", widget: "string" }
+      - { label: "Tipo", name: "tipo", widget: "hidden", default: "canone" }
+      - { label: "Status", name: "status", widget: "select", options: ["rascunho", "privado", "publico"], default: "rascunho" }
+      - { label: "Audiência", name: "audiencia", widget: "select", options: ["jogadores", "mestre"], default: "jogadores" }
+      - { label: "Tags", name: "tags", widget: "list", required: false }
+      - { label: "Texto", name: "body", widget: "markdown" }
+
+  - name: jornais
+    label: "Jornais"
+    label_singular: "Edição de jornal"
+    folder: "conteudo/05 - Blog Mar de Sangue (recuperado)/5 - Jornal (A Trombeta de Dagor)"
+    create: true
+    fields:
+      - { label: "Título", name: "titulo", widget: "string" }
+      - { label: "Tipo", name: "tipo", widget: "hidden", default: "jornal" }
+      - { label: "Jornal / Mesa", name: "campanha", widget: "string", required: false, hint: "Nome do jornal ou da mesa (cada mesa pode ter o seu)" }
+      - { label: "Data", name: "data", widget: "date", format: "YYYY-MM-DD", required: false }
+      - { label: "Status", name: "status", widget: "select", options: ["rascunho", "privado", "publico"], default: "rascunho" }
+      - { label: "Audiência", name: "audiencia", widget: "hidden", default: "jogadores" }
+      - { label: "Tags", name: "tags", widget: "list", default: ["Jornal"] }
+      - { label: "Texto", name: "body", widget: "markdown" }
+
+  - name: contos
+    label: "Contos e Narrativas"
+    folder: "conteudo/04 - Contos e Narrativas"
+    create: true
+    fields:
+      - { label: "Título", name: "titulo", widget: "string" }
+      - { label: "Tipo", name: "tipo", widget: "hidden", default: "conto" }
+      - { label: "Status", name: "status", widget: "select", options: ["rascunho", "privado", "publico"], default: "rascunho" }
+      - { label: "Audiência", name: "audiencia", widget: "select", options: ["jogadores", "mestre"], default: "jogadores" }
+      - { label: "Tags", name: "tags", widget: "list", required: false }
+      - { label: "Texto", name: "body", widget: "markdown" }
+
+  - name: ecos
+    label: "Ecos na Cidade dos Corvos (campanha)"
+    folder: "conteudo/03 - Mestragem - Ecos na Cidade dos Corvos"
+    create: true
+    fields:
+      - { label: "Título", name: "titulo", widget: "string" }
+      - { label: "Tipo", name: "tipo", widget: "select", options: ["campanha", "sessao"], default: "sessao" }
+      - { label: "Campanha", name: "campanha", widget: "hidden", default: "Ecos na Cidade dos Corvos" }
+      - { label: "Data", name: "data", widget: "date", format: "YYYY-MM-DD", required: false }
+      - { label: "Status", name: "status", widget: "select", options: ["rascunho", "privado", "publico"], default: "rascunho" }
+      - { label: "Audiência", name: "audiencia", widget: "select", options: ["jogadores", "mestre"], default: "mestre" }
+      - { label: "Tags", name: "tags", widget: "list", required: false }
+      - { label: "Texto", name: "body", widget: "markdown" }

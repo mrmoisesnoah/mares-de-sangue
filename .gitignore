@@ -1,0 +1,16 @@
+# Saída gerada (reconstruída por `python gerar_site.py`)
+site/
+site-mestre/
+site_check/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Backups e temporários
+*.zip
+*_backup*
+.DS_Store
+Thumbs.db

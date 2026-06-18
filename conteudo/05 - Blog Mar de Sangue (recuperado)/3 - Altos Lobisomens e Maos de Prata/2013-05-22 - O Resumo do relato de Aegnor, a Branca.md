@@ -1,0 +1,82 @@
+---
+titulo: "O Resumo do relato de Aegnor, a Branca"
+tipo: lore
+cenario: "Mar de Sangue"
+status: publico
+audiencia: jogadores
+data: 2013-05-22
+origem: blog
+tags: ["Altos Lobisomens", "Mãos de Prata"]
+---
+
+# O Resumo do relato de Aegnor, a Branca
+
+> 📰 Blog *Mar de Sangue* · 2013-05-22 · marcadores: Altos Lobisomens, Cultura
+> Fonte: https://maresdesangue.blogspot.com/2013/05/o-resumo-do-relato-de-aegnor-branca.html
+
+*(ESCRITO ORIGINALMENTE EM 22/05/2013, 12:30:00. Este relato conta como surgiram os Gaurhoth, os Altos Lobisomens da cidade de Minas Ithil)*  
+  
+
+<div>
+
+Eu era jovem, uma criança de doze anos, vinha de uma família de Elfos e Meio Elfos, e vivíamos em uma cidade a Norte na Floresta Menetrels, em Menegroth. Era bela, e Homens, Ferais e Feéricos viviam ali em harmonia. Eu nasci no final da Segunda Guerra contra os Magos, meu pai era um Soldado da horda Feérica liderada pelos Dranorianos, pois nossa cidade cresceu sobre o domínio de Dranor, mas éramos bem tratados, pois os Tiranos Reis ainda não tinham ascendido e se colocado entre os Nove.  
+  
+Meu pai foi muito ferido na Guerra, depois de servir fielmente por vinte anos foi aliviado de seus deveres, voltou para minha mãe e se tornou Guarda da Cidadela. Muita felicidade residia ali, tínhamos fartura mesmo nos tempos da Guerra, pois os Homens do Norte tinham muito cuidado por aquela cidade, diziam que um poderoso entre os Reis Dranorianos tinha desposado uma bela elfa que morou conosco, e desde então recebemos muita atenção do Norte.  
+  
+Muitos deuses eram adorados ali, mas a cidade fora construída em nome de Rainha Rapina, motivo pelo qual alguns Clãs Ferais se estabeleceram nos arredores da Cidade, e se misturaram ao povo como comerciantes até Sacerdotes da deusa. E por muito tempo o mal não nos alcançou, nem mesmo através dos Magos Sombrios, isto viria mais tarde pela mão de Reis que envergonharam a imagem dos antigos Senhores Dranorianos.  
+  
+Era noite e chovia, o som do vento era melancólico, mas a noite ainda estava bonita, quando uma jovem bateu nos portões. Estava cansada e ferida, assim como os dois homens que a acompanhavam. Eles tinham cinco crianças consigo, e findaram seu trabalho trazendo a moça e seus filhos a salvo para a cidade, a protegendo de algum perseguidor, pereceram nas casas de cura. Ela, apesar de cansada, resistiu aos ferimentos e chorou ao saber que seus companheiros tinham morrido, mas se alegrou pelo bem estar de seus filhos.  
+  
+Os Homens que estavam com ela eram Dranorianos, não faziam mais parte do exercito, mas seus traços não negavam sua origem, o que aumentou os cuidados pela mulher. Minha mãe era uma dos feéricos das Casas de cura, e acompanhei parte dessa história de perto. O nome da moça era Kira, era conhecida naquelas terras. Era líder de um Clã de Patrulheiros de renome, mas há alguns anos pararam de dar noticias.  
+  
+Ela foi muito questionada mas evitou algumas perguntas, e os homens não insistiram. Kira era muito bela, e seu porte e traços vinham das terras do Norte, das damas Dranorianos, e dos Homens ela não podia negar sua origem. Apesar de durona como os de seu povo, era amorosa com seus filhos, e com qualquer outra criança, e eu me apeguei muito a ela.  
+  
+Os Homens deram ordens para que não criassem alvoroço ou comentários que chegassem aos ouvidos dos estrangeiros, e ela viveu entre nós. Dentro da cidade ela ajudou os Homens que receberam seus conselhos e ordens de bom grado, pois ela tinha o dom de comandar e suas palavras eram dominadoras, era uma grande Militar, pois isso corria no sangue dos descendentes de Dranor.  
+  
+E seus filhos cresceram entre nós, e a cada dia revelavam seu parentesco com o povo do norte. Mas eles tinham algo mais, o espírito deles era ainda mais forte e ardente que qualquer Dranoriano, e tinham traços desconhecidos que não vinha de Dranor, o que nos assustou, pois o sangue Dranoriano era às vezes mais forte que o dos Feéricos. E eu me perguntava quem teria sido o pai dessas crianças. Eles eram queridos pelo povo, os três rapazes mais velhos eram fortes e altos, e suas duas irmãs eram belas como senhoras dos Altos Elfos. E mesmo elas se mostraram grandes guerreiras ao lado de seus irmãos.  
+  
+Quando chegaram à cidade, os Sacerdotes Ferais de Rainha Rapina notaram uma marca que eles carregavam. Diziam ser a marca do Senhor dos Lobos, que era adorado por grande parte dos Clãs Ferais, um semideus aparentado a Rainha Rapina. E tomaram aquilo como um sinal da deusa, e que as crianças foram escolhidas.  
+  
+E grandes feitos vieram deles, pois junto com sua mãe formaram um grupo de guerreiros poderosos na cidade, intitulados pelo povo como Imortais, e estes tiveram grande papel quando os Orcs invadiram as montanhas e lutaram contra os Homens. E Kira escondeu seu nome, comandava a seus homens mas evitava sair da cidade.  
+  
+Quando o mais velho chegou a seus vinte e um anos, fomos assombrados por um mal durante a madrugada. A Lua estava alta e gritos começaram a ser ouvidos na escuridão. Os guardas davam ordens, pois algo tinha entrado na cidade e pessoas tinham sido atacadas. Muitos estavam feridos e todos os Imortais, os guerreiros de Kira, foram surpreendidos nos dormitórios e atacados sem poder se defender. Poucos morreram, mas todos sofreram ferimentos graves. Meu pai também foi atacado, e minha mãe, que estava atendendo os feridos nas ruas viu uma fera se arrastando na escuridão, atacando a todos com uma fúria infernal. Os Guardas formaram barricadas em todas as saídas da cidade, mas uma delas foi rompida violentamente, e seja lá o que nos tinha atacado fugiu para as florestas.  
+  
+O filho mais velho, líder dos Imortais, desapareceu do dormitório. Kira estava desesperada e mandou seus homens vasculharem as cidades e os arredores da floresta, mas nada encontraram. Os guardas e pessoas feridas foram tratadas, e houvera poucas mortes.  
+  
+E por um mês Kira procurou seu filho, e ajudou pessoalmente nas buscas. E quando a lua novamente subiu cheia nos céus, gritos foram ouvidos, pessoas corriam, e minha mãe entrou em casa desesperada. Dizia para meu pai que os feridos estavam se transformando em bestas, os Imortais desapareceram, e todos estavam sendo atacados. Meu pai cobriria o próximo turno dos Guardas, mas quando ele terminou de se aprontar e a luz da lua adentrou nosso quarto pelas janelas e pela sacada, os olhos dele brilharam, e ele urrou de dor, minha mãe me protegeu em seus braços enquanto víamos meu pai se contorcer no quarto, quebrando móveis, rosnando como um animal.  
+  
+Minha mãe fugiu comigo para a sacada, e de lá olhamos para a cidade, e víamos vultos correndo pelas ruas, destruindo as lamparinas, correndo sobre os telhados, uivando e atacando as pessoas e guardas. Tochas estavam acesas nas mãos dos defensores, mas elas não afastavam as bestas, e a cidade estava infestada. Saiam das casas, subiam nas torres, e uivavam para a lua. E quando voltamos nosso olhar para meu pai, um grande lobisomem estava em nossa frente, e ele vinha em nossa direção. Minha mãe me abraçava forte dizendo que tudo ficaria bem.  
+  
+Então um uivo que superava a todos que eu tinha ouvido naquela noite, veio na direção das muralhas da cidade. E antes de nos atacar, meu pai parou como se tivesse recebido uma ordem, e rosnando olhou atentamente para a muralha. Saltou sobre nós e foi naquela direção. Olhamos para o Portão da cidade, e lá, posicionado no arco do Portão, a luz incendiou o olhar de um Lobisomem Branco, alto e poderoso.  
+  
+E todas as bestas na cidade começaram a se reunir a frente do Portão, e mais quatro feras que também estavam a atacar a cidade se colocaram a frente de todas. E Kira, trajada com armadura e armas, avançou entre os lobisomens, que abriam caminho pra ela. Chegando ao portão a fera branca desceu e ficou a sua frente. E voltando a forma humana, em farrapos estava o Filho mais Velho de Kira, que abraçou a mãe naquele momento. E todos os Lobisomens atrás dela caíram e começaram a voltar as formas humanas.  
+  
+Os Guardas detiveram Fëanor, o filho desaparecido de Kira, pois estavam assustados e confusos. Também começaram a recolher os feridos e mortos. E os transformados também foram levados as casas de Cura, entre eles estavam os Imortais e os outros quatro filhos de Kira, e foram tratados pelos curandeiros Ferais, que conheciam bem a raça e eram parentes distantes.  
+  
+Fëanor contou a mãe, aos Guardas e aos Sacerdotes Ferais que por três semanas ele esteve transformado, e não podia voltar à forma humana, e que na noite de sua primeira transformação não conseguia se controlar e sentia muita dor, que o deixou insano. E nas três semanas que se manteve vagando, por instinto compreendeu seus poderes e descobriu como voltar a forma humana. E a ele apareceu um espírito em forma de um Lobo Branco, que lhe deu muitos conselhos, mas disso ele não poderia falar.  
+  
+Ele aprendeu a se comunicar em uma língua estranha com outros de sua raça, e podia controlar os novos transformados e sabia como transmitir esse ensinamento. E assim ele garantiu que não haveria mais incidentes. Ele voltou ainda mais imponente e poderoso, e suas palavras eram firmes.  
+  
+Os Homens informaram os Senhores Dranorianos, e um deles veio pessoalmente. Ele falou com Kira e seus cinco filhos, e Fëanor o convenceu de seus dons e de sua história, pois assim como a mãe, grande voz e poder sobre outros ele tinha. Mas o Rei não sabia o que fazer, pois não devia deixar uma cidade cheia de lobisomens, mas os outros Senhores viram aquelas pessoas como uma arma de guerra.  
+  
+Falou em conselho com os outros reis que os Lobisomens eram uma questão de seu reino, pois aquela cidade esteve por debaixo de seu olhar e de sua esposa, que cresceu lá. Os Senhores aceitaram, mas disseram que ele não poderia desperdiçar tanto poder, que seriam um novo exército, um dos mais poderosos de Dranor, pois muitos dos transformados ali, inclusive os cinco filhos, eram da raça dos Dranorianos.  
+  
+  
+  
+O Rei então achou uma solução, disse que a cidade se manteria, pois era importante para ele e sua mulher, mas os lobisomens não podiam ficar ali. Disse que uma grande obra começara pela mão dos Anões e Feéricos do Norte, em terras escondidas no reino de Dranor, e ali a cidade dos Lobisomens ficaria. Mas eles eram livres para andar disfarçados em outras cidades para comercio, desde que lá não se fixassem sem a autorização de Dranor, e qualquer incidente poderia levar a sérias conseqüências.  
+  
+E nos garantiram prosperidade nessa nova vida, pois o novo Reino que Dranor começou no continente era a favor da liberdade, e parte dela nos foi tomado pela maldição. E em troca receberiamos moradas ricas, um governo separado e pouco influenciado por Dranor, livre entrada nas cidades, mas jamais poderíamos morar em outro lugar, ou passar um período muito longo fora de Dranor ou da cidade.  
+  
+E passado um ano, os Homens de Dranor nos guiaram para o Norte, Kira e seus filhos lideravam a marcha, e depois de meses viajando nas terras geladas nos deparamos com um poderoso exemplo da belíssima arquitetura dos Anões, uma gigantesca cidade escavada nos paredões de Gelo.  
+  
+Imensa como os salões das mansões Anãs, através de técnicas e engenharia que só os Anões e Feéricos conheciam, uma luz como a da lua, porém mais clara e quente, refletia em espelhos vinda de fora da fortaleza, e esquentava e iluminava o interior da cidade durante o dia, e grandes luminárias foram postas para noite, mas em dias de Lua cheia, no centro da cidade aonde o teto entalhado no gelo era transparente, uma grande e bela imagem da lua surgia para nós, e sua luz iluminava o grande salão. E só aos Dranorianos foi revelado o caminho que levava a cidade.  
+  
+E a Kira foi dado o Governo da cidade, e belo foi aquele reino, e disfarçados entre os homens e outras raças, fizemos comercio com ajuda de Dranor, enriquecemos e prosperamos escondidos do mundo. Nossa relação com outros lobisomens era fria, pois eles eram ignorantes, feras incontroláveis e nos envergonhavam. E a Rainha Rapina foi adorada ali, e dizem que ela falava com Kira e seus filhos pessoalmente, e um grande dom os havia entregado, uma chave, para libertar os atormentados.  
+  
+Mas nossa paz era assombrada por um inimigo que nos caçava como animais, os Mãos de Prata, que eram ligados a nossa história, e em pouco tempo nos perceberam entre os homens, e muitas vezes perseguiam nossos viajantes. E foi assim que passamos a fazer comercio acompanhado de tropas, e muitas vezes houvera confrontos entre o nosso clã e o deles. E esses combates só cresceram com o tempo, muitas vezes sofremos repreensões de Dranor, pois devido aos conflitos com os Mãos de Prata nossa presença foi notada, e mitos sobre os Altos Lobisomens se espalharam.  
+  
+Os Mãos de Prata queriam descobrir aonde era nossa cidade, e invadiam pequenos vilarejos e comércios que fundávamos na floresta, pois a nós foi liberado esse direito, desde que nenhum um estrangeiro pudesse viver lá, eram cidades para facilitar o comercio. E eu e minha família vivíamos em uma dessas cidades. E os conflitos contra os Mãos de Prata foram à única guerra que conhecemos, porque os Reis queriam nos esconder.  
+  
+*E assim termina o relato de Aegnor, uma Senhora Élfica que viveu entre os lobisomens por duzentos anos, e seu pai se tornou um grande general entre eles. Ela morreu em um ataque dos Mãos de Prata, lutou bravamente, mas caiu ao lado de seu pai. Ela nunca foi transformada. Deixou esses textos que passaram a fazer parte da biblioteca da cidade de Minas Ithil, a cidade da Lua, casa dos Lican, os Altos Lobisomens.*
+
+</div>

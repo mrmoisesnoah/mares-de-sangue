@@ -1,0 +1,3 @@
+# OBS: o workflow REAL já está no repositório em .github/workflows/deploy.yml
+# Este arquivo é só referência. Ao dar push na branch main, o GitHub Actions
+# builda e publica o site automaticamente — você não precisa fazer nada com ele.
