@@ -93,6 +93,7 @@ create table if not exists publicacoes (
 create index if not exists idx_pub_mundo on publicacoes(mundo_id);
 create index if not exists idx_pub_mesa  on publicacoes(mesa_id);
 create index if not exists idx_pub_tipo  on publicacoes(tipo);
+alter table publicacoes add column if not exists capa_url text;  -- imagem de capa (link ou Storage)
 
 -- ---------- Mídias (imagem / vídeo / link / arquivo) ----------
 create table if not exists midias (
