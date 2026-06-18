@@ -372,6 +372,17 @@ def construir():
                 if os.path.isfile(sp):
                     shutil.copy(sp, os.path.join(admin_dst, fnm))
 
+    # Fase 5: publica o app da plataforma em /plataforma (copia recursiva)
+    if not MESTRE:
+        plat_src = os.path.join(AQUI, "plataforma", "app")
+        if os.path.isdir(plat_src):
+            plat_dst = os.path.join(SAIDA, "plataforma")
+            os.makedirs(plat_dst, exist_ok=True)
+            for fnm in os.listdir(plat_src):
+                sp = os.path.join(plat_src, fnm)
+                if os.path.isfile(sp):
+                    shutil.copy(sp, os.path.join(plat_dst, fnm))
+
     print("[%s] %d artigos -> %s" % ("MESTRE" if MESTRE else "PUBLICO", len(arts), SAIDA))
     print("  tags: %d" % len(tagmap))
     return len(arts)

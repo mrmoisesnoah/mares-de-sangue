@@ -27,5 +27,8 @@ Edição pela web com papéis, mantendo o modelo Markdown:
 - Ver `FASE4-HOSPEDAGEM.md`. Requer conta GitHub (já existe) + ativar hospedagem/login.
 - Alternativa para o futuro, se precisar de contas de jogador em escala/tempo real: backend tipo Supabase. Só se necessário.
 
-## Fase 5 — Extras (sob demanda)
-Nada obrigatório. Possíveis: mídia/galerias locais, linha do tempo, mapas interativos, calendário, comentários, favoritos, exportação. Implementar um a um, quando a necessidade aparecer.
+## Fase 5 — Plataforma dinâmica 🚧 (em desenho)
+Evolui de site estático para plataforma colaborativa: login, mundos, mesas, personagens e publicações com tipo e visibilidade (público / mesa / mestre+jogador / privado). Backend gratuito **Supabase** (banco + login + storage + RLS). Modelo e plano em `PLATAFORMA.md`; esquema em `db/schema.sql`. Sub-fases 5.0→5.7 (fundação, ler mundo, criar/editar, mesas, personagens, relações/busca, mídias, migração). O site estático segue no ar durante a construção.
+
+## Fase 6 — Extras (sob demanda)
+Nada obrigatório. Possíveis: linha do tempo, mapas interativos, calendário, comentários, favoritos, notificações, exportação. Implementar um a um, quando a necessidade aparecer.
