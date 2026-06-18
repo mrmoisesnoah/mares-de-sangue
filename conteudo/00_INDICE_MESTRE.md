@@ -86,7 +86,7 @@ O conector do Drive não move/exclui; estes ficam por sua conta:
 1. **Aliança dos Suicidas:** "há 350 anos" × "cem anos após a Guerra das Chaves" não fecham.
 2. **Planos de eco:** origem de Agrestia/Pendor varia entre textos.
 3. **Público (jogador) × mestre (spoiler)** — separar ao publicar. ✅ marcado no front-matter (`status`/`audiencia`).
-4. **Grafias:** ✅ **Exar Khun** (resolvido — grafia única). ✅ **Dranor** (reino) × **Dranorak** (capital, em Dranor) — não são variação, são entidades distintas (resolvido). Ainda em aberto: Erevan/Erol · Gaurhoth/Gauroth · Czar StormRange/StormBorn.
+4. **Grafias:** ✅ **Exar Khun** (resolvido — grafia única). ✅ **Dranor** (reino) × **Dranorak** (capital, em Dranor) — não são variação, são entidades distintas (resolvido). ✅ **Gaurhoth** (grafia tolkieniana — resolvido). Ainda em aberto: Erevan/Erol · Czar StormRange/StormBorn. Regra: em dúvida, usar a grafia original de Tolkien.
 
 > **Fase 0 (17/06/2026):** todos os .md receberam front-matter YAML (`titulo, tipo, cenario, campanha, status, audiencia, data, origem, tags`). Backup em `backup_md_*.zip`. Pasta gêmea `Cenário RPG - Dagorcain e o Mundo de Skard.` é redundante (a apagar manualmente).
 

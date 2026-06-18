@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2026-06-16
 origem: blog
 tags: ["Caixão das Almas", "Exar Khun"]
+colecao: lore
 ---
+
 
 # A história de Raukor, o segundo morador do Caixão
 

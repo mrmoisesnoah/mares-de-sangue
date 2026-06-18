@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2013-08-30
 origem: blog
 tags: ["Caixão das Almas", "Exar Khun"]
+colecao: lore
 ---
+
 
 # Czar StormRange e os StormBorns
 

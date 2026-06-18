@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2013-06-30
 origem: blog
 tags: ["Elódia", "Grandes Cidades"]
+colecao: lore
 ---
+
 
 # A Cidade de Harad, no Grande Deserto de Dagorcain
 

@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2015-01-13
 origem: blog
 tags: ["Elódia", "Grandes Cidades"]
+colecao: lore
 ---
+
 
 # Elódia a Biblioteca - Guia II
 

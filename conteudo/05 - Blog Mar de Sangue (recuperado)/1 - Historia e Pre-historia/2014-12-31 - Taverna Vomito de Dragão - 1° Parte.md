@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2014-12-31
 origem: blog
 tags: ["História"]
+colecao: conto
 ---
+
 
 # Taverna Vomito de Dragão - 1° Parte
 

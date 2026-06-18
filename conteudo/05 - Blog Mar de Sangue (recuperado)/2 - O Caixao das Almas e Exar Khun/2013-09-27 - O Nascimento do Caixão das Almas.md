@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2013-09-27
 origem: blog
 tags: ["Caixão das Almas", "Exar Khun"]
+colecao: lore
 ---
+
 
 # O Nascimento do Caixão das Almas 
 

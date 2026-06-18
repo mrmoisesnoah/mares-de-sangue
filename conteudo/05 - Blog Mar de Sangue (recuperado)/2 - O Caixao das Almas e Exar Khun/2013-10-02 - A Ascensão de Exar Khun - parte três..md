@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2013-10-02
 origem: blog
 tags: ["Caixão das Almas", "Exar Khun"]
+colecao: lore
 ---
+
 
 # A Ascensão de Exar Khun - parte três. 
 

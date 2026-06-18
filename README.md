@@ -31,7 +31,7 @@ mares-de-sangue/                 ← raiz do repositório
   requirements.txt
   README.md  ·  CLAUDE.md  ·  .gitignore
   .github/workflows/deploy.yml   ← build + publicação automática (GitHub Pages)
-  admin/                         ← painel de edição (Decap CMS) — Fase 4
+  admin/                         ← painel de edição (Sveltia CMS) — Fase 4
     index.html  ·  config.yml
   docs/
     ARQUITETURA.md  ·  CONTRIBUINDO.md  ·  ROADMAP.md

@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2014-12-31
 origem: blog
 tags: ["Cultura"]
+colecao: conto
 ---
+
 
 # A Reunião - Parte 1
 

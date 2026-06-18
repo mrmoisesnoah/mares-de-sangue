@@ -1,5 +1,5 @@
 ---
-titulo: "Ecos na Cidade dos Corvos — Sessão 1"
+titulo: "Sessão 1 — Registro Objetivo"
 tipo: sessao
 cenario: "Mar de Sangue"
 campanha: "Ecos na Cidade dos Corvos"
@@ -8,6 +8,7 @@ audiencia: jogadores
 data: 2026-06-14
 tags: ["Sessão 1"]
 ---
+
 
 # Ecos na Cidade dos Corvos — Sessão 1
 

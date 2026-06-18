@@ -17,7 +17,7 @@ Prioridade máxima é simplicidade, baixo/zero custo e fácil manutenção por i
 - **Saída:** `site/` (público) e `site-mestre/` (tudo, com 🔒). Reconstruídos a cada execução; não versionar (estão no `.gitignore`).
 - **Tema:** CSS embutido no gerador (constante `CSS`), estética de livro de fantasia.
 - **Deploy:** `.github/workflows/deploy.yml` builda e publica no GitHub Pages a cada push.
-- **Edição multiusuário:** `admin/` (Decap CMS) — Fase 4.
+- **Edição multiusuário:** `admin/` (Sveltia CMS) — Fase 4.
 
 ## Front-matter (esquema)
 

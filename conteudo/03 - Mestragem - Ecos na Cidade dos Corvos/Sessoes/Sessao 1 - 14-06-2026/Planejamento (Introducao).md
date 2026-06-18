@@ -1,13 +1,15 @@
 ---
-titulo: "Ecos na Cidade dos Corvos — Sessão 1"
+titulo: "Sessão 1 — Planejamento (Introdução)"
 tipo: sessao
 cenario: "Mar de Sangue"
 campanha: "Ecos na Cidade dos Corvos"
-status: publico
-audiencia: jogadores
+status: privado
+audiencia: mestre
 data: 2026-06-14
 tags: ["Sessão 1"]
 ---
+
+
 
 # Ecos na Cidade dos Corvos — Sessão 1
 

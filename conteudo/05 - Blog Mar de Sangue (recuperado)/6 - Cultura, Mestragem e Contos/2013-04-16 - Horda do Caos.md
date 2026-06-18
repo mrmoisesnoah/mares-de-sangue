@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2013-04-16
 origem: blog
 tags: ["Cultura"]
+colecao: conto
 ---
+
 
 # Horda do Caos
 

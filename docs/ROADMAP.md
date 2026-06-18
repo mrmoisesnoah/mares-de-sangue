@@ -21,7 +21,7 @@ Página de tags, "Veja também" por tags compartilhadas, links internos `[[Títu
 
 ## Fase 4 — Multiusuário 🚧 (em montagem)
 Edição pela web com papéis, mantendo o modelo Markdown:
-- **CMS git (Decap)** sobre o site estático, hospedado no GitHub + Pages/Netlify.
+- **CMS git (Sveltia)** sobre o site estático, hospedado no GitHub + Pages/Netlify.
 - Login para mestres/jogadores; estados rascunho → privado → público (editorial workflow).
 - Coleções por tipo de conteúdo, incluindo **Jornais** (cada mesa pode criar o seu).
 - Ver `FASE4-HOSPEDAGEM.md`. Requer conta GitHub (já existe) + ativar hospedagem/login.

@@ -30,14 +30,14 @@ CONTEUDO = arg("--conteudo", os.path.join(AQUI, "conteudo"))
 SAIDA = arg("--saida", os.path.join(AQUI, "site-mestre" if MESTRE else "site"))
 
 SITE_NOME = "Mares de Sangue"
-SITE_SUB = "O Mundo de Skard - enciclopedia do cenario"
+SITE_SUB = "O Mundo de Skard — enciclopédia do cenário"
 
 IGNORAR_DIRS = {"_DOCX (Word)", "_Arquivo (superado)", "Fontes para Projetos IA"}
 IGNORAR_ARQS = {"_FASE0_RELATORIO.md", "_AUDITORIA_MIGRACAO.md"}
 
 SECOES = {
     ".": ("Geral", 0),
-    "01 - Canone Atual": ("Canone Atual", 1),
+    "01 - Canone Atual": ("Cânone Atual", 1),
     "02 - Lore Original (Textos Historicos)": ("Lore Original", 2),
     "03 - Mestragem - Ecos na Cidade dos Corvos": ("Ecos na Cidade dos Corvos", 3),
     "04 - Contos e Narrativas": ("Contos e Narrativas", 4),
@@ -46,8 +46,8 @@ SECOES = {
     "07 - Campanha Anterior (Sombras Vindas do Tempo)": ("Sombras Vindas do Tempo", 7),
 }
 TIPO_LABEL = {
-    "canone": "Canone", "lore": "Lore", "campanha": "Campanha",
-    "sessao": "Sessao", "conto": "Conto", "jornal": "Jornal", "indice": "Indice",
+    "canone": "Cânone", "lore": "Lore", "campanha": "Campanha",
+    "sessao": "Sessão", "conto": "Conto", "jornal": "Jornal", "indice": "Índice",
 }
 
 def slugify(s):
@@ -157,7 +157,7 @@ def chip(txt, cls="chip"):
 
 def pagina(titulo, conteudo, depth=0):
     base = "../" * depth
-    rodape_ed = "<strong>EDICAO DO MESTRE</strong> - contem segredos" if MESTRE else "edicao publica (jogadores)"
+    rodape_ed = "<strong>EDIÇÃO DO MESTRE</strong> — contém segredos" if MESTRE else "edição pública (jogadores)"
     return (
 '<!DOCTYPE html>\n<html lang="pt-BR">\n<head>\n'
 '<meta charset="utf-8">\n'
@@ -167,19 +167,19 @@ def pagina(titulo, conteudo, depth=0):
 '<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=EB+Garamond:ital@0;1&display=swap" rel="stylesheet">\n'
 '<link rel="stylesheet" href="' + base + 'assets/estilo.css">\n'
 '</head>\n<body>\n'
-'<a class="pular" href="#conteudo">Pular para o conteudo</a>\n'
+'<a class="pular" href="#conteudo">Pular para o conteúdo</a>\n'
 '<header class="topo">\n'
 '  <button id="btn-menu" aria-label="Menu">&#9776;</button>\n'
 '  <a class="marca" href="' + base + 'index.html"><span class="marca-t">' + SITE_NOME + '</span><span class="marca-s">' + html.escape(SITE_SUB) + '</span></a>\n'
 '  <form class="busca-mini" action="' + base + 'busca.html" method="get">\n'
-'    <input type="search" name="q" placeholder="Buscar no mundo..." aria-label="Buscar">\n'
+'    <input type="search" name="q" placeholder="Buscar no mundo…" aria-label="Buscar">\n'
 '  </form>\n'
 '</header>\n'
 '<div class="layout">\n'
 '  <aside class="lateral" id="lateral">{NAV}</aside>\n'
 '  <main id="conteudo" class="conteudo">' + conteudo + '</main>\n'
 '</div>\n'
-'<footer class="rodape"><p>' + SITE_NOME + ' &middot; gerado a partir do acervo do cenario &middot; ' + rodape_ed + '</p></footer>\n'
+'<footer class="rodape"><p>' + SITE_NOME + ' &middot; gerado a partir do acervo do cenário &middot; ' + rodape_ed + '</p></footer>\n'
 '<script src="' + base + 'assets/app.js"></script>\n'
 '</body>\n</html>')
 
@@ -188,7 +188,7 @@ def montar_nav(arts, depth, ativo_slug=""):
     secs = {}
     for a in arts:
         secs.setdefault((a.ordem, a.secao), []).append(a)
-    out = ['<nav><a class="nav-home" href="' + base + 'index.html">&#8962; Inicio</a>']
+    out = ['<nav><a class="nav-home" href="' + base + 'index.html">&#8962; Início</a>']
     out.append('<a class="nav-home" href="' + base + 'tags.html">&#127991; Tags</a>')
     for key in sorted(secs):
         ordem, secao = key
@@ -217,7 +217,7 @@ def limpar_saida(d):
             except OSError: pass
 
 PUBLICO_MAPA = {
-    "01 - Canone Atual": (1, "Canone do Mundo"),
+    "01 - Canone Atual": (1, "Cânone do Mundo"),
     "02 - Lore Original (Textos Historicos)": (2, "Lore do Universo"),
     "03 - Mestragem - Ecos na Cidade dos Corvos": (3, "Ecos na Cidade dos Corvos"),
     "04 - Contos e Narrativas": (4, "Contos e Narrativas"),
@@ -225,6 +225,12 @@ PUBLICO_MAPA = {
 }
 
 def secao_publica(a):
+    # Override por front-matter 'colecao' (ex.: textos do blog que complementam a Lore).
+    col = (a.meta.get("colecao") or "").strip().lower()
+    if col == "lore":
+        return (2, "Lore do Universo")
+    if col == "conto":
+        return (4, "Contos e Narrativas")
     if a.tipo == "jornal":
         return (5, "Jornais")
     top = a.rel.split(os.sep)[0] if a.rel != "." else "."
@@ -271,10 +277,10 @@ def construir():
         rel_html = ""
         if rel:
             li = "".join('<li><a href="../%s">%s</a> <span class="mini">%s</span></li>' % (x.url, html.escape(x.titulo), TIPO_LABEL.get(x.tipo, x.tipo)) for x in rel)
-            rel_html = '<section class="relacionados"><h2>Veja tambem</h2><ul>' + li + '</ul></section>'
+            rel_html = '<section class="relacionados"><h2>Veja também</h2><ul>' + li + '</ul></section>'
         artigo = (
 '<article class="artigo">\n'
-'  <nav class="trilha"><a href="../index.html">Inicio</a> &rsaquo; <span>' + html.escape(a.secao) + '</span></nav>\n'
+'  <nav class="trilha"><a href="../index.html">Início</a> &rsaquo; <span>' + html.escape(a.secao) + '</span></nav>\n'
 '  <h1 class="titulo-art">' + html.escape(a.titulo) + '</h1>\n'
 '  <div class="meta">' + " ".join(meta_chips) + '</div>\n'
 '  <div class="corpo">' + corpo_html + '</div>\n'
@@ -308,18 +314,18 @@ def construir():
     if recentes:
         li = "".join('<li><a href="%s">%s</a><span class="mini">%s &middot; %s</span></li>'
                      % (x.url, html.escape(x.titulo), x.data, TIPO_LABEL.get(x.tipo, x.tipo)) for x in recentes)
-        dest = '<section class="bloco"><h2>Adicoes recentes</h2><ul class="lista-rec">' + li + '</ul></section>'
+        dest = '<section class="bloco"><h2>Adições recentes</h2><ul class="lista-rec">' + li + '</ul></section>'
     home = (
 '<section class="hero">\n'
 '  <h1>' + SITE_NOME + '</h1>\n'
-'  <p class="lede">' + html.escape(SITE_SUB) + '. Uma enciclopedia viva do continente de Dagorcain e do antigo mundo de Skard - historia, cidades, faccoes, contos e cronicas de mesa.</p>\n'
+'  <p class="lede">' + html.escape(SITE_SUB) + '. Uma enciclopédia viva do continente de Dagorcain e do antigo mundo de Skard — história, cidades, facções, contos e crônicas de mesa.</p>\n'
 '  <form class="busca-grande" action="busca.html" method="get">\n'
-'    <input type="search" name="q" placeholder="Buscar personagens, cidades, eventos..." aria-label="Buscar">\n'
+'    <input type="search" name="q" placeholder="Buscar personagens, cidades, eventos…" aria-label="Buscar">\n'
 '    <button>Buscar</button>\n'
 '  </form>\n'
-'  <p class="contagem">' + str(len(arts)) + (' artigos (edicao do mestre)' if MESTRE else ' artigos publicos') + '</p>\n'
+'  <p class="contagem">' + str(len(arts)) + (' artigos (edição do mestre)' if MESTRE else ' artigos públicos') + '</p>\n'
 '</section>\n'
-'<section class="bloco"><h2>Secoes</h2><div class="cards">' + "".join(cards) + '</div></section>\n'
+'<section class="bloco"><h2>Seções</h2><div class="cards">' + "".join(cards) + '</div></section>\n'
 + dest)
     out = pagina("Inicio", home, 0).replace("{NAV}", montar_nav(arts, 0))
     with open(os.path.join(SAIDA, "index.html"), "w", encoding="utf-8") as f:
@@ -347,13 +353,24 @@ def construir():
     busca_html = (
 '<h1>Busca</h1>\n'
 '<form class="busca-grande" onsubmit="return false;">\n'
-'  <input id="q" type="search" placeholder="Digite para buscar..." autofocus aria-label="Buscar">\n'
+'  <input id="q" type="search" placeholder="Digite para buscar…" autofocus aria-label="Buscar">\n'
 '</form>\n'
 '<p id="busca-info" class="mini"></p>\n'
 '<div id="resultados" class="resultados"></div>')
     out = pagina("Busca", busca_html, 0).replace("{NAV}", montar_nav(arts, 0))
     with open(os.path.join(SAIDA, "busca.html"), "w", encoding="utf-8") as f:
         f.write(out)
+
+    # Fase 4: publica o painel de edicao /admin junto do site publico
+    if not MESTRE:
+        admin_src = os.path.join(AQUI, "admin")
+        if os.path.isdir(admin_src):
+            admin_dst = os.path.join(SAIDA, "admin")
+            os.makedirs(admin_dst, exist_ok=True)
+            for fnm in os.listdir(admin_src):
+                sp = os.path.join(admin_src, fnm)
+                if os.path.isfile(sp):
+                    shutil.copy(sp, os.path.join(admin_dst, fnm))
 
     print("[%s] %d artigos -> %s" % ("MESTRE" if MESTRE else "PUBLICO", len(arts), SAIDA))
     print("  tags: %d" % len(tagmap))

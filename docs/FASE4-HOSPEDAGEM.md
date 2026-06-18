@@ -1,8 +1,10 @@
 # Fase 4 — Publicar e habilitar edição multiusuário
 
-Objetivo: colocar o site no ar de graça e permitir que mestres/jogadores editem pela web, com papéis e os estados rascunho → privado → público — **sem abandonar o Markdown**.
+Objetivo: colocar o site no ar de graça e permitir que **mestres e jogadores** criem e publiquem textos pela web, com papéis e os estados rascunho → privado → público — **sem abandonar o Markdown**.
 
-A ferramenta é o **Decap CMS** (`admin/`): um painel web que edita os mesmos `.md` e faz commit no GitHub; a cada commit o site é reconstruído e publicado. Zero servidor próprio.
+A ferramenta é a **Sveltia CMS** (`admin/`): a sucessora moderna do Decap/Netlify CMS, gratuita, compatível com o mesmo `config.yml`. Edita os `.md` e faz commit no GitHub; a cada commit o site é reconstruído e publicado.
+
+> Por que Sveltia e não Decap: o login do Decap dependia do **Netlify Identity**, que foi **descontinuado**. A Sveltia é mantida ativamente e tem login via GitHub.
 
 ## Fluxo
 
@@ -10,56 +12,37 @@ A ferramenta é o **Decap CMS** (`admin/`): um painel web que edita os mesmos `.
 edita no painel /admin → commit no GitHub → build automático (Actions) → site/ publicado
 ```
 
-## Estrutura do repositório (já montada)
+## A — Publicar o site (já feito ✅)
 
-O repositório é a pasta **`mares-de-sangue/`** (autocontida, sem os PDFs/músicas):
+O site já está no ar via GitHub Pages + Actions: https://mrmoisesnoah.github.io/mares-de-sangue/
+O workflow `.github/workflows/deploy.yml` reconstrói tudo a cada `git push` na branch `main`.
 
-```
-mares-de-sangue/
-  gerar_site.py · requirements.txt · README.md · CLAUDE.md · .gitignore
-  .github/workflows/deploy.yml      ← build + publicação automática
-  admin/  (index.html, config.yml)  ← painel de edição
-  docs/
-  conteudo/                         ← o conteúdo .md (fonte única)
-  site/ (gerado, não versionar)
-```
+> A edição do **mestre** (`site-mestre/`) não é publicada.
 
-## Parte A — Publicar (rápido)
+## B — Ligar o painel de edição (login) — passos que dependem de você
 
-1. Crie um repositório no GitHub (ex.: `mares-de-sangue`) e suba o conteúdo desta pasta.
-   `site/` e `site-mestre/` não vão (estão no `.gitignore`).
-2. No repositório: *Settings → Pages → Source = GitHub Actions*.
-3. O workflow `.github/workflows/deploy.yml` já está incluído: a cada push na `main`,
-   ele instala as dependências, roda `python gerar_site.py` e publica `site/`.
+O painel já está publicado em `/admin/` (ex.: .../mares-de-sangue/admin/). Falta só o login. Caminho recomendado (gratuito):
 
-Alternativa: Cloudflare Pages/Netlify conectados ao repo (build `pip install -r requirements.txt && python gerar_site.py`, saída `site/`).
+**Sveltia CMS + autenticador no Cloudflare Workers**
+1. Crie uma conta gratuita no Cloudflare.
+2. Faça deploy do autenticador oficial **`sveltia-cms-auth`** (Cloudflare Worker) — repositório com instruções: https://github.com/sveltia/sveltia-cms-auth
+3. No GitHub, crie um *OAuth App* (Settings → Developer settings → OAuth Apps), apontando o callback para a URL do Worker; coloque o Client ID/Secret no Worker.
+4. Em `admin/config.yml`, descomente e preencha `base_url: https://SEU-AUTENTICADOR.workers.dev`.
+5. `git push`. Pronto: abra `/admin/`, entre com GitHub e edite.
 
-> A edição do **mestre** (`site-mestre/`) não deve ser publicada.
-
-## Parte B — Painel de edição (login + papéis)
-
-O Decap precisa de um provedor de login:
-
-**Opção 1 — Netlify Identity (mais simples):**
-1. Hospede no Netlify (conectado ao repo GitHub).
-2. Ative *Identity* e *Git Gateway*.
-3. Em `admin/config.yml`, troque o backend para `name: git-gateway`.
-4. Convide editores em *Identity → Invite users*.
-
-**Opção 2 — Backend GitHub** (já configurado no `config.yml`, ajuste `repo:`): exige um pequeno proxy OAuth. Só vale se não quiser usar o Netlify.
+**Alternativa ainda mais simples para não-técnicos (jogadores sem conta GitHub):** o serviço **DecapBridge** (gratuito) faz o login sem exigir conta GitHub de cada editor. É um serviço hospedado por terceiros — bom quando vários jogadores vão editar. Docs: https://decapbridge.com/
 
 ### Papéis e estados
-- Quem edita = quem você convida (Netlify) ou colaboradores do repo (GitHub).
-- `publish_mode: editorial_workflow` dá rascunho → em revisão → publicado.
-- `status`/`audiencia` controlam o que vai ao site público (mestre fica fora).
-- Permissões por usuário mais finas (cada mestre só na sua mesa) só pedem backend dinâmico (ex.: Supabase) — implementar se/quando for essencial.
+- **Quem edita** = colaboradores do repositório no GitHub (você convida em *Settings → Collaborators*). Admin = você; mestres/jogadores = colaboradores.
+- **Estados:** `publish_mode: editorial_workflow` dá rascunho → em revisão → publicado.
+- **Mestre × jogador:** os campos `status` e `audiencia` de cada texto controlam o que vai ao site público (conteúdo de mestre fica fora). É o mesmo controle que você já viu funcionando (ex.: o Planejamento da Sessão 1 é mestre; os resumos são públicos).
+- Permissões por usuário mais finas (cada mestre só na sua mesa) só pediriam um backend dinâmico (ex.: Supabase) — implementar apenas se/quando for essencial.
 
-### "Cada mesa cria seu jornal"
-A coleção **Jornais** do `config.yml` permite criar edições; o campo *Jornal / Mesa* identifica de qual jornal/mesa é. Assim A Trombeta de Dagor convive com jornais próprios de cada mesa.
+### "Cada mesa cria seu jornal / seus textos"
+As coleções do `config.yml` (Lore, Cânone, Jornais, Contos, Ecos) têm `create: true`: qualquer editor logado cria textos novos por ali. Na coleção **Jornais**, o campo *Jornal / Mesa* identifica de qual jornal/mesa é — assim A Trombeta de Dagor convive com jornais próprios de cada mesa.
 
-## O que depende de você (contas)
-1. Criar o repositório no GitHub e subir a pasta `mares-de-sangue/`.
-2. Ativar GitHub Pages (Actions) — ou conectar Netlify/Cloudflare.
-3. Para o painel: ativar Netlify Identity + Git Gateway e convidar os editores.
+## Resumo do que falta (só depende de você)
+1. (Login) Criar conta Cloudflare + publicar o Worker `sveltia-cms-auth` + OAuth App no GitHub, e preencher `base_url` no `config.yml`. (Ou usar DecapBridge.)
+2. Convidar mestres/jogadores como colaboradores do repositório.
 
-Tudo gratuito.
+Tudo gratuito. Posso te guiar em cada passo quando você for fazer.

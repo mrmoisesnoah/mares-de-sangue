@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2013-07-24
 origem: blog
 tags: ["Elódia", "Grandes Cidades"]
+colecao: lore
 ---
+
 
 # Sobre a antiga cidade Anã Cryptawn 
 

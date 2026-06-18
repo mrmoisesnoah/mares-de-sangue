@@ -1,28 +1,23 @@
-# Configuração do Decap CMS (painel web de edição) — Fase 4.
-# Decap edita os mesmos arquivos .md e faz commit no Git; o site é reconstruído.
-# Docs: https://decapcms.org/docs/
-#
-# IMPORTANTE: ajuste 'repo' para o seu repositório e confira os caminhos das
-# pastas conforme a raiz do repositório (ver docs/FASE4-HOSPEDAGEM.md).
+# Painel de edição (Sveltia CMS — compatível com Decap). Edita os .md e faz
+# commit no GitHub; o site é reconstruído pelo GitHub Actions automaticamente.
+# Docs: https://sveltiacms.app/  ·  Login: ver docs/FASE4-HOSPEDAGEM.md
 
 backend:
   name: github
-  repo: SEU-USUARIO/mares-de-sangue   # <-- troque pelo seu repositório GitHub
+  repo: mrmoisesnoah/mares-de-sangue
   branch: main
-  # Alternativa sem app OAuth próprio: usar Netlify Identity + git-gateway
-  # name: git-gateway
+  # Depois de publicar o autenticador (Cloudflare Worker "sveltia-cms-auth"),
+  # descomente e preencha com a URL dele:
+  # base_url: https://SEU-AUTENTICADOR.workers.dev
 
-# Fluxo editorial: rascunho -> em revisão -> publicado (casa com status do projeto)
+# Fluxo: rascunho -> em revisão -> publicado (casa com status do projeto)
 publish_mode: editorial_workflow
 
-locale: 'pt'
+locale: pt
 
-# Pasta onde imagens enviadas pelo CMS serão salvas
 media_folder: "conteudo/_midia"
 public_folder: "/_midia"
 
-# Campos reaproveitados entre coleções
-# (status/audiencia controlam a visibilidade no site)
 collections:
   - name: lore
     label: "Lore do Universo"

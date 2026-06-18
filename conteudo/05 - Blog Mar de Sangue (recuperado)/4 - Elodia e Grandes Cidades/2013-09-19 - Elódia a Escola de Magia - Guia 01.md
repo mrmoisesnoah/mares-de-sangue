@@ -7,7 +7,9 @@ audiencia: jogadores
 data: 2013-09-19
 origem: blog
 tags: ["Elódia", "Grandes Cidades"]
+colecao: lore
 ---
+
 
 # Elódia a Escola de Magia - Guia 01
 
