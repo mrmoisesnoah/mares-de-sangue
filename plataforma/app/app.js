@@ -133,7 +133,7 @@ async function telaPub(id){
   if(mid.data){ mid.data.forEach(function(m){
     media += (m.tipo==="video")? '<p class="vis-leg">🎬 <a href="'+esc(m.url)+'" target="_blank">'+esc(m.legenda||m.url)+'</a></p>'
                                : '<img class="capa" src="'+esc(m.url)+'" alt="">'; }); }
-  var corpoHtml = esc(p.corpo||"").replace(/\n/g,"<br>");
+  var corpoHtml = (window.marked ? marked.parse(p.corpo||"") : esc(p.corpo||"").replace(/\n/g,"<br>"));
   layout('<div class="bread">Publicação</div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+'</p>'
     +(p.tags&&p.tags.length?'<p class="vis-leg">'+p.tags.map(esc).join(", ")+'</p>':'')
