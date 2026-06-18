@@ -65,3 +65,43 @@ img.capa{max-width:100%;border-radius:8px;border:1px solid var(--borda);margin:1
 .corpo code{background:var(--perg2);padding:1px 5px;border-radius:4px;font-size:.85em}
 .corpo hr{border:0;border-top:1px solid var(--borda);margin:1.6em 0}
 .corpo a{border-bottom:1px dotted var(--sangue)}
+
+/* ===== UI v2: hero, dashboard, autor, impressão ===== */
+.hero2{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--borda);margin-bottom:22px;background:#3a2616}
+.hero2 .bg{position:absolute;inset:0;background-size:cover;background-position:center;filter:saturate(.9)}
+.hero2 .ov{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,12,6,.35),rgba(20,12,6,.78))}
+.hero2 .in{position:relative;padding:38px 28px;color:var(--perg)}
+.hero2 h1{color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.5);margin:0 0 .2em}
+.hero2 p{color:#f0e6cf;max-width:680px;margin:.2em 0 0}
+.hero2 .acts{margin-top:14px;display:flex;gap:8px;flex-wrap:wrap}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:14px 0 4px}
+.stat{background:var(--perg);border:1px solid var(--borda);border-radius:10px;padding:12px 14px;text-align:center}
+.stat b{display:block;font-family:'Cinzel',serif;font-size:24px;color:var(--sangue)}
+.stat span{font-size:13px;color:var(--tinta2)}
+.atalhos{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.atalho{background:var(--perg2);border:1px solid var(--borda);border-radius:18px;padding:6px 14px;font-size:14px;cursor:pointer;color:var(--tinta2)}
+.atalho:hover{border-color:var(--ouro);color:var(--sangue)}
+.autor-cap{display:flex;align-items:center;gap:16px;margin:6px 0 10px}
+.autor-cap .av{width:84px;height:84px;border-radius:50%;background:var(--perg2) center/cover no-repeat;border:2px solid var(--ouro);display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--ouro)}
+.acoes-pub{margin-top:22px;padding-top:14px;border-top:1px solid var(--borda);display:flex;gap:8px;flex-wrap:wrap}
+.btn.mini{padding:6px 12px;font-size:13px}
+@media print{ .topo,.lateral,.acoes-pub,.bread{display:none!important} .layout{display:block} .conteudo{padding:0} }
+
+/* ===== explorador: cards de categoria + abas retráteis ===== */
+.expq{width:100%;max-width:420px;padding:9px 13px;border:1px solid var(--ouro);border-radius:20px;font-family:inherit;font-size:15px;background:#fffdf6;margin:6px 0 4px}
+.cards-cat{display:flex;flex-wrap:wrap;gap:10px;margin:12px 0 6px}
+.catcard{cursor:pointer;background:var(--perg);border:1px solid var(--borda);border-radius:10px;padding:9px 14px;min-width:118px;text-align:center;transition:.12s}
+.catcard:hover{border-color:var(--ouro);transform:translateY(-1px)}
+.catcard.active{background:var(--sangue);border-color:var(--sangue);color:#fff}
+.catcard .ic{font-size:22px;line-height:1}
+.catcard .nm{font-family:'Cinzel',serif;font-size:12.5px;margin-top:2px}
+.catcard .ct{font-size:12px;color:var(--ouro)}
+.catcard.active .ct{color:#f0d9b5}
+details.bloco{border:1px solid var(--borda);border-radius:10px;margin:10px 0;background:var(--perg);overflow:hidden}
+details.bloco>summary{cursor:pointer;padding:11px 14px;font-family:'Cinzel',serif;color:var(--tinta);list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.bloco>summary::-webkit-details-marker{display:none}
+details.bloco>summary .ct{color:var(--ouro);font-size:13px;font-weight:400}
+details.bloco>summary:after{content:"▸";color:var(--ouro);margin-left:8px}
+details.bloco[open]>summary:after{content:"▾"}
+details.bloco[open]>summary{border-bottom:1px solid var(--borda);background:var(--perg2)}
+details.bloco .cards{padding:12px}
