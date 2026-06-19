@@ -7,7 +7,16 @@ function esc(s){ s=(s==null?"":""+s); return s.replace(/&/g,"&amp;").replace(/</
 function slug(s){ return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^\w\s-]/g,"").trim().replace(/[\s_-]+/g,"-")||("item-"+Date.now()); }
 function visChip(v){ return '<span class="chip c-'+v+'">'+esc((v||"").replace("_","+"))+'</span>'; }
 function val(id){ var e=document.getElementById(id); return e?e.value:""; }
-function go(t,arg){ S.view={t:t,arg:arg}; S.msg=""; window.scrollTo(0,0); render(); }
+var pendingArg;
+function go(t,arg){ S.msg=""; var h;
+  if(typeof arg==="object" && arg!==null){ pendingArg=arg; h="#/"+t; }
+  else { pendingArg=undefined; h="#/"+t+(arg!=null&&arg!==""?"/"+encodeURIComponent(""+arg):""); }
+  if(location.hash===h){ rota(); } else { location.hash=h; }
+}
+function rota(){ var raw=location.hash.replace(/^#\/?/,""); var parts=raw.split("/"); var t=parts[0]||"home"; var arg=(parts.length>1)?decodeURIComponent(parts.slice(1).join("/")):undefined; if(pendingArg!==undefined){ arg=pendingArg; pendingArg=undefined; } S.view={t:t,arg:arg}; window.scrollTo(0,0); render(); }
+window.addEventListener("hashchange", rota);
+function botaoCompartilhar(){ return '<button class="btn mini sec" onclick="compartilhar()">🔗 Compartilhar</button> <span id="compartilhar-fb" class="vis-leg" style="color:#2f5d2f"></span>'; }
+function compartilhar(){ var url=location.href; var done=function(){ var el=document.getElementById("compartilhar-fb"); if(el){ el.textContent="✓ link copiado!"; setTimeout(function(){ if(el)el.textContent=""; },2500); } }; try{ if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(url).then(done, function(){ window.prompt("Copie o link:",url); }); } else { window.prompt("Copie o link:",url); } }catch(e){ window.prompt("Copie o link:",url); } }
 function erro(e){ S.msg='<div class="aviso">'+esc(e&&e.message?e.message:e)+'</div>'; render(); }
 function md(s){ s=s||""; s=s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, function(m,alvo,rot){ var t=(rot||alvo).trim(); return '<a class="wikilink" data-alvo="'+esc(alvo.trim()).replace(/"/g,"&quot;")+'">'+esc(t)+'</a>'; }); return (window.marked ? marked.parse(s) : esc(s).replace(/\n/g,"<br>")); }
 function resumo(c){ var t=(c||"").replace(/[#*`>\[\]_]/g,"").replace(/\s+/g," ").trim(); return t.length>120?t.slice(0,120)+"…":t; }
@@ -113,13 +122,13 @@ async function carregar(){
     var m=await sb.from("mundos").select("*").order("criado_em"); if(m.error)throw m.error;
     S.mundos=m.data||[]; S.mundo=S.mundos[0]||null;
     if(S.mundo) await carregarMesas();
-    go("home");
+    rota();
   }catch(e){ erro(e); }
 }
 async function carregarPublico(){
   try{ S.user=null; S.profile=null; S.mesas=[];
     var m=await sb.from("mundos").select("*").eq("publico",true).order("criado_em");
-    S.mundos=m.data||[]; S.mundo=S.mundos[0]||null; if(S.mundo) await carregarMesas(); go("home");
+    S.mundos=m.data||[]; S.mundo=S.mundos[0]||null; if(S.mundo) await carregarMesas(); rota();
   }catch(e){ erro(e); }
 }
 async function selecionarMundo(id){ S.mundo=S.mundos.find(function(w){return w.id===id;})||S.mundo; await carregarMesas(); go("home"); }
@@ -264,7 +273,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
   var extra="";
   if(ehPersonagem(p.tipo)){ var outros=(await pubsDoAutor(p.autor_id)).filter(function(x){return x.id!==p.id;});
     if(outros.length){ abrirExplorador(outros); extra='<h2>Mais textos de '+esc(nomeAutor)+'</h2>'+exploradorHTML(); } }
-  var acoes='<div class="acoes-pub"><button class="btn mini sec" onclick="baixarPdf()">⬇ PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button>'
+  var acoes='<div class="acoes-pub"><button class="btn mini sec" onclick="baixarPdf()">⬇ PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button> '+botaoCompartilhar()
     +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">✎ Editar</a> <button class="btn mini sec" style="border-color:#c08" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
   layout('<div class="bread"><a onclick="'+voltar+'">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')
@@ -407,7 +416,7 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var mesaNome=c.mesa_id?((S.mesas.find(function(m){return m.id===c.mesa_id;})||{}).nome||null):null;
   var btnAdd=podeAdd?'<a class="btn" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+'})">+ Adicionar texto</a> ':'';
   var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
-  var acoes=(podeAdd||podeEditar)?'<p>'+btnAdd+btnEdit+'</p>':'';
+  var acoes='<p>'+btnAdd+btnEdit+((btnAdd||btnEdit)?' ':'')+botaoCompartilhar()+'</p>';
   var rel; if(pubs.length){ abrirExplorador(pubs); rel='<h2>Conteúdo relacionado</h2>'+exploradorHTML(); } else { rel='<h2>Conteúdo relacionado</h2><div class="empty">Nenhum conteúdo ligado a este personagem ainda.'+(podeAdd?' Use o botão “+ Adicionar texto”.':'')+'</div>'; }
   var painel=podeEditar?'<h2>Quem pode escrever histórias deste personagem</h2><p class="vis-leg">Autorize outros a adicionar textos na página deste personagem (além de você).</p><div id="contribpers">Carregando…</div>':'';
   layout('<div class="bread"><a onclick="go(\'pers\',\'jog\')">‹ Personagens</a></div>'
@@ -488,7 +497,7 @@ async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJor
   var logo=j.imagem_url?'<div class="av" style="width:120px;height:120px;border-radius:12px;background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px;border-radius:12px">📰</div>';
   var btnPub=podePublicar?'<a class="btn" onclick="go(\'nova\',{jornal:\''+id+'\',tipo:\'jornal\'})">+ Publicar notícia</a> ':'';
   var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarJornal\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirJornal(\''+id+'\')">🗑 Excluir</button>':'';
-  var acoes=(podePublicar||podeEditar)?'<p>'+btnPub+btnEdit+'</p>':'';
+  var acoes='<p>'+btnPub+btnEdit+((btnPub||btnEdit)?' ':'')+botaoCompartilhar()+'</p>';
   var lista=noticias.length?listar(noticias):'<div class="empty">Nenhuma notícia publicada ainda.'+(podePublicar?' Use o botão “+ Publicar notícia”.':'')+'</div>';
   var painel=podeEditar?'<h2>Escritores do jornal</h2><p class="vis-leg">Autorize quem pode publicar notícias por este jornal (além de você).</p><div id="escritores">Carregando…</div>':'';
   layout('<div class="bread"><a onclick="go(\'jornais\')">‹ Jornais</a></div>'
@@ -529,7 +538,7 @@ function telaCreditos(){ layout('<div class="bread"><a onclick="go(\'home\')">In
   +'<p><b>Mares de Sangue</b> — plataforma idealizada, projetada e desenvolvida por <b>Moisés Noah</b>.</p>'
   +'<h2>O cenário</h2>'
   +'<p>O mundo de <b>Skard</b> e o cenário <b>Mar de Sangue</b> foram criados coletivamente por <b>TOGA — The Older Gods Adventures</b>, o grupo original de RPG de mesa que construiu junto, ao longo dos anos, toda a história original deste universo.</p>'
-  +'<p><b>Membros fundadores do TOGA:</b> Moisés Noah, Arnom Abner, Amós Gonzaga, Asafe Lucas, Cleudon Paulo, Thompson Moutinho (O Primeiro Mestre) e Matheus “Tharen”.</p>'
+  +'<p><b>Membros fundadores do TOGA:</b> Thompson Moutinho (<b><i>O Primeiro Mestre</i></b>), Moisés Noah, Arnom Abner, Amós Gonzaga, Asafe Lucas, Cleudon Paulo e Matheus “Tharen”.</p>'
   +'<h2>Material original</h2>'
   +'<p>A história original permanece disponível no blog <a href="https://maresdesangue.blogspot.com/" target="_blank" rel="noopener">Mares de Sangue</a>.</p>'
   +'<hr>'
