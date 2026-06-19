@@ -296,7 +296,7 @@ function formPub(opts, p){
     +'<p style="margin-top:16px"><button class="btn" onclick="salvarPub('+(mesaId?"'"+mesaId+"'":"null")+','+(p?"'"+p.id+"'":"null")+','+(emMesa?"true":"false")+')">'+(p?'Salvar':'Criar '+esc(rot))+'</button> '
     +'<button class="btn sec" onclick="'+(mesaId?"go('mesa','"+mesaId+"')":"go('lore')")+'">Cancelar</button></p></div>';
 }
-async function telaNova(opts){ S.meusPers=await meusPersonagens(); layout(formPub(opts||{},null)); }
+async function telaNova(opts){ opts=opts||{}; S.meusPers=await meusPersonagens(); if(opts.personagem&&!S.meusPers.some(function(x){return x.id===opts.personagem;})){ var pc=await umPersonagem(opts.personagem); if(pc) S.meusPers=S.meusPers.concat([{id:pc.id,nome:pc.nome}]); } layout(formPub(opts,null)); }
 async function telaEditar(id){ layout('<p>Carregando…</p>'); S.meusPers=await meusPersonagens(); var p=await umaPub(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPub({mesa:p.mesa_id},p)); }
 function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><h1>🌍 Criar Mundo</h1>'
   +'<div class="form"><label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: Mares de Sangue"><label>Descrição</label><textarea id="m_desc"></textarea>'
@@ -306,10 +306,12 @@ function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><h1>⚔ Criar
   +'<div class="form"><label>Nome</label><input id="me_nome"><label>Descrição</label><textarea id="me_desc"></textarea>'
   +'<label>Imagem de fundo — link</label><input id="me_fundo" placeholder="https://…">'
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesa()">Criar mesa</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
-function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mundo</div><h1>Editar mundo</h1>'
+async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mundo</div><h1>Editar mundo</h1>'
   +'<div class="form"><label>Nome</label><input id="w_nome" value="'+esc(w.nome)+'"><label>Descrição</label><textarea id="w_desc">'+esc(w.descricao||"")+'</textarea>'
   +'<label>Imagem de fundo (hero) — link</label><input id="w_fundo" value="'+esc(w.fundo_url||"")+'" placeholder="https://…">'
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundoEdit()">Salvar</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
+  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundoEdit()">Salvar</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'
+  +'<h2>Colaboradores do mundo</h2><p class="vis-leg">Quem pode criar conteúdo neste mundo. Você (dono) sempre pode.</p><div id="colabmundo">Carregando…</div>');
+  renderColabMundo(w.id); }
 async function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===id;}); if(!m){layout('<div class="aviso">Mesa não encontrada.</div>');return;}
   layout('<div class="bread">Editar mesa</div><h1>Editar mesa</h1><div class="form"><label>Nome</label><input id="me_nome" value="'+esc(m.nome)+'">'
   +'<label>Descrição</label><textarea id="me_desc">'+esc(m.descricao||"")+'</textarea><label>Imagem de fundo — link</label><input id="me_fundo" value="'+esc(m.fundo_url||"")+'">'
@@ -381,18 +383,24 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; }
   var nomeAutor=await nomeDe(c.jogador_id); var pubs=await pubsDoPersonagem(id);
   var podeEditar=(S.user&&(c.jogador_id===S.user.id||(S.profile&&S.profile.papel_global==="admin")));
+  var contribs=await contribPersonagem(id); var souContrib=!!(S.user&&contribs.some(function(x){return x.user_id===S.user.id;}));
+  var podeAdd=podeEditar||souContrib;
   var av=c.imagem_url?'<div class="av" style="width:120px;height:120px;background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px">'+esc((c.nome||"?")[0].toUpperCase())+'</div>';
   var mesaNome=c.mesa_id?((S.mesas.find(function(m){return m.id===c.mesa_id;})||{}).nome||null):null;
-  var acoes=podeEditar?'<p><a class="btn" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+'})">+ Adicionar texto</a> <a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button></p>':'';
-  var rel; if(pubs.length){ abrirExplorador(pubs); rel='<h2>Conteúdo relacionado</h2>'+exploradorHTML(); } else { rel='<h2>Conteúdo relacionado</h2><div class="empty">Nenhum conteúdo ligado a este personagem ainda.'+(podeEditar?' Use o botão “+ Adicionar texto”.':'')+'</div>'; }
+  var btnAdd=podeAdd?'<a class="btn" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+'})">+ Adicionar texto</a> ':'';
+  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
+  var acoes=(podeAdd||podeEditar)?'<p>'+btnAdd+btnEdit+'</p>':'';
+  var rel; if(pubs.length){ abrirExplorador(pubs); rel='<h2>Conteúdo relacionado</h2>'+exploradorHTML(); } else { rel='<h2>Conteúdo relacionado</h2><div class="empty">Nenhum conteúdo ligado a este personagem ainda.'+(podeAdd?' Use o botão “+ Adicionar texto”.':'')+'</div>'; }
+  var painel=podeEditar?'<h2>Quem pode escrever histórias deste personagem</h2><p class="vis-leg">Autorize outros a adicionar textos na página deste personagem (além de você).</p><div id="contribpers">Carregando…</div>':'';
   layout('<div class="bread"><a onclick="go(\'pers\',\'jog\')">‹ Personagens</a></div>'
     +'<div class="autor-cap">'+av+'<div><h1 style="margin:0">'+esc(c.nome)+'</h1>'
     +(c.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(c.epiteto)+'</p>':'')
     +'<p class="vis-leg">'+visChip(c.visibilidade)+(c.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+' · por <a onclick="go(\'autor\',\''+c.jogador_id+'\')">'+esc(nomeAutor)+'</a>'+(mesaNome?' · <a onclick="go(\'mesa\',\''+c.mesa_id+'\')">⚔ '+esc(mesaNome)+'</a>':'')+'</p></div></div>'
     +(c.resumo?'<p>'+esc(c.resumo)+'</p>':'')
     +(c.corpo?'<div class="corpo">'+md(c.corpo)+'</div>':'')
-    +acoes+rel);
-  if(pubs.length) renderExpl(); }
+    +acoes+rel+painel);
+  if(pubs.length) renderExpl();
+  if(podeEditar) renderContribPers(id); }
 function formPersonagem(opts, c){
   var mesaId=c?c.mesa_id:(opts.mesa||null); var emMesa=!!opts.mesa;
   var visOpts=mesaId?[["publico","público (todos)"],["mesa","mesa (todos da campanha)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
@@ -419,6 +427,31 @@ async function salvarPersonagem(editId){ try{
 }catch(e){erro(e);} }
 async function excluirPersonagem(id){ if(!confirm("Excluir este personagem? Não dá para desfazer.")) return; try{ var r=await sb.from("personagens").delete().eq("id",id); if(r.error)throw r.error; go("pers","jog"); }catch(e){erro(e);} }
 async function subirImgPers(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("pc_img_st"); if(st)st.textContent="enviando…"; try{ var u=await uploadArquivo(f); var c=document.getElementById("pc_img"); if(c)c.value=u; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
+// ===== Permissionamento: colaboradores do mundo =====
+async function membrosMundo(id){ var r=await sb.from("mundo_membros").select("user_id,papel").eq("mundo_id",id); return r.error?[]:(r.data||[]); }
+async function addColabMundo(id){ var uid=val("mw_add"); if(!uid)return; try{ var r=await sb.from("mundo_membros").insert({mundo_id:id,user_id:uid,papel:"colaborador"}); if(r.error)throw r.error; await renderColabMundo(id); }catch(e){erro(e);} }
+async function removerColabMundo(id,uid){ if(!confirm("Remover este colaborador do mundo?"))return; try{ var r=await sb.from("mundo_membros").delete().eq("mundo_id",id).eq("user_id",uid); if(r.error)throw r.error; await renderColabMundo(id); }catch(e){erro(e);} }
+async function renderColabMundo(id){ var box=document.getElementById("colabmundo"); if(!box)return;
+  var ms=await membrosMundo(id); var perf=await perfis(); var donoId=S.mundo.dono_id;
+  var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
+  var ja={}; ms.forEach(function(x){ja[x.user_id]=1;}); ja[donoId]=1;
+  var linhaDono='<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(donoId))+'</span><span class="chip c-mestre">dono</span></li>';
+  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span><span class="chip c-mesa">colaborador</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerColabMundo(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
+  var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
+  var add=opc?'<div class="expbar" style="margin-top:10px"><select id="mw_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addColabMundo(\''+id+'\')">+ Adicionar colaborador</button></div>':'<p class="vis-leg">Todos os usuários já podem criar neste mundo.</p>';
+  box.innerHTML='<ul class="lista2">'+linhaDono+linhas+'</ul>'+add; }
+// ===== Permissionamento: contribuidores do personagem =====
+async function contribPersonagem(id){ var r=await sb.from("personagem_contribuidores").select("user_id").eq("personagem_id",id); return r.error?[]:(r.data||[]); }
+async function addContribPers(id){ var uid=val("cp_add"); if(!uid)return; try{ var r=await sb.from("personagem_contribuidores").insert({personagem_id:id,user_id:uid}); if(r.error)throw r.error; await renderContribPers(id); }catch(e){erro(e);} }
+async function removerContribPers(id,uid){ if(!confirm("Remover esta autorização?"))return; try{ var r=await sb.from("personagem_contribuidores").delete().eq("personagem_id",id).eq("user_id",uid); if(r.error)throw r.error; await renderContribPers(id); }catch(e){erro(e);} }
+async function renderContribPers(id){ var box=document.getElementById("contribpers"); if(!box)return;
+  var ms=await contribPersonagem(id); var perf=await perfis();
+  var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
+  var ja={}; ms.forEach(function(x){ja[x.user_id]=1;}); if(S.user)ja[S.user.id]=1;
+  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerContribPers(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
+  var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
+  var add=opc?'<div class="expbar" style="margin-top:10px"><select id="cp_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addContribPers(\''+id+'\')">+ Autorizar</button></div>':'<p class="vis-leg">Todos os usuários já estão autorizados.</p>';
+  box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Só você, por enquanto.</li>')+'</ul>'+add; }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
