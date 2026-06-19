@@ -137,6 +137,10 @@ async function perfilDe(uid){ S.perfilCache=S.perfilCache||{}; if(S.perfilCache[
 async function uploadArquivo(f){ var path=(S.user?S.user.id:"anon")+"/"+Date.now()+"-"+slug(f.name)+"."+(f.name.split(".").pop()||"img");
   var r=await sb.storage.from("midias").upload(path,f,{upsert:false}); if(r.error)throw r.error;
   return sb.storage.from("midias").getPublicUrl(path).data.publicUrl; }
+function inserirNoTextarea(ta, texto){ var ss=(ta.selectionStart!=null)?ta.selectionStart:ta.value.length; ta.value=ta.value.slice(0,ss)+texto+ta.value.slice(ss); var pos=ss+texto.length; ta.selectionStart=ta.selectionEnd=pos; ta.focus(); }
+async function subirEInserir(ta, fdata){ var marca="![enviando "+Date.now()+"…]()"; inserirNoTextarea(ta, "\n"+marca+"\n"); try{ var url=await uploadArquivo(fdata); ta.value=ta.value.replace(marca, "![]("+url+")"); }catch(e){ ta.value=ta.value.replace(marca, "[falha ao enviar imagem]"); } }
+function colarImg(e, ta){ var items=(e.clipboardData||window.clipboardData||{}).items||[]; for(var i=0;i<items.length;i++){ if(items[i].type&&items[i].type.indexOf("image")===0){ var fd=items[i].getAsFile(); if(fd){ e.preventDefault(); subirEInserir(ta, fd); } } } }
+function soltarImg(e, ta){ var fs=(e.dataTransfer||{}).files||[]; var pego=false; for(var i=0;i<fs.length;i++){ if(fs[i].type&&fs[i].type.indexOf("image")===0){ if(!pego){ e.preventDefault(); pego=true; } subirEInserir(ta, fs[i]); } } }
 async function subirCapa(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("f_capa_st"); if(st)st.textContent="enviando…";
   try{ var url=await uploadArquivo(f); var c=document.getElementById("f_capa"); if(c)c.value=url; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
 
@@ -285,7 +289,7 @@ function formPub(opts, p){
     +seletorPers
     +'<label>Título</label><input id="f_titulo" value="'+esc(p?p.titulo:"")+'">'
     +'<label>Imagem de capa — link (opcional)</label><input id="f_capa" value="'+esc(p&&p.capa_url?p.capa_url:"")+'" placeholder="https://…">'+uploadCampo()
-    +'<label>Texto (Markdown)</label><textarea id="f_corpo">'+esc(p?p.corpo:"")+'</textarea>'
+    +'<label>Texto (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="f_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(p?p.corpo:"")+'</textarea>'
     +'<div class="row"><div><label>Marcadores / tags (vírgula — digite para criar novos)</label><input id="f_tags" list="taglist" value="'+esc(p&&p.tags?p.tags.join(", "):"")+'">'+datalistTags()+'</div>'
     +'<div><label>Estado</label><select id="f_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],p?p.estado:"publicado")+'</select></div>'
     +'<div><label>Visibilidade</label><select id="f_vis">'+opt(visOpts,p?p.visibilidade:(mesaId?"mesa":"publico"))+'</select></div></div>'
@@ -399,7 +403,7 @@ function formPersonagem(opts, c){
     +seletorMesa
     +'<label>Foto — link (opcional)</label><input id="pc_img" value="'+esc(c&&c.imagem_url?c.imagem_url:"")+'" placeholder="https://…">'+(S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirImgPers(this)"><span id="pc_img_st" class="vis-leg"></span>':'')
     +'<label>Resumo curto (opcional)</label><input id="pc_resumo" value="'+esc(c&&c.resumo?c.resumo:"")+'" placeholder="uma linha sobre o personagem">'
-    +'<label>Perfil / história (Markdown)</label><textarea id="pc_corpo">'+esc(c&&c.corpo?c.corpo:"")+'</textarea>'
+    +'<label>Perfil / história (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="pc_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(c&&c.corpo?c.corpo:"")+'</textarea>'
     +'<div class="row"><div><label>Estado</label><select id="pc_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],c?c.estado:"publicado")+'</select></div>'
     +'<div><label>Visibilidade</label><select id="pc_vis">'+opt(visOpts,c?c.visibilidade:(mesaId?"mesa":"publico"))+'</select></div></div>'
     +'<p style="margin-top:16px"><button class="btn" onclick="salvarPersonagem('+(c?"'"+c.id+"'":"null")+')">'+(c?'Salvar':'Criar personagem')+'</button> <button class="btn sec" onclick="'+(c?"go('personagem','"+c.id+"')":"go('pers','jog')")+'">Cancelar</button></p></div>';
