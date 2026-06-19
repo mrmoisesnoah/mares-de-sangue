@@ -331,7 +331,7 @@ function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><h1>🌍 Cr
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundo()">Criar mundo</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
 function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><h1>⚔ Criar Mesa</h1>'
   +'<div class="form"><label>Nome</label><input id="me_nome"><label>Descrição</label><textarea id="me_desc"></textarea><label>Época no mundo (opcional)</label><input id="me_epoca" placeholder="ex.: Ano 2068"><label>Local / região (opcional)</label><input id="me_local" placeholder="ex.: Cidade dos Corvos">'
-  +'<label>Imagem de fundo — link</label><input id="me_fundo" placeholder="https://…">'
+  +campoImagem('Imagem de fundo (opcional)','me_fundo','')
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesa()">Criar mesa</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
 async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mundo</div><h1>Editar mundo</h1>'
   +'<div class="form"><label>Nome</label><input id="w_nome" value="'+esc(w.nome)+'"><label>Descrição</label><textarea id="w_desc">'+esc(w.descricao||"")+'</textarea>'
@@ -341,7 +341,7 @@ async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Edit
   renderColabMundo(w.id); renderPedidos("mundo",w.id,"pedidosmundo"); }
 async function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===id;}); if(!m){layout('<div class="aviso">Mesa não encontrada.</div>');return;}
   layout('<div class="bread">Editar mesa</div><h1>Editar mesa</h1><div class="form"><label>Nome</label><input id="me_nome" value="'+esc(m.nome)+'">'
-  +'<label>Descrição</label><textarea id="me_desc">'+esc(m.descricao||"")+'</textarea><label>Época no mundo (opcional)</label><input id="me_epoca" value="'+esc(m.epoca||"")+'" placeholder="ex.: Ano 2068, após a Guerra das Cinco Chaves"><label>Local / região (opcional)</label><input id="me_local" value="'+esc(m.local||"")+'" placeholder="ex.: Cidade dos Corvos, em Dranor"><label>Imagem de fundo — link</label><input id="me_fundo" value="'+esc(m.fundo_url||"")+'">'
+  +'<label>Descrição</label><textarea id="me_desc">'+esc(m.descricao||"")+'</textarea><label>Época no mundo (opcional)</label><input id="me_epoca" value="'+esc(m.epoca||"")+'" placeholder="ex.: Ano 2068, após a Guerra das Cinco Chaves"><label>Local / região (opcional)</label><input id="me_local" value="'+esc(m.local||"")+'" placeholder="ex.: Cidade dos Corvos, em Dranor">'+campoImagem('Imagem de fundo (opcional)','me_fundo',(m.fundo_url||""))
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesaEdit(\''+id+'\')">Salvar</button> <button class="btn sec" onclick="go(\'mesa\',\''+id+'\')">Cancelar</button></p></div>'+'<h2>Jogadores da mesa</h2><p class="vis-leg">Adicione jogadores para que vejam o conteúdo de visibilidade “mesa” e possam contribuir com suas histórias.</p><div id="membros">Carregando…</div><div id="pedidosmesa"></div>'); await renderMembros(id); renderPedidos("mesa",id,"pedidosmesa"); }
 async function renderMembros(id){
   var c=document.getElementById("membros"); if(!c)return;
