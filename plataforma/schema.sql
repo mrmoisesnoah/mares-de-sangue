@@ -39,6 +39,10 @@ create table if not exists mundos (
   criado_em timestamptz not null default now()
 );
 
+-- Ao criar uma mesa, o criador (mestre_id) vira membro 'mestre' automaticamente.
+-- Necessário porque as regras de visibilidade (RLS) dependem de mesa_membros.
+-- (definição da função/trigger logo após a tabela mesa_membros)
+
 -- ---------- Mesas / campanhas ----------
 create table if not exists mesas (
   id        uuid primary key default gen_random_uuid(),
@@ -59,6 +63,25 @@ create table if not exists mesa_membros (
   criado_em timestamptz not null default now(),
   primary key (mesa_id, user_id)
 );
+
+-- Cria automaticamente o vínculo mestre quando uma mesa é criada,
+-- e preenche as mesas que já existiam (idempotente).
+create or replace function handle_new_mesa()
+returns trigger language plpgsql security definer
+set search_path = public as $$
+begin
+  insert into public.mesa_membros (mesa_id, user_id, papel)
+  values (new.id, new.mestre_id, 'mestre')
+  on conflict (mesa_id, user_id) do update set papel = 'mestre';
+  return new;
+end $$;
+drop trigger if exists on_mesa_created on mesas;
+create trigger on_mesa_created after insert on mesas
+  for each row execute function handle_new_mesa();
+
+insert into mesa_membros (mesa_id, user_id, papel)
+  select id, mestre_id, 'mestre' from mesas
+  on conflict (mesa_id, user_id) do update set papel = 'mestre';
 
 -- ---------- Personagens ----------
 create table if not exists personagens (
@@ -229,7 +252,7 @@ create policy rel_insert on publicacao_relacoes for insert with check (
 -- ============================================================
 -- update profiles set papel_global = 'admin' where id = 'SEU-USER-ID';
 -- insert into mundos (nome, slug, descricao, dono_id, publico)
---   values ('Mares de Sangue','mares-de-sangue','O Mundo de Skard','SEU-USER-ID', true);
+--   values ('O Mundo de Skard','mares-de-sangue','Cenário de Mares de Sangue — o continente de Dagorcain','SEU-USER-ID', true);
 -- insert into mesas (mundo_id, nome, slug, descricao, mestre_id)
 --   select id, 'Ecos na Cidade dos Corvos','ecos-na-cidade-dos-corvos','Campanha atual', 'SEU-USER-ID'
 --   from mundos where slug = 'mares-de-sangue';

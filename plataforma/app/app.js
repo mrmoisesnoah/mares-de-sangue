@@ -57,6 +57,7 @@ function hero(titulo, sub, fundo, acts){
     +'<div class="in"><h1>'+esc(titulo)+'</h1>'+(sub?'<p>'+esc(sub)+'</p>':'')+(acts?'<div class="acts">'+acts+'</div>':'')+'</div></div>';
 }
 function toggleModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); renderExpl(); }
+function toggleMenu(){ var l=document.querySelector(".lateral"); if(l) l.classList.toggle("aberta"); }
 
 // ===== Explorador =====
 function abrirExplorador(pubs){ regTags(pubs); S.expl={pubs:pubs,q:"",cat:null}; }
@@ -162,7 +163,7 @@ function sidebar(){
       nav+='<a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a>';
       if(donoMundo()) nav+='<a onclick="go(\'editarMundo\')">✎ Editar mundo</a>';
       if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
-      nav+='<h4>Criar</h4><a onclick="go(\'novaMesa\')">+ Mesa</a><a onclick="go(\'nova\',{mesa:null})">+ Publicação</a><a onclick="go(\'nova\',{mesa:null,tipo:\'personagem\'})">+ Personagem</a>';
+      nav+='<h4>Criar</h4><a onclick="go(\'novaMesa\')">+ Mesa</a><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo</a><a onclick="go(\'nova\',{mesa:null,tipo:\'personagem\'})">+ Personagem</a>';
     } else { nav+='<a onclick="go(\'login\')">🔑 Entrar para participar</a>'; }
   }
   return nav;
@@ -171,7 +172,7 @@ function layout(conteudo){
   var ub = S.user
     ? esc(S.profile?S.profile.nome:S.user.email)+(S.profile&&S.profile.papel_global==="admin"?" · admin":"")+' &nbsp;<button class="linkbtn" style="color:#cbb892" onclick="sair()">sair</button>'
     : '<button class="btn mini" onclick="go(\'login\')">Entrar</button>';
-  app.innerHTML='<header class="topo"><div class="marca" onclick="go(\'home\')">Mares de Sangue<small>Plataforma · uma produção TOGA</small></div>'
+  app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button><div class="marca" onclick="go(\'home\')">Mares de Sangue<small>Plataforma · uma produção TOGA</small></div>'
     +'<div class="userbox">'+ub+'</div></header>'
     +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>';
 }
@@ -207,7 +208,7 @@ async function telaMundos(){
     +'<div class="cards">'+(cards||'<div class="empty">Nenhum mundo.</div>')+'</div>');
 }
 async function telaLore(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var lore=await loreDoMundo(); abrirExplorador(lore);
-  layout(hero("Enciclopédia de "+S.mundo.nome,"Filtre por categoria, busque, alterne cards/lista", S.mundo.fundo_url, (S.user?'<a class="btn" onclick="go(\'nova\',{mesa:null})">+ Nova publicação</a>':''))+exploradorHTML()); renderExpl(); }
+  layout(hero("Enciclopédia de "+S.mundo.nome,"Filtre por categoria, busque, alterne cards/lista", S.mundo.fundo_url, (S.user?'<a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a>':''))+exploradorHTML()); renderExpl(); }
 async function telaMapas(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var lore=await loreDoMundo(); var mp=lore.filter(function(p){return p.tipo==="mapa";});
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mapas</div><h1>🗺️ Mapas</h1>'
     +(S.user?'<p><a class="btn" onclick="go(\'nova\',{mesa:null,tipo:\'mapa\'})">+ Novo mapa</a></p>':'')
@@ -225,7 +226,7 @@ async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Car
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; }
   var pubs=await pubsDaMesa(id); abrirExplorador(pubs);
-  var acts='<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Publicação</a> '
+  var acts='<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
     +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'personagem\'})">+ Personagem</a> '
     +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>'
     +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'');
@@ -234,7 +235,7 @@ async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Car
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
     +'<div class="autor-cap"><div class="av">'+(nome?esc(nome[0].toUpperCase()):"?")+'</div><div><h1 style="margin:0">'+esc(nome)+'</h1><p class="vis-leg">'+pubs.length+' publicações visíveis neste mundo'+(ehEu?" · sua página de trabalho (vê também rascunhos e privados)":" · página pública")+'</p></div></div>'
-    +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Nova publicação</a></p>':'')+exploradorHTML()); renderExpl(); }
+    +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a></p>':'')+exploradorHTML()); renderExpl(); }
 async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p;
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
   var nomeAutor=await nomeDe(p.autor_id);
@@ -271,9 +272,10 @@ function datalistTags(){ var ks=Object.keys(S.tags); return '<datalist id="tagli
 function formPub(opts, p){
   var mesaId=opts.mesa||(p?p.mesa_id:null); var tipoSel=(p?p.tipo:opts.tipo)||"conto";
   var emMesa=!!opts.mesa; // veio de uma mesa específica
+  var rot=ehPersonagem(tipoSel)?"personagem":(tipoSel==="mapa"?"mapa":"conteúdo");
   var visOpts=(mesaId)?[["mesa","mesa (todos da campanha)"],["publico","público (todos)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
   var seletorMesa = (!emMesa && S.mesas.length) ? '<label>Mesa (opcional — relacione a uma campanha)</label><select id="f_mesa"><option value="">— sem mesa (adicionar depois) —</option>'+S.mesas.map(function(m){return '<option value="'+m.id+'"'+(p&&p.mesa_id===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join("")+'</select>' : '';
-  return '<div class="bread">'+(p?'Editar':'Nova')+' publicação</div><h1>'+(p?'Editar publicação':'Nova publicação')+'</h1>'
+  return '<div class="bread">'+(p?'Editar ':'Novo ')+esc(rot)+'</div><h1>'+(p?'Editar ':'Novo ')+esc(rot)+'</h1>'
     +'<div class="form"><label>Tipo</label><select id="f_tipo">'+opt(TIPOS,tipoSel)+'</select>'
     +seletorMesa
     +'<label>Título</label><input id="f_titulo" value="'+esc(p?p.titulo:"")+'">'
@@ -282,7 +284,7 @@ function formPub(opts, p){
     +'<div class="row"><div><label>Marcadores / tags (vírgula — digite para criar novos)</label><input id="f_tags" list="taglist" value="'+esc(p&&p.tags?p.tags.join(", "):"")+'">'+datalistTags()+'</div>'
     +'<div><label>Estado</label><select id="f_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],p?p.estado:"publicado")+'</select></div>'
     +'<div><label>Visibilidade</label><select id="f_vis">'+opt(visOpts,p?p.visibilidade:(mesaId?"mesa":"publico"))+'</select></div></div>'
-    +'<p style="margin-top:16px"><button class="btn" onclick="salvarPub('+(mesaId?"'"+mesaId+"'":"null")+','+(p?"'"+p.id+"'":"null")+','+(emMesa?"true":"false")+')">'+(p?'Salvar':'Publicar')+'</button> '
+    +'<p style="margin-top:16px"><button class="btn" onclick="salvarPub('+(mesaId?"'"+mesaId+"'":"null")+','+(p?"'"+p.id+"'":"null")+','+(emMesa?"true":"false")+')">'+(p?'Salvar':'Criar '+esc(rot))+'</button> '
     +'<button class="btn sec" onclick="'+(mesaId?"go('mesa','"+mesaId+"')":"go('lore')")+'">Cancelar</button></p></div>';
 }
 function telaNova(opts){ layout(formPub(opts||{},null)); }
@@ -299,10 +301,27 @@ function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mun
   +'<div class="form"><label>Nome</label><input id="w_nome" value="'+esc(w.nome)+'"><label>Descrição</label><textarea id="w_desc">'+esc(w.descricao||"")+'</textarea>'
   +'<label>Imagem de fundo (hero) — link</label><input id="w_fundo" value="'+esc(w.fundo_url||"")+'" placeholder="https://…">'
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundoEdit()">Salvar</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
-function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===id;}); if(!m){layout('<div class="aviso">Mesa não encontrada.</div>');return;}
+async function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===id;}); if(!m){layout('<div class="aviso">Mesa não encontrada.</div>');return;}
   layout('<div class="bread">Editar mesa</div><h1>Editar mesa</h1><div class="form"><label>Nome</label><input id="me_nome" value="'+esc(m.nome)+'">'
   +'<label>Descrição</label><textarea id="me_desc">'+esc(m.descricao||"")+'</textarea><label>Imagem de fundo — link</label><input id="me_fundo" value="'+esc(m.fundo_url||"")+'">'
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesaEdit(\''+id+'\')">Salvar</button> <button class="btn sec" onclick="go(\'mesa\',\''+id+'\')">Cancelar</button></p></div>'); }
+  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesaEdit(\''+id+'\')">Salvar</button> <button class="btn sec" onclick="go(\'mesa\',\''+id+'\')">Cancelar</button></p></div>'+'<h2>Jogadores da mesa</h2><p class="vis-leg">Adicione jogadores para que vejam o conteúdo de visibilidade “mesa” e possam contribuir com suas histórias.</p><div id="membros">Carregando…</div>'); await renderMembros(id); }
+async function renderMembros(id){
+  var c=document.getElementById("membros"); if(!c)return;
+  var ms=await membrosMesa(id); var perf=await perfis();
+  var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
+  var ja={}; ms.forEach(function(x){ja[x.user_id]=1;});
+  var linhas=ms.map(function(x){
+    var rem=(x.papel==="mestre")?"":' <button class="btn mini sec" style="border-color:#c08" onclick="removerMembro(\''+id+'\',\''+x.user_id+'\')">remover</button>';
+    return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span><span class="chip c-'+(x.papel==="mestre"?"mestre":"mesa")+'">'+esc(x.papel)+'</span>'+rem+'</li>';
+  }).join("");
+  var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
+  var add=opc?'<div class="expbar" style="margin-top:10px"><select id="me_addjog" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addJogador(\''+id+'\')">+ Adicionar jogador</button></div>':'<p class="vis-leg">Todos os usuários registrados já estão nesta mesa.</p>';
+  c.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Sem jogadores ainda — só o mestre.</li>')+'</ul>'+add;
+}
+async function membrosMesa(id){ var r=await sb.from("mesa_membros").select("user_id,papel").eq("mesa_id",id); return r.error?[]:(r.data||[]); }
+async function perfis(){ if(S.perfis)return S.perfis; var r=await sb.from("profiles").select("id,nome").order("nome"); S.perfis=r.error?[]:(r.data||[]); return S.perfis; }
+async function addJogador(id){ var uid=val("me_addjog"); if(!uid)return; try{ var r=await sb.from("mesa_membros").insert({mesa_id:id,user_id:uid,papel:"jogador"}); if(r.error)throw r.error; await renderMembros(id); }catch(e){erro(e);} }
+async function removerMembro(id,uid){ if(!confirm("Remover este jogador da mesa?"))return; try{ var r=await sb.from("mesa_membros").delete().eq("mesa_id",id).eq("user_id",uid); if(r.error)throw r.error; await renderMembros(id); }catch(e){erro(e);} }
 async function subirMundoFundo(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("m_fundo_st"); if(st)st.textContent="enviando…";
   try{ var u=await uploadArquivo(f); document.getElementById("m_fundo").value=u; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
 

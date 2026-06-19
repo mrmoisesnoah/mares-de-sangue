@@ -51,7 +51,13 @@ img.capa{max-width:100%;border-radius:8px;border:1px solid var(--borda);margin:1
 .login input{width:100%;padding:11px;border:1px solid var(--ouro);border-radius:8px;margin:6px 0;font-family:inherit;font-size:15px;background:#fffdf6}
 .login .btn{width:100%;margin-top:8px;text-align:center}
 .linkbtn{background:none;border:0;color:var(--sangue);cursor:pointer;font-family:inherit;font-size:14px;text-decoration:underline}
-@media(max-width:820px){.lateral{display:none}.conteudo{padding:18px}}
+#btn-menu{display:none;background:none;border:0;color:var(--perg);font-size:24px;cursor:pointer;padding:0 4px;line-height:1}
+@media(max-width:820px){
+  #btn-menu{display:block}
+  .lateral{position:fixed;top:56px;left:0;bottom:0;z-index:40;width:240px;transform:translateX(-105%);transition:transform .2s ease;overflow-y:auto;box-shadow:3px 0 16px rgba(0,0,0,.35)}
+  .lateral.aberta{transform:translateX(0)}
+  .conteudo{padding:18px}
+}
 
 /* corpo de markdown renderizado */
 .corpo{font-size:18.5px;max-width:760px}
