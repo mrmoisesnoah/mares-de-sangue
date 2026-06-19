@@ -119,13 +119,13 @@ async function carregar(){
 async function carregarPublico(){
   try{ S.user=null; S.profile=null; S.mesas=[];
     var m=await sb.from("mundos").select("*").eq("publico",true).order("criado_em");
-    S.mundos=m.data||[]; S.mundo=S.mundos[0]||null; go("home");
+    S.mundos=m.data||[]; S.mundo=S.mundos[0]||null; if(S.mundo) await carregarMesas(); go("home");
   }catch(e){ erro(e); }
 }
 async function selecionarMundo(id){ S.mundo=S.mundos.find(function(w){return w.id===id;})||S.mundo; if(S.user) await carregarMesas(); else S.mesas=[]; go("home"); }
 async function carregarMesas(){ var r=await sb.from("mesas").select("*").eq("mundo_id",S.mundo.id).order("criado_em"); S.mesas=r.error?[]:(r.data||[]); }
 async function pubsDaMesa(id){ var r=await sb.from("publicacoes").select("*").eq("mesa_id",id).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
-async function loreDoMundo(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).is("mesa_id",null).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
+async function loreDoMundo(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).or("mesa_id.is.null,visibilidade.eq.publico").order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function persDoMundo(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).order("titulo"); var d=r.error?[]:(r.data||[]); return d.filter(function(p){return ehPersonagem(p.tipo);}); }
 async function recentes(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).order("criado_em",{ascending:false}).limit(6); return r.error?[]:(r.data||[]); }
 async function pubsDoAutor(uid){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).eq("autor_id",uid).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
@@ -154,17 +154,17 @@ function sidebar(){
   var nav='<a class="nav-home"'+on("home")+' onclick="go(\'home\')">⌂ Início</a>';
   nav+='<a'+on("mundos")+' onclick="go(\'mundos\')">🌍 Mundos</a>';
   if(S.mundo){
-    nav+='<div class="lat-mundo">em <b>'+esc(S.mundo.nome)+'</b></div>';
+    nav+='<div class="mundo-atual" onclick="go(\'home\')" title="Mundo selecionado">'+(S.mundo.capa_url?'<div class="mi" style="background-image:url('+esc(S.mundo.capa_url)+')"></div>':'<div class="mi">🌍</div>')+'<div><div class="ms">Você está em</div><div class="mt">'+esc(S.mundo.nome)+'</div></div></div>';
     nav+='<a'+on("lore")+' onclick="go(\'lore\')">📖 Enciclopédia</a>';
     nav+='<a'+on("mapas")+' onclick="go(\'mapas\')">🗺️ Mapas</a>';
     nav+='<a onclick="go(\'pers\',\'jog\')">👥 Personagens dos Jogadores</a>';
     nav+='<a onclick="go(\'pers\',\'mes\')">🎭 Personagens do Mestre</a>';
+    if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a'+(S.view.t==="mesa"&&S.view.arg===m.id?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
     if(S.user){
       nav+='<h4>Sua conta</h4>';
       nav+='<a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a>';
       nav+='<a'+on("perfil")+' onclick="go(\'perfil\')">✎ Editar perfil</a>';
       if(donoMundo()) nav+='<a onclick="go(\'editarMundo\')">✎ Editar mundo</a>';
-      if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
       nav+='<h4>Criar</h4><a onclick="go(\'novaMesa\')">+ Mesa</a><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo</a><a onclick="go(\'nova\',{mesa:null,tipo:\'personagem\'})">+ Personagem</a>';
     } else { nav+='<a onclick="go(\'login\')">🔑 Entrar para participar</a>'; }
   }
@@ -200,7 +200,7 @@ async function telaHome(){
     +'<h2>'+esc(S.mundo.nome)+'</h2><p>'+esc(S.mundo.descricao||"")+'</p>'
     +'<div class="stats"><div class="stat"><b>'+nLore+'</b><span>artigos</span></div><div class="stat"><b>'+nMesas+'</b><span>mesas</span></div><div class="stat"><b>'+nMapas+'</b><span>mapas</span></div></div>'
     +'<p><a class="btn sec" onclick="go(\'lore\')">📖 Enciclopédia</a> <a class="btn sec" onclick="go(\'pers\',\'jog\')">👥 Personagens</a></p>'
-    +(S.user&&S.mesas.length?'<h2>Suas mesas</h2><div class="cards">'+S.mesas.map(function(m){return '<div class="card clic" onclick="go(\'mesa\',\''+m.id+'\')">'+thumb(m.capa_url,"⚔")+'<h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("")+'</div>':'')
+    +(S.mesas.length?'<h2>'+(S.user?'Suas mesas':'Mesas e Campanhas')+'</h2><div class="cards">'+S.mesas.map(function(m){return '<div class="card clic" onclick="go(\'mesa\',\''+m.id+'\')">'+thumb(m.capa_url,"⚔")+'<h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("")+'</div>':'')
     +(recs.length?'<h2>Adições recentes</h2>'+listar(recs):''));
 }
 async function telaMundos(){
@@ -228,10 +228,10 @@ async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Car
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; }
   var pubs=await pubsDaMesa(id); abrirExplorador(pubs);
-  var acts='<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
+  var acts=S.user?('<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
     +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'personagem\'})">+ Personagem</a> '
     +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>'
-    +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'');
+    +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')):'';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+exploradorHTML()); renderExpl(); }
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
