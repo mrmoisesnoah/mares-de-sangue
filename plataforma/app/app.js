@@ -179,7 +179,6 @@ function layout(conteudo){
     var av=(S.profile&&S.profile.avatar_url)?'<span class="avatar" style="background-image:url('+esc(S.profile.avatar_url)+')"></span>':'<span class="avatar">'+esc(((S.profile&&S.profile.nome?S.profile.nome:"?")[0]||"?").toUpperCase())+'</span>';
     ub='<button class="user-btn" onclick="toggleUserMenu(event)">'+av+'<span class="user-nm">'+nm+'</span><span class="ws-ar">▾</span></button>'
       +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">✎ Editar perfil</a>'
-      +(donoMundo()?'<a onclick="go(\'editarMundo\')">✎ Editar mundo</a>':'')
       +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
@@ -204,11 +203,18 @@ async function telaHome(){
   }
   var lore=await loreDoMundo(); var recs=await recentes();
   var nMesas=S.mesas.length, nLore=lore.length, nMapas=lore.filter(function(p){return p.tipo==="mapa";}).length;
-  layout(topo
-    +'<h2>Mundos</h2><div class="cards">'+mundoCards+'</div>'
-    +'<h2>'+esc(S.mundo.nome)+'</h2><p>'+esc(S.mundo.descricao||"")+'</p>'
+  var heroDash=hero(S.mundo.nome, S.mundo.descricao||"Plataforma para Criação de Mundos — uma produção TOGA", S.mundo.fundo_url, botoesCriar()+(donoMundo()?' <a class="btn sec" onclick="go(\'editarMundo\')">✎ Editar mundo</a>':''));
+  function dcard(ic,nm,ds,ac){ return '<div class="card clic dash" onclick="'+ac+'"><div class="dash-ic">'+ic+'</div><h3>'+nm+'</h3><p class="res">'+ds+'</p></div>'; }
+  layout(heroDash
     +'<div class="stats"><div class="stat"><b>'+nLore+'</b><span>artigos</span></div><div class="stat"><b>'+nMesas+'</b><span>mesas</span></div><div class="stat"><b>'+nMapas+'</b><span>mapas</span></div></div>'
-    +'<p><a class="btn sec" onclick="go(\'lore\')">📖 Enciclopédia</a> <a class="btn sec" onclick="go(\'pers\',\'jog\')">👥 Personagens</a></p>'
+    +'<h2>Explorar o mundo</h2><div class="cards">'
+      +dcard("📖","Enciclopédia","Conhecimento público do mundo","go(\'lore\')")
+      +dcard("🕰","Linha do tempo","A cronologia dos acontecimentos","go(\'linha\')")
+      +dcard("👥","Personagens","Heróis, NPCs e histórias","go(\'pers\',\'jog\')")
+      +dcard("📰","Jornais","Periódicos e notícias","go(\'jornais\')")
+      +dcard("🗺️","Mapas","Cartografia do cenário","go(\'mapas\')")
+      +dcard("🔎","Buscar","Procurar em tudo","go(\'busca\',\'\')")
+    +'</div>'
     +(S.mesas.length?'<h2>'+(S.user?'Suas mesas':'Mesas e Campanhas')+'</h2><div class="cards">'+S.mesas.map(function(m){return '<div class="card clic" onclick="go(\'mesa\',\''+m.id+'\')">'+thumb(m.capa_url,"⚔")+'<h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("")+'</div>':'')
     +(recs.length?'<h2>Adições recentes</h2>'+listar(recs):''));
 }
@@ -281,6 +287,8 @@ function baixarDoc(){ var p=S.pubAtual; if(!p)return;
 var TIPOS=['conto','background','diário de personagem','personagem','mapa','cidade','facção','região','reino','religião','criatura','item','evento histórico','história do mundo','resumo de sessão','crônica','planejamento do mestre','anotação privada'];
 function opt(arr,sel){ return arr.map(function(o){var v,l; if(Array.isArray(o)){v=o[0];l=o[1];}else{v=o;l=o;} return '<option value="'+esc(v)+'"'+(sel===v?' selected':'')+'>'+esc(l)+'</option>';}).join(""); }
 function uploadCampo(){ return S.user?'<label>… ou enviar arquivo de imagem</label><input type="file" accept="image/*" onchange="subirCapa(this)"><span id="f_capa_st" class="vis-leg"></span>':''; }
+function campoImagem(label, id, valor){ return '<label>'+label+'</label><div class="img-campo"><input id="'+id+'" value="'+esc(valor||"")+'" placeholder="cole o link direto de uma imagem (.jpg .png .webp .gif)">'+(S.user?'<label class="img-up" title="Enviar do computador"><input type="file" accept="image/*" style="display:none" onchange="subirImg(this,&#39;'+id+'&#39;)">📁 Enviar</label>':'')+'</div><span id="'+id+'_st" class="vis-leg"></span><p class="vis-leg" style="margin:2px 0 0;font-size:12px">Cole o <b>link direto</b> de uma imagem pública (URL terminando em .jpg/.png/.webp/.gif), <b>ou</b> envie um arquivo do computador.</p>'; }
+async function subirImg(inp, id){ var fl=inp.files&&inp.files[0]; if(!fl)return; var st=document.getElementById(id+"_st"); if(st)st.textContent="enviando…"; try{ var u=await uploadArquivo(fl); var c=document.getElementById(id); if(c)c.value=u; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
 function datalistTags(){ var ks=Object.keys(S.tags); return '<datalist id="taglist">'+ks.map(function(t){return '<option value="'+esc(t)+'">';}).join("")+'</datalist>'; }
 function formPub(opts, p){
   var mesaId=opts.mesa||(p?p.mesa_id:null); var tipoSel=(p?p.tipo:opts.tipo)||"conto";
@@ -298,7 +306,7 @@ function formPub(opts, p){
     +seletorJornal
     +seletorSessao
     +'<label>Título</label><input id="f_titulo" value="'+esc(p?p.titulo:"")+'">'
-    +'<label>Imagem de capa — link (opcional)</label><input id="f_capa" value="'+esc(p&&p.capa_url?p.capa_url:"")+'" placeholder="https://…">'+uploadCampo()
+    +campoImagem('Imagem de capa (opcional)','f_capa',(p&&p.capa_url?p.capa_url:""))
     +'<label>Texto (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="f_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(p?p.corpo:"")+'</textarea>'
     +'<div class="row"><div><label>Marcadores / tags (vírgula — digite para criar novos)</label><input id="f_tags" list="taglist" value="'+esc(p&&p.tags?p.tags.join(", "):"")+'">'+datalistTags()+'</div>'
     +'<div><label>Estado</label><select id="f_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],p?p.estado:"publicado")+'</select></div>'
@@ -310,7 +318,7 @@ async function telaNova(opts){ opts=opts||{}; S.meusPers=await meusPersonagens()
 async function telaEditar(id){ layout('<p>Carregando…</p>'); S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); var p=await umaPub(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} S.sessoesForm = p.mesa_id? await sessoesDaMesa(p.mesa_id) : []; layout(formPub({mesa:p.mesa_id},p)); }
 function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><h1>🌍 Criar Mundo</h1>'
   +'<div class="form"><label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: Mares de Sangue"><label>Descrição</label><textarea id="m_desc"></textarea>'
-  +'<label>Imagem de fundo (hero) — link</label><input id="m_fundo" placeholder="https://…">'+ (S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirMundoFundo(this)"><span id="m_fundo_st" class="vis-leg"></span>':'')
+  +campoImagem('Imagem de fundo (hero)','m_fundo','')
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundo()">Criar mundo</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
 function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><h1>⚔ Criar Mesa</h1>'
   +'<div class="form"><label>Nome</label><input id="me_nome"><label>Descrição</label><textarea id="me_desc"></textarea><label>Época no mundo (opcional)</label><input id="me_epoca" placeholder="ex.: Ano 2068"><label>Local / região (opcional)</label><input id="me_local" placeholder="ex.: Cidade dos Corvos">'
@@ -318,7 +326,7 @@ function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><h1>⚔ Criar
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesa()">Criar mesa</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
 async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mundo</div><h1>Editar mundo</h1>'
   +'<div class="form"><label>Nome</label><input id="w_nome" value="'+esc(w.nome)+'"><label>Descrição</label><textarea id="w_desc">'+esc(w.descricao||"")+'</textarea>'
-  +'<label>Imagem de fundo (hero) — link</label><input id="w_fundo" value="'+esc(w.fundo_url||"")+'" placeholder="https://…">'
+  +campoImagem('Imagem de fundo (hero)','w_fundo',(w.fundo_url||""))
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundoEdit()">Salvar</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'
   +'<h2>Colaboradores do mundo</h2><p class="vis-leg">Quem pode criar conteúdo neste mundo. Você (dono) sempre pode.</p><div id="colabmundo">Carregando…</div>');
   renderColabMundo(w.id); }
@@ -376,7 +384,7 @@ function telaPerfil(){ if(!S.user){go("login");return;} var p=S.profile||{};
   +'<div class="autor-cap">'+(p.avatar_url?'<div class="av" id="av_prev" style="background-image:url('+esc(p.avatar_url)+')"></div>':'<div class="av" id="av_prev">'+esc(((p.nome||"?")[0]||"?").toUpperCase())+'</div>')+'<div><h2 style="margin:0">'+esc(p.nome||"Aventureiro")+'</h2><p class="vis-leg" style="font-style:italic">'+esc(p.epiteto||"")+'</p></div></div>'
   +'<div class="form"><label>Nome de aventureiro</label><input id="pf_nome" value="'+esc(p.nome||"")+'">'
   +'<label>Epíteto / título (ex.: o Errante, a Branca)</label><input id="pf_epiteto" value="'+esc(p.epiteto||"")+'" placeholder="opcional">'
-  +'<label>Foto de perfil — link</label><input id="pf_avatar" value="'+esc(p.avatar_url||"")+'" placeholder="https://…"><label>… ou enviar arquivo de imagem</label><input type="file" accept="image/*" onchange="subirAvatar(this)"><span id="pf_avatar_st" class="vis-leg"></span>'
+  +campoImagem('Foto de perfil','pf_avatar',(p.avatar_url||""))
   +'<label>Sobre você (Markdown)</label><textarea id="pf_bio">'+esc(p.bio||"")+'</textarea>'
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarPerfil()">Salvar perfil</button> <button class="btn sec" onclick="go(\'autor\',\''+S.user.id+'\')">Ver minha página</button></p></div>'); }
 async function subirAvatar(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("pf_avatar_st"); if(st)st.textContent="enviando…";
@@ -419,7 +427,7 @@ function formPersonagem(opts, c){
     +'<div class="form"><label>Nome</label><input id="pc_nome" value="'+esc(c?c.nome:"")+'">'
     +'<label>Epíteto / título (opcional)</label><input id="pc_epiteto" value="'+esc(c&&c.epiteto?c.epiteto:"")+'" placeholder="ex.: o Errante, a Branca">'
     +seletorMesa
-    +'<label>Foto — link (opcional)</label><input id="pc_img" value="'+esc(c&&c.imagem_url?c.imagem_url:"")+'" placeholder="https://…">'+(S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirImgPers(this)"><span id="pc_img_st" class="vis-leg"></span>':'')
+    +campoImagem('Foto do personagem (opcional)','pc_img',(c&&c.imagem_url?c.imagem_url:""))
     +'<label>Resumo curto (opcional)</label><input id="pc_resumo" value="'+esc(c&&c.resumo?c.resumo:"")+'" placeholder="uma linha sobre o personagem">'
     +'<label>Perfil / história (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="pc_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(c&&c.corpo?c.corpo:"")+'</textarea>'
     +'<div class="row"><div><label>Estado</label><select id="pc_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],c?c.estado:"publicado")+'</select></div>'
@@ -492,7 +500,7 @@ function formJornal(j){
   return '<div class="bread">'+(j?'Editar jornal':'Novo jornal')+'</div><h1>📰 '+(j?'Editar jornal':'Criar jornal')+'</h1>'
     +'<div class="form"><label>Nome do jornal</label><input id="j_nome" value="'+esc(j?j.nome:"")+'" placeholder="Ex.: A Trombeta de Dagor">'
     +'<label>Descrição / lema (opcional)</label><input id="j_desc" value="'+esc(j&&j.descricao?j.descricao:"")+'">'
-    +'<label>Logo — link (opcional)</label><input id="j_img" value="'+esc(j&&j.imagem_url?j.imagem_url:"")+'" placeholder="https://…">'+(S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirLogoJornal(this)"><span id="j_img_st" class="vis-leg"></span>':'')
+    +campoImagem('Logo do jornal (opcional)','j_img',(j&&j.imagem_url?j.imagem_url:""))
     +'<label>Visibilidade</label><select id="j_vis">'+opt(visOpts,j?j.visibilidade:"publico")+'</select>'
     +'<p style="margin-top:16px"><button class="btn" onclick="salvarJornal('+(j?"'"+j.id+"'":"null")+')">'+(j?'Salvar':'Criar jornal')+'</button> <button class="btn sec" onclick="'+(j?"go('jornal','"+j.id+"')":"go('jornais')")+'">Cancelar</button></p></div>';
 }
@@ -521,7 +529,7 @@ function telaCreditos(){ layout('<div class="bread"><a onclick="go(\'home\')">In
   +'<p><b>Mares de Sangue</b> — plataforma idealizada, projetada e desenvolvida por <b>Moisés Noah</b>.</p>'
   +'<h2>O cenário</h2>'
   +'<p>O mundo de <b>Skard</b> e o cenário <b>Mar de Sangue</b> foram criados coletivamente por <b>TOGA — The Older Gods Adventures</b>, o grupo original de RPG de mesa que construiu junto, ao longo dos anos, toda a história original deste universo.</p>'
-  +'<p><b>Membros fundadores do TOGA:</b> Moisés Noah, Arnom Abner, Amós Gonzaga, Asafe Lucas, Cleudon Paulo, Thompson Marinho e Matheus “Tharen”.</p>'
+  +'<p><b>Membros fundadores do TOGA:</b> Moisés Noah, Arnom Abner, Amós Gonzaga, Asafe Lucas, Cleudon Paulo, Thompson Moutinho (O Primeiro Mestre) e Matheus “Tharen”.</p>'
   +'<h2>Material original</h2>'
   +'<p>A história original permanece disponível no blog <a href="https://maresdesangue.blogspot.com/" target="_blank" rel="noopener">Mares de Sangue</a>.</p>'
   +'<hr>'
