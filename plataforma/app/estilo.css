@@ -105,3 +105,14 @@ details.bloco>summary:after{content:"▸";color:var(--ouro);margin-left:8px}
 details.bloco[open]>summary:after{content:"▾"}
 details.bloco[open]>summary{border-bottom:1px solid var(--borda);background:var(--perg2)}
 details.bloco .cards{padding:12px}
+
+/* ===== UI v3: lista/cards, multi-mundo ===== */
+.expbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0}
+.lista2{list-style:none;padding:0;margin:8px 0}
+.li-clic{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px dotted var(--borda);cursor:pointer;border-radius:8px}
+.li-clic:hover{background:var(--perg2)}
+.li-ic{font-size:18px;width:24px;text-align:center}
+.li-tit{flex:1;font-family:'Cinzel',serif;font-size:15px;color:var(--sangue)}
+.lat-mundo{font-size:12px;color:var(--tinta2);margin:2px 4px 6px;font-style:italic}
+.card.sel{border-color:var(--sangue);box-shadow:0 0 0 2px rgba(124,28,20,.25)}
+.login .sub small{color:var(--tinta2);font-size:12.5px}
