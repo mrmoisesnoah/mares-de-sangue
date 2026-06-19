@@ -129,3 +129,22 @@ details.bloco .cards{padding:12px}
 .mundo-atual .mi{flex:0 0 36px;width:36px;height:36px;border-radius:8px;background:var(--perg) center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:20px;border:1px solid var(--borda)}
 .mundo-atual .ms{font-size:10px;color:var(--tinta2);text-transform:uppercase;letter-spacing:.6px}
 .mundo-atual .mt{font-family:'Cinzel',serif;font-size:14.5px;color:var(--sangue);line-height:1.15}
+
+/* ===== barra superior: seletor de mundo + menu do usuário ===== */
+.topo{gap:10px}
+.marca{display:flex;align-items:center}
+.userbox{position:relative}
+.world-switch{display:flex;align-items:center;gap:7px;margin-left:8px;padding:5px 12px;background:rgba(255,255,255,.07);border:1px solid var(--ouro);border-radius:20px;cursor:pointer;color:var(--perg);max-width:240px}
+.world-switch:hover{background:rgba(255,255,255,.16)}
+.world-switch .ws-ic{font-size:14px;line-height:1}
+.world-switch .ws-nm{font-family:'Cinzel',serif;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ws-ar{color:#cbb892;font-size:10px}
+.user-btn{display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--perg);cursor:pointer;font-family:inherit;font-size:13.5px}
+.user-btn:hover{color:#fff}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--ouro) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#23170f;font-family:'Cinzel',serif;font-weight:700;font-size:14px;flex:0 0 30px}
+.user-menu{display:none;position:absolute;right:0;top:46px;background:var(--papel);border:1px solid var(--borda);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:190px;padding:6px;z-index:60}
+.user-menu.aberto{display:block}
+.user-menu a{display:block;padding:8px 12px;border-radius:7px;color:var(--tinta2);font-size:14px;cursor:pointer}
+.user-menu a:hover{background:var(--perg2);color:var(--sangue)}
+.user-menu .sep{height:1px;background:var(--borda);margin:5px 4px}
+@media(max-width:600px){ .user-nm{display:none} .world-switch{max-width:140px} .marca{font-size:17px} }

@@ -152,29 +152,31 @@ function telaLogin(novo){
 function sidebar(){
   var on=function(x){return S.view.t===x?' class="on"':'';};
   var nav='<a class="nav-home"'+on("home")+' onclick="go(\'home\')">⌂ Início</a>';
-  nav+='<a'+on("mundos")+' onclick="go(\'mundos\')">🌍 Mundos</a>';
   if(S.mundo){
-    nav+='<div class="mundo-atual" onclick="go(\'home\')" title="Mundo selecionado">'+(S.mundo.capa_url?'<div class="mi" style="background-image:url('+esc(S.mundo.capa_url)+')"></div>':'<div class="mi">🌍</div>')+'<div><div class="ms">Você está em</div><div class="mt">'+esc(S.mundo.nome)+'</div></div></div>';
     nav+='<a'+on("lore")+' onclick="go(\'lore\')">📖 Enciclopédia</a>';
     nav+='<a'+on("mapas")+' onclick="go(\'mapas\')">🗺️ Mapas</a>';
     nav+='<a onclick="go(\'pers\',\'jog\')">👥 Personagens dos Jogadores</a>';
     nav+='<a onclick="go(\'pers\',\'mes\')">🎭 Personagens do Mestre</a>';
     if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a'+(S.view.t==="mesa"&&S.view.arg===m.id?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
     if(S.user){
-      nav+='<h4>Sua conta</h4>';
-      nav+='<a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a>';
-      nav+='<a'+on("perfil")+' onclick="go(\'perfil\')">✎ Editar perfil</a>';
-      if(donoMundo()) nav+='<a onclick="go(\'editarMundo\')">✎ Editar mundo</a>';
-      nav+='<h4>Criar</h4><a onclick="go(\'novaMesa\')">+ Mesa</a><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo</a><a onclick="go(\'nova\',{mesa:null,tipo:\'personagem\'})">+ Personagem</a>';
+      nav+='<h4>Criar</h4><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a><a onclick="go(\'nova\',{mesa:null,tipo:\'personagem\'})">+ Personagem</a><a onclick="go(\'novaMesa\')">+ Mesa</a>';
     } else { nav+='<a onclick="go(\'login\')">🔑 Entrar para participar</a>'; }
   }
   return nav;
 }
 function layout(conteudo){
-  var ub = S.user
-    ? esc(S.profile?S.profile.nome:S.user.email)+(S.profile&&S.profile.papel_global==="admin"?" · admin":"")+' &nbsp;<button class="linkbtn" style="color:#cbb892" onclick="sair()">sair</button>'
-    : '<button class="btn mini" onclick="go(\'login\')">Entrar</button>';
-  app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button><div class="marca" onclick="go(\'home\')">Mares de Sangue<small>Plataforma · uma produção TOGA</small></div>'
+  var pill = S.mundo ? '<div class="world-switch" onclick="go(\'mundos\')" title="Trocar de mundo"><span class="ws-ic">🌍</span><span class="ws-nm">'+esc(S.mundo.nome)+'</span><span class="ws-ar">▾</span></div>' : '';
+  var ub;
+  if(S.user){
+    var nm=esc(S.profile?S.profile.nome:S.user.email);
+    var av=(S.profile&&S.profile.avatar_url)?'<span class="avatar" style="background-image:url('+esc(S.profile.avatar_url)+')"></span>':'<span class="avatar">'+esc(((S.profile&&S.profile.nome?S.profile.nome:"?")[0]||"?").toUpperCase())+'</span>';
+    ub='<button class="user-btn" onclick="toggleUserMenu(event)">'+av+'<span class="user-nm">'+nm+'</span><span class="ws-ar">▾</span></button>'
+      +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">✎ Editar perfil</a>'
+      +(donoMundo()?'<a onclick="go(\'editarMundo\')">✎ Editar mundo</a>':'')
+      +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
+  } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
+  app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
+    +'<div class="marca" onclick="go(\'home\')">⚜ Mares de Sangue</div>'+pill
     +'<div class="userbox">'+ub+'</div></header>'
     +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>';
 }
@@ -383,4 +385,6 @@ function render(){
   else if(t==="perfil") telaPerfil();
   else telaHome();
 }
+function toggleUserMenu(e){ if(e)e.stopPropagation(); var m=document.getElementById("usermenu"); if(m) m.classList.toggle("aberto"); }
+document.addEventListener("click", function(){ var m=document.getElementById("usermenu"); if(m) m.classList.remove("aberto"); });
 init();
