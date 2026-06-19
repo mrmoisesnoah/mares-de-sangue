@@ -183,7 +183,7 @@ function layout(conteudo){
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
     +'<div class="marca" onclick="go(\'home\')">⚜ Mares de Sangue</div>'+pill
     +'<div class="userbox">'+ub+'</div></header>'
-    +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>';
+    +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
 }
 
 // ---------- telas ----------
@@ -510,6 +510,17 @@ async function renderEscritores(id){ var box=document.getElementById("escritores
   var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
   var add=opc?'<div class="expbar" style="margin-top:10px"><select id="je_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addEscritor(\''+id+'\')">+ Autorizar escritor</button></div>':'<p class="vis-leg">Todos os usuários já podem escrever.</p>';
   box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Só você, por enquanto.</li>')+'</ul>'+add; }
+function telaCreditos(){ layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Créditos</div><h1>Créditos & Atribuições</h1>'
+  +'<div class="corpo" style="max-width:740px">'
+  +'<p><b>Mares de Sangue</b> — plataforma idealizada, projetada e desenvolvida por <b>Moisés Noah</b>.</p>'
+  +'<h2>O cenário</h2>'
+  +'<p>O mundo de <b>Skard</b> e o cenário <b>Mar de Sangue</b> foram criados coletivamente por <b>TOGA — The Older Gods Adventures</b>, o grupo original de RPG de mesa que construiu junto, ao longo dos anos, toda a história original deste universo.</p>'
+  +'<p><b>Membros fundadores do TOGA:</b> Moisés Noah, Arnom Abner, Amós Gonzaga, Asafe Lucas, Cleudon Paulo, Thompson Marinho e Matheus “Tharen”.</p>'
+  +'<h2>Material original</h2>'
+  +'<p>A história original permanece disponível no blog <a href="https://maresdesangue.blogspot.com/" target="_blank" rel="noopener">Mares de Sangue</a>.</p>'
+  +'<hr>'
+  +'<p class="vis-leg">© '+(new Date().getFullYear())+' Moisés Noah / TOGA — The Older Gods Adventures. Os direitos do cenário e das histórias originais pertencem aos seus criadores. Cada autor mantém os direitos sobre o conteúdo que publica nesta plataforma.</p>'
+  +'</div>'); }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
@@ -534,6 +545,7 @@ function render(){
   else if(t==="jornal") telaJornal(S.view.arg);
   else if(t==="novoJornal") telaNovoJornal();
   else if(t==="editarJornal") telaEditarJornal(S.view.arg);
+  else if(t==="creditos") telaCreditos();
   else telaHome();
 }
 function toggleUserMenu(e){ if(e)e.stopPropagation(); var m=document.getElementById("usermenu"); if(m) m.classList.toggle("aberto"); }
