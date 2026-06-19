@@ -167,3 +167,19 @@ details.bloco .cards{padding:12px}
 .rodape a{text-decoration:underline}
 .rodape b{color:var(--tinta)}
 @media(max-width:820px){ .rodape{padding:16px 18px 26px} }
+
+/* wikilinks e busca no topo */
+.wikilink{border-bottom:1px dashed var(--sangue);cursor:pointer}
+.wikilink:hover{background:var(--perg2)}
+.topo-busca{flex:1;min-width:90px;max-width:300px;margin-left:8px;padding:6px 12px;border:1px solid var(--ouro);border-radius:18px;background:rgba(255,255,255,.07);color:var(--perg);font-family:inherit;font-size:13.5px}
+.topo-busca::placeholder{color:#cbb892}
+@media(max-width:600px){ .topo-busca{display:none} }
+
+/* linha do tempo */
+.tl{position:relative;margin:18px 0 0;padding-left:30px}
+.tl:before{content:"";position:absolute;left:9px;top:6px;bottom:6px;width:2px;background:var(--ouro)}
+.tl-item{position:relative;margin:0 0 18px}
+.tl-dot{position:absolute;left:-25px;top:6px;width:14px;height:14px;border-radius:50%;border:2px solid var(--papel);box-shadow:0 0 0 1px var(--ouro)}
+.tl-card{background:var(--perg);border:1px solid var(--borda);border-radius:10px;padding:12px 16px}
+.tl-card h3{font-family:'Cinzel',serif;color:var(--sangue);margin:.1em 0 .2em;font-size:18px}
+.tl-quando{font-size:12px;color:var(--ouro);text-transform:uppercase;letter-spacing:.5px;font-weight:600}

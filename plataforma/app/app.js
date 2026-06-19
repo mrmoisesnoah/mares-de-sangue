@@ -9,7 +9,7 @@ function visChip(v){ return '<span class="chip c-'+v+'">'+esc((v||"").replace("_
 function val(id){ var e=document.getElementById(id); return e?e.value:""; }
 function go(t,arg){ S.view={t:t,arg:arg}; S.msg=""; window.scrollTo(0,0); render(); }
 function erro(e){ S.msg='<div class="aviso">'+esc(e&&e.message?e.message:e)+'</div>'; render(); }
-function md(s){ return (window.marked ? marked.parse(s||"") : esc(s||"").replace(/\n/g,"<br>")); }
+function md(s){ s=s||""; s=s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, function(m,alvo,rot){ var t=(rot||alvo).trim(); return '<a class="wikilink" data-alvo="'+esc(alvo.trim()).replace(/"/g,"&quot;")+'">'+esc(t)+'</a>'; }); return (window.marked ? marked.parse(s) : esc(s).replace(/\n/g,"<br>")); }
 function resumo(c){ var t=(c||"").replace(/[#*`>\[\]_]/g,"").replace(/\s+/g," ").trim(); return t.length>120?t.slice(0,120)+"…":t; }
 function meu(p){ return !!S.user && p && (p.autor_id===S.user.id || (S.profile&&S.profile.papel_global==="admin")); }
 function donoMundo(){ return !!S.user && S.mundo && (S.mundo.dono_id===S.user.id || (S.profile&&S.profile.papel_global==="admin")); }
@@ -157,9 +157,11 @@ function sidebar(){
   var on=function(x){return S.view.t===x?' class="on"':'';};
   var nav='<a class="nav-home"'+on("home")+' onclick="go(\'home\')">⌂ Início</a>';
   if(S.mundo){
+    nav+='<a'+on("busca")+' onclick="go(\'busca\',\'\')">🔎 Buscar</a>';
     nav+='<a'+on("lore")+' onclick="go(\'lore\')">📖 Enciclopédia</a>';
     nav+='<a'+on("mapas")+' onclick="go(\'mapas\')">🗺️ Mapas</a>';
     nav+='<a class="destaque'+(S.view.t==="jornais"?' on':'')+'" onclick="go(\'jornais\')">📰 Jornais</a>';
+    nav+='<a'+on("linha")+' onclick="go(\'linha\')">🕰 Linha do tempo</a>';
     nav+='<a onclick="go(\'pers\',\'jog\')">👥 Personagens dos Jogadores</a>';
     nav+='<a onclick="go(\'pers\',\'mes\')">🎭 Personagens do Mestre</a>';
     if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a'+(S.view.t==="mesa"&&S.view.arg===m.id?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
@@ -181,7 +183,7 @@ function layout(conteudo){
       +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
-    +'<div class="marca" onclick="go(\'home\')">⚜ Mares de Sangue</div>'+pill
+    +'<div class="marca" onclick="go(\'home\')">⚜ Mares de Sangue</div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="🔎 Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
     +'<div class="userbox">'+ub+'</div></header>'
     +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
 }
@@ -238,7 +240,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
     +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>'
     +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')):'';
   var secSess=sess.length?'<h2>🎲 Sessões</h2><div class="cards">'+sess.map(cardSessao).join("")+'</div>':'';
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+secSess+exploradorHTML()); renderExpl(); }
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+(mesa.epoca||mesa.local?'<p class="vis-leg" style="margin-top:-12px">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'')+secSess+exploradorHTML()); renderExpl(); }
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
@@ -249,6 +251,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
   var nomeAutor=await nomeDe(p.autor_id);
   var pcLink=""; if(p.personagem_id){ var pcx=await umPersonagem(p.personagem_id); if(pcx) pcLink=' · <a onclick="go(\'personagem\',\''+p.personagem_id+'\')">🧝 '+esc(pcx.nome)+'</a>'; }
   var jorLink=""; if(p.jornal_id){ var jx=await umJornal(p.jornal_id); if(jx) jorLink=' · <a onclick="go(\'jornal\',\''+p.jornal_id+'\')">📰 '+esc(jx.nome)+'</a>'; }
+  var vejaTb=""; if(p.tags&&p.tags.length){ var vt=await sb.from("publicacoes").select("*").eq("mundo_id",p.mundo_id).overlaps("tags",p.tags).neq("id",p.id).limit(8); if(vt.data&&vt.data.length){ vejaTb='<h2>Veja também</h2>'+listar(vt.data); } }
   var mid=await sb.from("midias").select("*").eq("publicacao_id",id); var media="";
   if(mid.data){ mid.data.forEach(function(m){ media += (m.tipo==="video")?'<p class="vis-leg">🎬 <a href="'+esc(m.url)+'" target="_blank">'+esc(m.legenda||m.url)+'</a></p>':'<img class="capa" src="'+esc(m.url)+'" alt="">'; }); }
   var voltar = p.mesa_id ? "go('mesa','"+p.mesa_id+"')" : (p.tipo==="mapa"?"go('mapas')":"go('lore')");
@@ -262,7 +265,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
     +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
     +(p.tags&&p.tags.length?'<p class="vis-leg">'+p.tags.map(esc).join(", ")+'</p>':'')
     +(p.capa_url?'<img class="capa" src="'+esc(p.capa_url)+'" alt="">':'')
-    +media+'<div class="corpo">'+md(p.corpo)+'</div>'+acoes+extra);
+    +media+'<div class="corpo">'+md(p.corpo)+'</div>'+vejaTb+acoes+extra);
   if(extra) renderExpl(); }
 
 // ---------- export ----------
@@ -310,7 +313,7 @@ function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><h1>🌍 Cr
   +'<label>Imagem de fundo (hero) — link</label><input id="m_fundo" placeholder="https://…">'+ (S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirMundoFundo(this)"><span id="m_fundo_st" class="vis-leg"></span>':'')
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundo()">Criar mundo</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
 function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><h1>⚔ Criar Mesa</h1>'
-  +'<div class="form"><label>Nome</label><input id="me_nome"><label>Descrição</label><textarea id="me_desc"></textarea>'
+  +'<div class="form"><label>Nome</label><input id="me_nome"><label>Descrição</label><textarea id="me_desc"></textarea><label>Época no mundo (opcional)</label><input id="me_epoca" placeholder="ex.: Ano 2068"><label>Local / região (opcional)</label><input id="me_local" placeholder="ex.: Cidade dos Corvos">'
   +'<label>Imagem de fundo — link</label><input id="me_fundo" placeholder="https://…">'
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesa()">Criar mesa</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
 async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mundo</div><h1>Editar mundo</h1>'
@@ -321,7 +324,7 @@ async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Edit
   renderColabMundo(w.id); }
 async function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===id;}); if(!m){layout('<div class="aviso">Mesa não encontrada.</div>');return;}
   layout('<div class="bread">Editar mesa</div><h1>Editar mesa</h1><div class="form"><label>Nome</label><input id="me_nome" value="'+esc(m.nome)+'">'
-  +'<label>Descrição</label><textarea id="me_desc">'+esc(m.descricao||"")+'</textarea><label>Imagem de fundo — link</label><input id="me_fundo" value="'+esc(m.fundo_url||"")+'">'
+  +'<label>Descrição</label><textarea id="me_desc">'+esc(m.descricao||"")+'</textarea><label>Época no mundo (opcional)</label><input id="me_epoca" value="'+esc(m.epoca||"")+'" placeholder="ex.: Ano 2068, após a Guerra das Cinco Chaves"><label>Local / região (opcional)</label><input id="me_local" value="'+esc(m.local||"")+'" placeholder="ex.: Cidade dos Corvos, em Dranor"><label>Imagem de fundo — link</label><input id="me_fundo" value="'+esc(m.fundo_url||"")+'">'
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesaEdit(\''+id+'\')">Salvar</button> <button class="btn sec" onclick="go(\'mesa\',\''+id+'\')">Cancelar</button></p></div>'+'<h2>Jogadores da mesa</h2><p class="vis-leg">Adicione jogadores para que vejam o conteúdo de visibilidade “mesa” e possam contribuir com suas histórias.</p><div id="membros">Carregando…</div>'); await renderMembros(id); }
 async function renderMembros(id){
   var c=document.getElementById("membros"); if(!c)return;
@@ -350,9 +353,9 @@ async function salvarMundo(){ try{ var n=val("m_nome").trim(); if(!n)return erro
 async function salvarMundoEdit(){ try{ var upd={nome:val("w_nome").trim(),descricao:val("w_desc"),fundo_url:val("w_fundo").trim()||null};
   var r=await sb.from("mundos").update(upd).eq("id",S.mundo.id).select().single(); if(r.error)throw r.error; S.mundo=r.data; var i=S.mundos.findIndex(function(w){return w.id===r.data.id;}); if(i>=0)S.mundos[i]=r.data; go("home"); }catch(e){erro(e);} }
 async function salvarMesa(){ try{ var n=val("me_nome").trim(); if(!n)return erro("Dê um nome à mesa.");
-  var reg={mundo_id:S.mundo.id,nome:n,slug:slug(n),descricao:val("me_desc"),mestre_id:S.user.id}; var f=val("me_fundo").trim(); if(f)reg.fundo_url=f;
+  var reg={mundo_id:S.mundo.id,nome:n,slug:slug(n),descricao:val("me_desc"),mestre_id:S.user.id}; var f=val("me_fundo").trim(); if(f)reg.fundo_url=f; reg.epoca=val("me_epoca").trim()||null; reg.local=val("me_local").trim()||null;
   var r=await sb.from("mesas").insert(reg).select().single(); if(r.error)throw r.error; await carregarMesas(); go("mesa",r.data.id); }catch(e){erro(e);} }
-async function salvarMesaEdit(id){ try{ var upd={nome:val("me_nome").trim(),descricao:val("me_desc"),fundo_url:val("me_fundo").trim()||null};
+async function salvarMesaEdit(id){ try{ var upd={nome:val("me_nome").trim(),descricao:val("me_desc"),fundo_url:val("me_fundo").trim()||null,epoca:val("me_epoca").trim()||null,local:val("me_local").trim()||null};
   var r=await sb.from("mesas").update(upd).eq("id",id).select().single(); if(r.error)throw r.error; await carregarMesas(); go("mesa",id); }catch(e){erro(e);} }
 async function salvarPub(mesaId, editId, emMesa){ try{
   var titulo=val("f_titulo").trim(); if(!titulo)return erro("Dê um título.");
@@ -564,6 +567,53 @@ async function salvarSessao(mesaId, editId){ try{ var t=val("se_titulo").trim();
   else { reg.mesa_id=mesaId; var r=await sb.from("sessoes").insert(reg).select().single(); if(r.error)throw r.error; go("sessao",r.data.id); }
 }catch(e){erro(e);} }
 async function excluirSessao(id,mesaId){ if(!confirm("Excluir esta sessão? O conteúdo dela não é apagado, só desvinculado."))return; try{ var r=await sb.from("sessoes").delete().eq("id",id); if(r.error)throw r.error; go("areaMestre",mesaId); }catch(e){erro(e);} }
+// ===== Links wiki + busca global =====
+async function irPorTitulo(t){ t=(t||"").trim(); if(!t||!S.mundo){ if(t) go("busca",t); return; }
+  try{
+    var p=await sb.from("publicacoes").select("id").eq("mundo_id",S.mundo.id).ilike("titulo",t).limit(1);
+    if(p.data&&p.data.length){ go("pub",p.data[0].id); return; }
+    var c=await sb.from("personagens").select("id").eq("mundo_id",S.mundo.id).ilike("nome",t).limit(1);
+    if(c.data&&c.data.length){ go("personagem",c.data[0].id); return; }
+    var j=await sb.from("jornais").select("id").eq("mundo_id",S.mundo.id).ilike("nome",t).limit(1);
+    if(j.data&&j.data.length){ go("jornal",j.data[0].id); return; }
+    go("busca",t);
+  }catch(e){ go("busca",t); } }
+async function telaBusca(q){ if(!S.mundo){go("mundos");return;} q=(q||"").trim();
+  layout('<div class="bread">Busca</div><h1>🔎 Buscar em '+esc(S.mundo.nome)+'</h1><input class="expq" id="buscaq" value="'+esc(q)+'" placeholder="Digite e tecle Enter…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)"><div id="buscares"><p class="vis-leg">'+(q?'Buscando…':'Digite algo para buscar.')+'</p></div>');
+  var inp=document.getElementById("buscaq"); if(inp){ inp.focus(); inp.setSelectionRange(inp.value.length,inp.value.length); }
+  if(!q) return;
+  var ql=q.replace(/[%,()*]/g," ").trim(); var like="%"+ql+"%";
+  var pr=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).or("titulo.ilike."+like+",corpo.ilike."+like).limit(40);
+  var cr=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).ilike("nome",like).limit(24);
+  var jr=await sb.from("jornais").select("*").eq("mundo_id",S.mundo.id).ilike("nome",like).limit(24);
+  var pubs=(pr.data||[]), pers=(cr.data||[]), jors=(jr.data||[]); var html="";
+  if(pubs.length) html+='<h2>Conteúdos <span class="vis-leg">('+pubs.length+')</span></h2><div class="cards">'+pubs.map(cardPub).join("")+'</div>';
+  if(pers.length) html+='<h2>Personagens <span class="vis-leg">('+pers.length+')</span></h2><div class="cards">'+pers.map(cardPersonagem).join("")+'</div>';
+  if(jors.length) html+='<h2>Jornais <span class="vis-leg">('+jors.length+')</span></h2><div class="cards">'+jors.map(cardJornal).join("")+'</div>';
+  if(!html) html='<div class="empty">Nada encontrado para “'+esc(q)+'”.</div>';
+  var box=document.getElementById("buscares"); if(box) box.innerHTML=html; }
+// ===== Linha do tempo do mundo =====
+async function eventosMundo(){ if(!S.mundo)return []; var r=await sb.from("eventos").select("*").eq("mundo_id",S.mundo.id).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
+async function umEvento(id){ var r=await sb.from("eventos").select("*").eq("id",id).maybeSingle(); return r.data; }
+async function telaLinhaTempo(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var evs=await eventosMundo();
+  var criar=S.user?'<a class="btn" onclick="go(\'novoEvento\')">+ Novo evento</a>':'';
+  var tl=evs.length?'<div class="tl">'+evs.map(function(e){ var podeE=S.user&&(donoMundo()||e.autor_id===S.user.id); return '<div class="tl-item"><span class="tl-dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span><div class="tl-card">'+(e.quando?'<div class="tl-quando">'+esc(e.quando)+'</div>':'')+'<h3>'+esc(e.titulo)+'</h3>'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+(podeE?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">✎ editar</a> · <a onclick="excluirEvento(\''+e.id+'\')">🗑 excluir</a></p>':'')+'</div></div>'; }).join("")+'</div>':'<div class="empty">Nenhum acontecimento na linha do tempo ainda.'+(S.user?' Adicione o primeiro.':'')+'</div>';
+  layout(hero("🕰 Linha do Tempo — "+S.mundo.nome,"A cronologia do mundo, dos primórdios aos dias atuais", S.mundo.fundo_url, criar)+'<p class="vis-leg">Dica: use o campo “Ordem” para encadear os acontecimentos na sequência certa.</p>'+tl); }
+function formEvento(e){ return '<div class="bread"><a onclick="go(\'linha\')">‹ Linha do tempo</a></div><h1>🕰 '+(e?'Editar evento':'Novo evento')+'</h1>'
+  +'<div class="form"><label>Título do acontecimento</label><input id="ev_titulo" value="'+esc(e?e.titulo:"")+'">'
+  +'<div class="row"><div><label>Quando (texto livre: ano, era…)</label><input id="ev_quando" value="'+esc(e&&e.quando?e.quando:"")+'" placeholder="ex.: Ano 2068"></div>'
+  +'<div><label>Ordem (número p/ a sequência)</label><input id="ev_ordem" type="number" value="'+esc(e&&e.ordem!=null?e.ordem:"")+'"></div></div>'
+  +'<label>Descrição (Markdown — aceita [[links]] e imagens)</label><textarea id="ev_desc" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(e&&e.descricao?e.descricao:"")+'</textarea>'
+  +'<label>Cor do marcador</label><input id="ev_cor" type="color" value="'+esc(e&&e.cor?e.cor:"#7c1c14")+'" style="width:64px;height:36px;padding:2px">'
+  +'<p style="margin-top:14px"><button class="btn" onclick="salvarEvento('+(e?"'"+e.id+"'":"null")+')">'+(e?'Salvar':'Criar evento')+'</button> <button class="btn sec" onclick="go(\'linha\')">Cancelar</button></p></div>'; }
+function telaNovoEvento(){ layout(formEvento(null)); }
+async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formEvento(e)); }
+async function salvarEvento(editId){ try{ var t=val("ev_titulo").trim(); if(!t)return erro("Dê um título ao evento."); var ord=val("ev_ordem").trim();
+  var reg={ titulo:t, quando:(val("ev_quando").trim()||null), ordem:(ord!==""?parseInt(ord,10):null), descricao:val("ev_desc"), cor:(val("ev_cor")||null) };
+  if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; }
+  else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg); if(r.error)throw r.error; }
+  go("linha"); }catch(e){erro(e);} }
+async function excluirEvento(id){ if(!confirm("Excluir este evento da linha do tempo?"))return; try{ var r=await sb.from("eventos").delete().eq("id",id); if(r.error)throw r.error; go("linha"); }catch(e){erro(e);} }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
@@ -589,6 +639,10 @@ function render(){
   else if(t==="novoJornal") telaNovoJornal();
   else if(t==="editarJornal") telaEditarJornal(S.view.arg);
   else if(t==="creditos") telaCreditos();
+  else if(t==="busca") telaBusca(S.view.arg);
+  else if(t==="linha") telaLinhaTempo();
+  else if(t==="novoEvento") telaNovoEvento();
+  else if(t==="editarEvento") telaEditarEvento(S.view.arg);
   else if(t==="areaMestre") telaMestre(S.view.arg);
   else if(t==="sessao") telaSessao(S.view.arg);
   else if(t==="novaSessao") telaNovaSessao(S.view.arg);
@@ -597,5 +651,5 @@ function render(){
 }
 function toggleUserMenu(e){ if(e)e.stopPropagation(); var m=document.getElementById("usermenu"); if(m) m.classList.toggle("aberto"); }
 function toggleWorldMenu(e){ if(e)e.stopPropagation(); var w=document.getElementById("worldmenu"); if(w) w.classList.toggle("aberto"); }
-document.addEventListener("click", function(){ var m=document.getElementById("usermenu"); if(m) m.classList.remove("aberto"); var w=document.getElementById("worldmenu"); if(w) w.classList.remove("aberto"); });
+document.addEventListener("click", function(e){ var wl=(e.target&&e.target.closest)?e.target.closest(".wikilink"):null; if(wl){ e.preventDefault(); irPorTitulo(wl.getAttribute("data-alvo")); } var m=document.getElementById("usermenu"); if(m) m.classList.remove("aberto"); var w=document.getElementById("worldmenu"); if(w) w.classList.remove("aberto"); });
 init();
