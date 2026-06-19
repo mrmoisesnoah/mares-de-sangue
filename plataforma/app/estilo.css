@@ -148,3 +148,12 @@ details.bloco .cards{padding:12px}
 .user-menu a:hover{background:var(--perg2);color:var(--sangue)}
 .user-menu .sep{height:1px;background:var(--borda);margin:5px 4px}
 @media(max-width:600px){ .user-nm{display:none} .world-switch{max-width:140px} .marca{font-size:17px} }
+
+/* ===== dropdown de mundos (pílula do topo) ===== */
+.ws-wrap{position:relative;display:flex}
+.world-menu{display:none;position:absolute;left:0;top:42px;background:var(--papel);border:1px solid var(--borda);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:210px;max-height:60vh;overflow:auto;padding:6px;z-index:60}
+.world-menu.aberto{display:block}
+.world-menu a{display:block;padding:8px 12px;border-radius:7px;color:var(--tinta2);font-size:14px;cursor:pointer;white-space:nowrap}
+.world-menu a:hover{background:var(--perg2);color:var(--sangue)}
+.world-menu a.atual{background:var(--sangue);color:#fff}
+.world-menu .sep{height:1px;background:var(--borda);margin:5px 4px}
