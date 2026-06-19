@@ -159,11 +159,12 @@ function sidebar(){
   if(S.mundo){
     nav+='<a'+on("lore")+' onclick="go(\'lore\')">📖 Enciclopédia</a>';
     nav+='<a'+on("mapas")+' onclick="go(\'mapas\')">🗺️ Mapas</a>';
+    nav+='<a class="destaque'+(S.view.t==="jornais"?' on':'')+'" onclick="go(\'jornais\')">📰 Jornais</a>';
     nav+='<a onclick="go(\'pers\',\'jog\')">👥 Personagens dos Jogadores</a>';
     nav+='<a onclick="go(\'pers\',\'mes\')">🎭 Personagens do Mestre</a>';
     if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a'+(S.view.t==="mesa"&&S.view.arg===m.id?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
     if(S.user){
-      nav+='<h4>Criar</h4><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a><a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a><a onclick="go(\'novaMesa\')">+ Mesa</a>';
+      nav+='<h4>Criar</h4><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a><a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a><a onclick="go(\'novoJornal\')">+ Jornal</a><a onclick="go(\'novaMesa\')">+ Mesa</a>';
     } else { nav+='<a onclick="go(\'login\')">🔑 Entrar para participar</a>'; }
   }
   return nav;
@@ -246,6 +247,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
   var nomeAutor=await nomeDe(p.autor_id);
   var pcLink=""; if(p.personagem_id){ var pcx=await umPersonagem(p.personagem_id); if(pcx) pcLink=' · <a onclick="go(\'personagem\',\''+p.personagem_id+'\')">🧝 '+esc(pcx.nome)+'</a>'; }
+  var jorLink=""; if(p.jornal_id){ var jx=await umJornal(p.jornal_id); if(jx) jorLink=' · <a onclick="go(\'jornal\',\''+p.jornal_id+'\')">📰 '+esc(jx.nome)+'</a>'; }
   var mid=await sb.from("midias").select("*").eq("publicacao_id",id); var media="";
   if(mid.data){ mid.data.forEach(function(m){ media += (m.tipo==="video")?'<p class="vis-leg">🎬 <a href="'+esc(m.url)+'" target="_blank">'+esc(m.legenda||m.url)+'</a></p>':'<img class="capa" src="'+esc(m.url)+'" alt="">'; }); }
   var voltar = p.mesa_id ? "go('mesa','"+p.mesa_id+"')" : (p.tipo==="mapa"?"go('mapas')":"go('lore')");
@@ -256,7 +258,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
     +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">✎ Editar</a> <button class="btn mini sec" style="border-color:#c08" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
   layout('<div class="bread"><a onclick="'+voltar+'">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')
-    +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+'</span></p>'
+    +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
     +(p.tags&&p.tags.length?'<p class="vis-leg">'+p.tags.map(esc).join(", ")+'</p>':'')
     +(p.capa_url?'<img class="capa" src="'+esc(p.capa_url)+'" alt="">':'')
     +media+'<div class="corpo">'+md(p.corpo)+'</div>'+acoes+extra);
@@ -283,10 +285,12 @@ function formPub(opts, p){
   var visOpts=(mesaId)?[["mesa","mesa (todos da campanha)"],["publico","público (todos)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
   var seletorMesa = (!emMesa && S.mesas.length) ? '<label>Mesa (opcional — relacione a uma campanha)</label><select id="f_mesa"><option value="">— sem mesa (adicionar depois) —</option>'+S.mesas.map(function(m){return '<option value="'+m.id+'"'+(p&&p.mesa_id===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join("")+'</select>' : '';
   var seletorPers = (S.meusPers&&S.meusPers.length) ? '<label>Personagem (opcional — ligar a um personagem)</label><select id="f_personagem"><option value="">— nenhum —</option>'+S.meusPers.map(function(pc){return '<option value="'+pc.id+'"'+(((p&&p.personagem_id===pc.id)||(opts.personagem===pc.id))?' selected':'')+'>'+esc(pc.nome)+'</option>';}).join("")+'</select>' : '';
+  var seletorJornal = (S.meusJornais&&S.meusJornais.length) ? '<label>Jornal (opcional — publicar por um jornal)</label><select id="f_jornal"><option value="">— nenhum —</option>'+S.meusJornais.map(function(jj){return '<option value="'+jj.id+'"'+(((p&&p.jornal_id===jj.id)||(opts.jornal===jj.id))?' selected':'')+'>'+esc(jj.nome)+'</option>';}).join("")+'</select>' : '';
   return '<div class="bread">'+(p?'Editar ':'Novo ')+esc(rot)+'</div><h1>'+(p?'Editar ':'Novo ')+esc(rot)+'</h1>'
     +'<div class="form"><label>Tipo</label><select id="f_tipo">'+opt(TIPOS,tipoSel)+'</select>'
     +seletorMesa
     +seletorPers
+    +seletorJornal
     +'<label>Título</label><input id="f_titulo" value="'+esc(p?p.titulo:"")+'">'
     +'<label>Imagem de capa — link (opcional)</label><input id="f_capa" value="'+esc(p&&p.capa_url?p.capa_url:"")+'" placeholder="https://…">'+uploadCampo()
     +'<label>Texto (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="f_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(p?p.corpo:"")+'</textarea>'
@@ -296,8 +300,8 @@ function formPub(opts, p){
     +'<p style="margin-top:16px"><button class="btn" onclick="salvarPub('+(mesaId?"'"+mesaId+"'":"null")+','+(p?"'"+p.id+"'":"null")+','+(emMesa?"true":"false")+')">'+(p?'Salvar':'Criar '+esc(rot))+'</button> '
     +'<button class="btn sec" onclick="'+(mesaId?"go('mesa','"+mesaId+"')":"go('lore')")+'">Cancelar</button></p></div>';
 }
-async function telaNova(opts){ opts=opts||{}; S.meusPers=await meusPersonagens(); if(opts.personagem&&!S.meusPers.some(function(x){return x.id===opts.personagem;})){ var pc=await umPersonagem(opts.personagem); if(pc) S.meusPers=S.meusPers.concat([{id:pc.id,nome:pc.nome}]); } layout(formPub(opts,null)); }
-async function telaEditar(id){ layout('<p>Carregando…</p>'); S.meusPers=await meusPersonagens(); var p=await umaPub(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPub({mesa:p.mesa_id},p)); }
+async function telaNova(opts){ opts=opts||{}; S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); if(opts.personagem&&!S.meusPers.some(function(x){return x.id===opts.personagem;})){ var pc=await umPersonagem(opts.personagem); if(pc) S.meusPers=S.meusPers.concat([{id:pc.id,nome:pc.nome}]); } if(opts.jornal&&!S.meusJornais.some(function(x){return x.id===opts.jornal;})){ var jj=await umJornal(opts.jornal); if(jj) S.meusJornais=S.meusJornais.concat([{id:jj.id,nome:jj.nome}]); } layout(formPub(opts,null)); }
+async function telaEditar(id){ layout('<p>Carregando…</p>'); S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); var p=await umaPub(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPub({mesa:p.mesa_id},p)); }
 function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><h1>🌍 Criar Mundo</h1>'
   +'<div class="form"><label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: Mares de Sangue"><label>Descrição</label><textarea id="m_desc"></textarea>'
   +'<label>Imagem de fundo (hero) — link</label><input id="m_fundo" placeholder="https://…">'+ (S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirMundoFundo(this)"><span id="m_fundo_st" class="vis-leg"></span>':'')
@@ -352,7 +356,7 @@ async function salvarPub(mesaId, editId, emMesa){ try{
   if(!emMesa){ var sel=val("f_mesa"); if(sel) mesaId=sel; }
   var reg={ tipo:val("f_tipo"), titulo:titulo, slug:slug(titulo), corpo:val("f_corpo"),
     tags:val("f_tags").split(",").map(function(s){return s.trim();}).filter(Boolean),
-    estado:val("f_estado"), visibilidade:val("f_vis"), capa_url:(val("f_capa").trim()||null), personagem_id:(val("f_personagem")||null) };
+    estado:val("f_estado"), visibilidade:val("f_vis"), capa_url:(val("f_capa").trim()||null), personagem_id:(val("f_personagem")||null), jornal_id:(val("f_jornal")||null) };
   if(reg.tipo==="mapa") reg.categoria="mapa";
   if(editId){ var u=await sb.from("publicacoes").update(reg).eq("id",editId); if(u.error)throw u.error; go("pub",editId); }
   else { reg.mundo_id=S.mundo.id; reg.mesa_id=mesaId||null; reg.autor_id=S.user.id;
@@ -452,6 +456,60 @@ async function renderContribPers(id){ var box=document.getElementById("contribpe
   var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
   var add=opc?'<div class="expbar" style="margin-top:10px"><select id="cp_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addContribPers(\''+id+'\')">+ Autorizar</button></div>':'<p class="vis-leg">Todos os usuários já estão autorizados.</p>';
   box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Só você, por enquanto.</li>')+'</ul>'+add; }
+// ===== Jornais do mundo =====
+async function jornaisMundo(){ if(!S.mundo)return []; var r=await sb.from("jornais").select("*").eq("mundo_id",S.mundo.id).order("nome"); return r.error?[]:(r.data||[]); }
+async function umJornal(id){ var r=await sb.from("jornais").select("*").eq("id",id).maybeSingle(); return r.data; }
+async function pubsDoJornal(id){ var r=await sb.from("publicacoes").select("*").eq("jornal_id",id).order("criado_em",{ascending:false}); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
+async function meusJornais(){ if(!S.user||!S.mundo)return []; var r=await sb.from("jornais").select("id,nome").eq("mundo_id",S.mundo.id).eq("dono_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
+function cardJornal(j){ return '<div class="card clic" onclick="go(\'jornal\',\''+j.id+'\')">'+(j.imagem_url?'<div class="thumb" style="background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="thumb noimg">📰</div>')+'<h3>'+esc(j.nome)+'</h3>'+(j.descricao?'<p class="res">'+esc(j.descricao)+'</p>':'')+'</div>'; }
+async function telaJornais(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var js=await jornaisMundo();
+  var criar=S.user?'<a class="btn" onclick="go(\'novoJornal\')">+ Criar jornal</a>':'';
+  var cards=js.length?'<div class="cards">'+js.map(cardJornal).join("")+'</div>':'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
+  layout(hero("📰 Jornais de "+S.mundo.nome,"Periódicos do mundo — notícias, crônicas e boatos publicados pelos jornais", S.mundo.fundo_url, criar)+cards); }
+async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){ layout('<div class="aviso">Jornal não encontrado ou sem permissão.</div>'); return; }
+  var nomeDono=await nomeDe(j.dono_id); var noticias=await pubsDoJornal(id);
+  var podeEditar=(S.user&&(j.dono_id===S.user.id||(S.profile&&S.profile.papel_global==="admin")));
+  var escr=await escritoresJornal(id); var souEscr=!!(S.user&&escr.some(function(x){return x.user_id===S.user.id;}));
+  var podePublicar=podeEditar||souEscr;
+  var logo=j.imagem_url?'<div class="av" style="width:120px;height:120px;border-radius:12px;background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px;border-radius:12px">📰</div>';
+  var btnPub=podePublicar?'<a class="btn" onclick="go(\'nova\',{jornal:\''+id+'\',tipo:\'jornal\'})">+ Publicar notícia</a> ':'';
+  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarJornal\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirJornal(\''+id+'\')">🗑 Excluir</button>':'';
+  var acoes=(podePublicar||podeEditar)?'<p>'+btnPub+btnEdit+'</p>':'';
+  var lista=noticias.length?listar(noticias):'<div class="empty">Nenhuma notícia publicada ainda.'+(podePublicar?' Use o botão “+ Publicar notícia”.':'')+'</div>';
+  var painel=podeEditar?'<h2>Escritores do jornal</h2><p class="vis-leg">Autorize quem pode publicar notícias por este jornal (além de você).</p><div id="escritores">Carregando…</div>':'';
+  layout('<div class="bread"><a onclick="go(\'jornais\')">‹ Jornais</a></div>'
+    +'<div class="autor-cap">'+logo+'<div><h1 style="margin:0">'+esc(j.nome)+'</h1>'+(j.descricao?'<p class="vis-leg" style="font-style:italic">'+esc(j.descricao)+'</p>':'')+'<p class="vis-leg">'+visChip(j.visibilidade)+' · fundado por <a onclick="go(\'autor\',\''+j.dono_id+'\')">'+esc(nomeDono)+'</a></p></div></div>'
+    +acoes+'<h2>Edições / Notícias</h2>'+lista+painel);
+  if(podeEditar) renderEscritores(id); }
+function formJornal(j){
+  var visOpts=[["publico","público (todos)"],["privado","privado (só eu)"]];
+  return '<div class="bread">'+(j?'Editar jornal':'Novo jornal')+'</div><h1>📰 '+(j?'Editar jornal':'Criar jornal')+'</h1>'
+    +'<div class="form"><label>Nome do jornal</label><input id="j_nome" value="'+esc(j?j.nome:"")+'" placeholder="Ex.: A Trombeta de Dagor">'
+    +'<label>Descrição / lema (opcional)</label><input id="j_desc" value="'+esc(j&&j.descricao?j.descricao:"")+'">'
+    +'<label>Logo — link (opcional)</label><input id="j_img" value="'+esc(j&&j.imagem_url?j.imagem_url:"")+'" placeholder="https://…">'+(S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirLogoJornal(this)"><span id="j_img_st" class="vis-leg"></span>':'')
+    +'<label>Visibilidade</label><select id="j_vis">'+opt(visOpts,j?j.visibilidade:"publico")+'</select>'
+    +'<p style="margin-top:16px"><button class="btn" onclick="salvarJornal('+(j?"'"+j.id+"'":"null")+')">'+(j?'Salvar':'Criar jornal')+'</button> <button class="btn sec" onclick="'+(j?"go('jornal','"+j.id+"')":"go('jornais')")+'">Cancelar</button></p></div>';
+}
+function telaNovoJornal(){ layout(formJornal(null)); }
+async function telaEditarJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formJornal(j)); }
+async function salvarJornal(editId){ try{ var nome=val("j_nome").trim(); if(!nome)return erro("Dê um nome ao jornal.");
+  var reg={ nome:nome, slug:slug(nome), descricao:(val("j_desc").trim()||null), imagem_url:(val("j_img").trim()||null), visibilidade:val("j_vis"), estado:"publicado" };
+  if(editId){ var u=await sb.from("jornais").update(reg).eq("id",editId); if(u.error)throw u.error; go("jornal",editId); }
+  else { reg.mundo_id=S.mundo.id; reg.dono_id=S.user.id; var r=await sb.from("jornais").insert(reg).select().single(); if(r.error)throw r.error; go("jornal",r.data.id); }
+}catch(e){erro(e);} }
+async function excluirJornal(id){ if(!confirm("Excluir este jornal? As notícias não são apagadas, só desvinculadas."))return; try{ var r=await sb.from("jornais").delete().eq("id",id); if(r.error)throw r.error; go("jornais"); }catch(e){erro(e);} }
+async function subirLogoJornal(inp){ var fl=inp.files&&inp.files[0]; if(!fl)return; var st=document.getElementById("j_img_st"); if(st)st.textContent="enviando…"; try{ var u=await uploadArquivo(fl); var c=document.getElementById("j_img"); if(c)c.value=u; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
+async function escritoresJornal(id){ var r=await sb.from("jornal_escritores").select("user_id").eq("jornal_id",id); return r.error?[]:(r.data||[]); }
+async function addEscritor(id){ var uid=val("je_add"); if(!uid)return; try{ var r=await sb.from("jornal_escritores").insert({jornal_id:id,user_id:uid}); if(r.error)throw r.error; await renderEscritores(id); }catch(e){erro(e);} }
+async function removerEscritor(id,uid){ if(!confirm("Remover este escritor?"))return; try{ var r=await sb.from("jornal_escritores").delete().eq("jornal_id",id).eq("user_id",uid); if(r.error)throw r.error; await renderEscritores(id); }catch(e){erro(e);} }
+async function renderEscritores(id){ var box=document.getElementById("escritores"); if(!box)return;
+  var ms=await escritoresJornal(id); var perf=await perfis();
+  var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
+  var ja={}; ms.forEach(function(x){ja[x.user_id]=1;}); if(S.user)ja[S.user.id]=1;
+  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerEscritor(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
+  var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
+  var add=opc?'<div class="expbar" style="margin-top:10px"><select id="je_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addEscritor(\''+id+'\')">+ Autorizar escritor</button></div>':'<p class="vis-leg">Todos os usuários já podem escrever.</p>';
+  box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Só você, por enquanto.</li>')+'</ul>'+add; }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
@@ -472,6 +530,10 @@ function render(){
   else if(t==="personagem") telaPersonagem(S.view.arg);
   else if(t==="novoPersonagem") telaNovoPersonagem(S.view.arg);
   else if(t==="editarPersonagem") telaEditarPersonagem(S.view.arg);
+  else if(t==="jornais") telaJornais();
+  else if(t==="jornal") telaJornal(S.view.arg);
+  else if(t==="novoJornal") telaNovoJornal();
+  else if(t==="editarJornal") telaEditarJornal(S.view.arg);
   else telaHome();
 }
 function toggleUserMenu(e){ if(e)e.stopPropagation(); var m=document.getElementById("usermenu"); if(m) m.classList.toggle("aberto"); }

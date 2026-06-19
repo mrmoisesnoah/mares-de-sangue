@@ -157,3 +157,7 @@ details.bloco .cards{padding:12px}
 .world-menu a:hover{background:var(--perg2);color:var(--sangue)}
 .world-menu a.atual{background:var(--sangue);color:#fff}
 .world-menu .sep{height:1px;background:var(--borda);margin:5px 4px}
+
+/* destaque do item Jornais na lateral */
+.lateral a.destaque{color:var(--sangue);font-weight:600}
+.lateral a.destaque.on{color:#fff}
