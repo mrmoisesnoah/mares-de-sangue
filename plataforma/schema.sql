@@ -14,6 +14,10 @@ create table if not exists profiles (
   criado_em   timestamptz not null default now()
 );
 
+alter table profiles add column if not exists avatar_url text;
+alter table profiles add column if not exists bio text;
+alter table profiles add column if not exists epiteto text;
+
 -- Cria o perfil automaticamente quando um usuário se registra
 create or replace function handle_new_user()
 returns trigger language plpgsql security definer

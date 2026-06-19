@@ -131,6 +131,7 @@ async function recentes(){ var r=await sb.from("publicacoes").select("*").eq("mu
 async function pubsDoAutor(uid){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).eq("autor_id",uid).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function umaPub(id){ var r=await sb.from("publicacoes").select("*").eq("id",id).maybeSingle(); return r.data; }
 async function nomeDe(uid){ if(S.nomes[uid])return S.nomes[uid]; var r=await sb.from("profiles").select("nome").eq("id",uid).maybeSingle(); var n=r.data?r.data.nome:"Autor"; S.nomes[uid]=n; return n; }
+async function perfilDe(uid){ S.perfilCache=S.perfilCache||{}; if(S.perfilCache[uid])return S.perfilCache[uid]; var r=await sb.from("profiles").select("id,nome,avatar_url,bio,epiteto").eq("id",uid).maybeSingle(); var p=r.data||{nome:"Autor"}; S.perfilCache[uid]=p; if(p&&p.nome)S.nomes[uid]=p.nome; return p; }
 
 // ---------- storage ----------
 async function uploadArquivo(f){ var path=(S.user?S.user.id:"anon")+"/"+Date.now()+"-"+slug(f.name)+"."+(f.name.split(".").pop()||"img");
@@ -161,6 +162,7 @@ function sidebar(){
     if(S.user){
       nav+='<h4>Sua conta</h4>';
       nav+='<a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a>';
+      nav+='<a'+on("perfil")+' onclick="go(\'perfil\')">✎ Editar perfil</a>';
       if(donoMundo()) nav+='<a onclick="go(\'editarMundo\')">✎ Editar mundo</a>';
       if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
       nav+='<h4>Criar</h4><a onclick="go(\'novaMesa\')">+ Mesa</a><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo</a><a onclick="go(\'nova\',{mesa:null,tipo:\'personagem\'})">+ Personagem</a>';
@@ -231,10 +233,10 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
     +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>'
     +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'');
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+exploradorHTML()); renderExpl(); }
-async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var nome=await nomeDe(uid); var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
+async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
-    +'<div class="autor-cap"><div class="av">'+(nome?esc(nome[0].toUpperCase()):"?")+'</div><div><h1 style="margin:0">'+esc(nome)+'</h1><p class="vis-leg">'+pubs.length+' publicações visíveis neste mundo'+(ehEu?" · sua página de trabalho (vê também rascunhos e privados)":" · página pública")+'</p></div></div>'
+    +'<div class="autor-cap">'+(pf.avatar_url?'<div class="av" style="background-image:url('+esc(pf.avatar_url)+')"></div>':'<div class="av">'+esc((nome||"?")[0].toUpperCase())+'</div>')+'<div><h1 style="margin:0">'+esc(nome)+'</h1>'+(pf.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(pf.epiteto)+'</p>':'')+'<p class="vis-leg">'+pubs.length+' publicações visíveis neste mundo'+(ehEu?" · sua página de trabalho (vê também rascunhos e privados)":" · página pública")+(ehEu?' · <a onclick="go(\'perfil\')">✎ editar perfil</a>':'')+'</p></div></div>'+(pf.bio?'<div class="corpo" style="max-width:760px;margin:6px 0 14px">'+md(pf.bio)+'</div>':'')
     +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a></p>':'')+exploradorHTML()); renderExpl(); }
 async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p;
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
@@ -266,7 +268,7 @@ function baixarDoc(){ var p=S.pubAtual; if(!p)return;
 
 // ---------- formulários ----------
 var TIPOS=['conto','background','diário de personagem','personagem','mapa','cidade','facção','região','reino','religião','criatura','item','evento histórico','história do mundo','resumo de sessão','crônica','planejamento do mestre','anotação privada'];
-function opt(arr,sel){ return arr.map(function(o){var v=o[0]||o,l=o[1]||o;return '<option value="'+v+'"'+(sel===v?' selected':'')+'>'+l+'</option>';}).join(""); }
+function opt(arr,sel){ return arr.map(function(o){var v,l; if(Array.isArray(o)){v=o[0];l=o[1];}else{v=o;l=o;} return '<option value="'+esc(v)+'"'+(sel===v?' selected':'')+'>'+esc(l)+'</option>';}).join(""); }
 function uploadCampo(){ return S.user?'<label>… ou enviar arquivo de imagem</label><input type="file" accept="image/*" onchange="subirCapa(this)"><span id="f_capa_st" class="vis-leg"></span>':''; }
 function datalistTags(){ var ks=Object.keys(S.tags); return '<datalist id="taglist">'+ks.map(function(t){return '<option value="'+esc(t)+'">';}).join("")+'</datalist>'; }
 function formPub(opts, p){
@@ -350,6 +352,18 @@ async function salvarPub(mesaId, editId, emMesa){ try{
 async function excluirPub(id, mesaId){ if(!confirm("Excluir esta publicação? Não dá para desfazer.")) return;
   try{ var r=await sb.from("publicacoes").delete().eq("id",id); if(r.error)throw r.error; if(mesaId) go("mesa",mesaId); else go("lore"); }catch(e){erro(e);} }
 
+function telaPerfil(){ if(!S.user){go("login");return;} var p=S.profile||{};
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Editar perfil</div><h1>👤 Editar perfil</h1>'
+  +'<div class="autor-cap">'+(p.avatar_url?'<div class="av" id="av_prev" style="background-image:url('+esc(p.avatar_url)+')"></div>':'<div class="av" id="av_prev">'+esc(((p.nome||"?")[0]||"?").toUpperCase())+'</div>')+'<div><h2 style="margin:0">'+esc(p.nome||"Aventureiro")+'</h2><p class="vis-leg" style="font-style:italic">'+esc(p.epiteto||"")+'</p></div></div>'
+  +'<div class="form"><label>Nome de aventureiro</label><input id="pf_nome" value="'+esc(p.nome||"")+'">'
+  +'<label>Epíteto / título (ex.: o Errante, a Branca)</label><input id="pf_epiteto" value="'+esc(p.epiteto||"")+'" placeholder="opcional">'
+  +'<label>Foto de perfil — link</label><input id="pf_avatar" value="'+esc(p.avatar_url||"")+'" placeholder="https://…"><label>… ou enviar arquivo de imagem</label><input type="file" accept="image/*" onchange="subirAvatar(this)"><span id="pf_avatar_st" class="vis-leg"></span>'
+  +'<label>Sobre você (Markdown)</label><textarea id="pf_bio">'+esc(p.bio||"")+'</textarea>'
+  +'<p style="margin-top:14px"><button class="btn" onclick="salvarPerfil()">Salvar perfil</button> <button class="btn sec" onclick="go(\'autor\',\''+S.user.id+'\')">Ver minha página</button></p></div>'); }
+async function subirAvatar(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("pf_avatar_st"); if(st)st.textContent="enviando…";
+  try{ var u=await uploadArquivo(f); var c=document.getElementById("pf_avatar"); if(c)c.value=u; var pv=document.getElementById("av_prev"); if(pv){pv.style.backgroundImage="url("+u+")"; pv.textContent="";} if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
+async function salvarPerfil(){ try{ var nome=val("pf_nome").trim()||"Aventureiro"; var upd={nome:nome, epiteto:(val("pf_epiteto").trim()||null), avatar_url:(val("pf_avatar").trim()||null), bio:val("pf_bio")};
+  var r=await sb.from("profiles").update(upd).eq("id",S.user.id).select().single(); if(r.error)throw r.error; S.profile=r.data; S.nomes[S.user.id]=r.data.nome; if(S.perfilCache)delete S.perfilCache[S.user.id]; go("autor",S.user.id); }catch(e){erro(e);} }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
@@ -366,6 +380,7 @@ function render(){
   else if(t==="editarMundo") telaEditarMundo();
   else if(t==="editarMesa") telaEditarMesa(S.view.arg);
   else if(t==="novaMesa") telaNovaMesa();
+  else if(t==="perfil") telaPerfil();
   else telaHome();
 }
 init();
