@@ -186,34 +186,49 @@ alter table midias              enable row level security;
 alter table publicacao_relacoes enable row level security;
 
 -- Perfis: cada um lê todos os nomes; edita só o próprio
+drop policy if exists prof_select on profiles;
 create policy prof_select on profiles for select using (true);
+drop policy if exists prof_update on profiles;
 create policy prof_update on profiles for update using (id = auth.uid());
 
 -- Mundos: públicos visíveis a todos; donos/admin gerenciam
+drop policy if exists mundo_select on mundos;
 create policy mundo_select on mundos for select using (publico or dono_id = auth.uid() or is_admin());
+drop policy if exists mundo_insert on mundos;
 create policy mundo_insert on mundos for insert with check (dono_id = auth.uid());
+drop policy if exists mundo_update on mundos;
 create policy mundo_update on mundos for update using (dono_id = auth.uid() or is_admin());
 
 -- Mesas: visíveis a membros (e dono do mundo/admin)
+drop policy if exists mesa_select on mesas;
 create policy mesa_select on mesas for select using (
   is_membro(id) or is_dono_mundo(mundo_id) or is_admin()
 );
+drop policy if exists mesa_insert on mesas;
 create policy mesa_insert on mesas for insert with check (mestre_id = auth.uid());
+drop policy if exists mesa_update on mesas;
 create policy mesa_update on mesas for update using (is_mestre(id) or is_admin());
 
 -- Membros: visíveis aos membros da mesa; mestre gerencia
+drop policy if exists memb_select on mesa_membros;
 create policy memb_select on mesa_membros for select using (is_membro(mesa_id) or is_admin());
+drop policy if exists memb_insert on mesa_membros;
 create policy memb_insert on mesa_membros for insert with check (is_mestre(mesa_id) or is_admin());
+drop policy if exists memb_delete on mesa_membros;
 create policy memb_delete on mesa_membros for delete using (is_mestre(mesa_id) or is_admin());
 
 -- Personagens: autor sempre; membros da mesa veem; demais conforme publicações
+drop policy if exists pers_select on personagens;
 create policy pers_select on personagens for select using (
   jogador_id = auth.uid() or (mesa_id is not null and is_membro(mesa_id)) or is_admin()
 );
+drop policy if exists pers_insert on personagens;
 create policy pers_insert on personagens for insert with check (jogador_id = auth.uid());
+drop policy if exists pers_update on personagens;
 create policy pers_update on personagens for update using (jogador_id = auth.uid() or (mesa_id is not null and is_mestre(mesa_id)) or is_admin());
 
 -- PUBLICAÇÕES — o coração da visibilidade
+drop policy if exists pub_select on publicacoes;
 create policy pub_select on publicacoes for select using (
   is_admin()
   or autor_id = auth.uid()
@@ -221,6 +236,7 @@ create policy pub_select on publicacoes for select using (
   or (visibilidade = 'mesa'         and mesa_id is not null and is_membro(mesa_id))
   or (visibilidade in ('autor_mestre','mestre') and mesa_id is not null and is_mestre(mesa_id))
 );
+drop policy if exists pub_insert on publicacoes;
 create policy pub_insert on publicacoes for insert with check (
   autor_id = auth.uid() and (
     (mesa_id is not null and is_membro(mesa_id))
@@ -228,23 +244,30 @@ create policy pub_insert on publicacoes for insert with check (
     or is_admin()
   )
 );
+drop policy if exists pub_update on publicacoes;
 create policy pub_update on publicacoes for update using (
   autor_id = auth.uid() or (mesa_id is not null and is_mestre(mesa_id)) or is_admin()
 );
+drop policy if exists pub_delete on publicacoes;
 create policy pub_delete on publicacoes for delete using (
   autor_id = auth.uid() or (mesa_id is not null and is_mestre(mesa_id)) or is_admin()
 );
 
 -- Mídias: seguem a publicação dona (visível se a publicação for visível)
+drop policy if exists midia_select on midias;
 create policy midia_select on midias for select using (
   publicacao_id is null
   or exists (select 1 from publicacoes p where p.id = midias.publicacao_id)  -- RLS de publicacoes filtra o resto
 );
+drop policy if exists midia_insert on midias;
 create policy midia_insert on midias for insert with check (autor_id = auth.uid());
+drop policy if exists midia_delete on midias;
 create policy midia_delete on midias for delete using (autor_id = auth.uid() or is_admin());
 
 -- Relações: leitura livre entre publicações visíveis; autor cria
+drop policy if exists rel_select on publicacao_relacoes;
 create policy rel_select on publicacao_relacoes for select using (true);
+drop policy if exists rel_insert on publicacao_relacoes;
 create policy rel_insert on publicacao_relacoes for insert with check (
   exists (select 1 from publicacoes p where p.id = origem_id and (p.autor_id = auth.uid() or is_admin()))
 );
