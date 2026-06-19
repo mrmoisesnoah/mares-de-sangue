@@ -232,12 +232,13 @@ async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Car
     +'<p class="vis-leg">Clique num personagem para ver o perfil e todo o conteúdo ligado a ele.</p>'+criar+cards); }
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; }
-  var pubs=await pubsDaMesa(id); abrirExplorador(pubs);
+  var pubs=await pubsDaMesa(id); abrirExplorador(pubs); var sess=await sessoesDaMesa(id);
   var acts=S.user?('<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
     +'<a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a> '
     +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>'
-    +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')):'';
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+exploradorHTML()); renderExpl(); }
+    +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')):'';
+  var secSess=sess.length?'<h2>🎲 Sessões</h2><div class="cards">'+sess.map(cardSessao).join("")+'</div>':'';
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+secSess+exploradorHTML()); renderExpl(); }
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
@@ -286,22 +287,24 @@ function formPub(opts, p){
   var seletorMesa = (!emMesa && S.mesas.length) ? '<label>Mesa (opcional — relacione a uma campanha)</label><select id="f_mesa"><option value="">— sem mesa (adicionar depois) —</option>'+S.mesas.map(function(m){return '<option value="'+m.id+'"'+(p&&p.mesa_id===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join("")+'</select>' : '';
   var seletorPers = (S.meusPers&&S.meusPers.length) ? '<label>Personagem (opcional — ligar a um personagem)</label><select id="f_personagem"><option value="">— nenhum —</option>'+S.meusPers.map(function(pc){return '<option value="'+pc.id+'"'+(((p&&p.personagem_id===pc.id)||(opts.personagem===pc.id))?' selected':'')+'>'+esc(pc.nome)+'</option>';}).join("")+'</select>' : '';
   var seletorJornal = (S.meusJornais&&S.meusJornais.length) ? '<label>Jornal (opcional — publicar por um jornal)</label><select id="f_jornal"><option value="">— nenhum —</option>'+S.meusJornais.map(function(jj){return '<option value="'+jj.id+'"'+(((p&&p.jornal_id===jj.id)||(opts.jornal===jj.id))?' selected':'')+'>'+esc(jj.nome)+'</option>';}).join("")+'</select>' : '';
+  var seletorSessao = (mesaId && S.sessoesForm && S.sessoesForm.length) ? '<label>Sessão (opcional)</label><select id="f_sessao"><option value="">— nenhuma / geral —</option>'+S.sessoesForm.map(function(se){return '<option value="'+se.id+'"'+(((p&&p.sessao_id===se.id)||(opts.sessao===se.id))?' selected':'')+'>'+esc(se.titulo)+'</option>';}).join("")+'</select>' : '';
   return '<div class="bread">'+(p?'Editar ':'Novo ')+esc(rot)+'</div><h1>'+(p?'Editar ':'Novo ')+esc(rot)+'</h1>'
     +'<div class="form"><label>Tipo</label><select id="f_tipo">'+opt(TIPOS,tipoSel)+'</select>'
     +seletorMesa
     +seletorPers
     +seletorJornal
+    +seletorSessao
     +'<label>Título</label><input id="f_titulo" value="'+esc(p?p.titulo:"")+'">'
     +'<label>Imagem de capa — link (opcional)</label><input id="f_capa" value="'+esc(p&&p.capa_url?p.capa_url:"")+'" placeholder="https://…">'+uploadCampo()
     +'<label>Texto (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="f_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(p?p.corpo:"")+'</textarea>'
     +'<div class="row"><div><label>Marcadores / tags (vírgula — digite para criar novos)</label><input id="f_tags" list="taglist" value="'+esc(p&&p.tags?p.tags.join(", "):"")+'">'+datalistTags()+'</div>'
     +'<div><label>Estado</label><select id="f_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],p?p.estado:"publicado")+'</select></div>'
-    +'<div><label>Visibilidade</label><select id="f_vis">'+opt(visOpts,p?p.visibilidade:(mesaId?"mesa":"publico"))+'</select></div></div>'
+    +'<div><label>Visibilidade</label><select id="f_vis">'+opt(visOpts,p?p.visibilidade:(opts.vis||(mesaId?"mesa":"publico")))+'</select></div></div>'
     +'<p style="margin-top:16px"><button class="btn" onclick="salvarPub('+(mesaId?"'"+mesaId+"'":"null")+','+(p?"'"+p.id+"'":"null")+','+(emMesa?"true":"false")+')">'+(p?'Salvar':'Criar '+esc(rot))+'</button> '
     +'<button class="btn sec" onclick="'+(mesaId?"go('mesa','"+mesaId+"')":"go('lore')")+'">Cancelar</button></p></div>';
 }
-async function telaNova(opts){ opts=opts||{}; S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); if(opts.personagem&&!S.meusPers.some(function(x){return x.id===opts.personagem;})){ var pc=await umPersonagem(opts.personagem); if(pc) S.meusPers=S.meusPers.concat([{id:pc.id,nome:pc.nome}]); } if(opts.jornal&&!S.meusJornais.some(function(x){return x.id===opts.jornal;})){ var jj=await umJornal(opts.jornal); if(jj) S.meusJornais=S.meusJornais.concat([{id:jj.id,nome:jj.nome}]); } layout(formPub(opts,null)); }
-async function telaEditar(id){ layout('<p>Carregando…</p>'); S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); var p=await umaPub(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPub({mesa:p.mesa_id},p)); }
+async function telaNova(opts){ opts=opts||{}; S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); if(opts.personagem&&!S.meusPers.some(function(x){return x.id===opts.personagem;})){ var pc=await umPersonagem(opts.personagem); if(pc) S.meusPers=S.meusPers.concat([{id:pc.id,nome:pc.nome}]); } if(opts.jornal&&!S.meusJornais.some(function(x){return x.id===opts.jornal;})){ var jj=await umJornal(opts.jornal); if(jj) S.meusJornais=S.meusJornais.concat([{id:jj.id,nome:jj.nome}]); } S.sessoesForm = opts.mesa? await sessoesDaMesa(opts.mesa) : []; layout(formPub(opts,null)); }
+async function telaEditar(id){ layout('<p>Carregando…</p>'); S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); var p=await umaPub(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} S.sessoesForm = p.mesa_id? await sessoesDaMesa(p.mesa_id) : []; layout(formPub({mesa:p.mesa_id},p)); }
 function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><h1>🌍 Criar Mundo</h1>'
   +'<div class="form"><label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: Mares de Sangue"><label>Descrição</label><textarea id="m_desc"></textarea>'
   +'<label>Imagem de fundo (hero) — link</label><input id="m_fundo" placeholder="https://…">'+ (S.user?'<label>… ou enviar arquivo</label><input type="file" accept="image/*" onchange="subirMundoFundo(this)"><span id="m_fundo_st" class="vis-leg"></span>':'')
@@ -356,7 +359,7 @@ async function salvarPub(mesaId, editId, emMesa){ try{
   if(!emMesa){ var sel=val("f_mesa"); if(sel) mesaId=sel; }
   var reg={ tipo:val("f_tipo"), titulo:titulo, slug:slug(titulo), corpo:val("f_corpo"),
     tags:val("f_tags").split(",").map(function(s){return s.trim();}).filter(Boolean),
-    estado:val("f_estado"), visibilidade:val("f_vis"), capa_url:(val("f_capa").trim()||null), personagem_id:(val("f_personagem")||null), jornal_id:(val("f_jornal")||null) };
+    estado:val("f_estado"), visibilidade:val("f_vis"), capa_url:(val("f_capa").trim()||null), personagem_id:(val("f_personagem")||null), jornal_id:(val("f_jornal")||null), sessao_id:(val("f_sessao")||null) };
   if(reg.tipo==="mapa") reg.categoria="mapa";
   if(editId){ var u=await sb.from("publicacoes").update(reg).eq("id",editId); if(u.error)throw u.error; go("pub",editId); }
   else { reg.mundo_id=S.mundo.id; reg.mesa_id=mesaId||null; reg.autor_id=S.user.id;
@@ -521,6 +524,46 @@ function telaCreditos(){ layout('<div class="bread"><a onclick="go(\'home\')">In
   +'<hr>'
   +'<p class="vis-leg">© '+(new Date().getFullYear())+' Moisés Noah / TOGA — The Older Gods Adventures. Os direitos do cenário e das histórias originais pertencem aos seus criadores. Cada autor mantém os direitos sobre o conteúdo que publica nesta plataforma.</p>'
   +'</div>'); }
+// ===== Sessões / Área do Mestre =====
+async function sessoesDaMesa(id){ var r=await sb.from("sessoes").select("*").eq("mesa_id",id).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
+async function umaSessao(id){ var r=await sb.from("sessoes").select("*").eq("id",id).maybeSingle(); return r.data; }
+async function pubsDaSessao(id){ var r=await sb.from("publicacoes").select("*").eq("sessao_id",id).order("criado_em"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
+function cardSessao(se){ return '<div class="card clic" onclick="go(\'sessao\',\''+se.id+'\')"><div class="thumb noimg">🎲</div><h3>'+esc(se.titulo)+'</h3>'+(se.data?'<p class="res">'+esc(se.data)+'</p>':'')+'</div>'; }
+async function telaMestre(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
+  if(!mesa){ layout('<div class="aviso">Mesa não encontrada.</div>'); return; }
+  if(!mestreDe(mesa)){ layout('<div class="aviso">Área restrita ao mestre desta mesa.</div>'); return; }
+  var pubs=await pubsDaMesa(id); var sess=await sessoesDaMesa(id);
+  var geral=pubs.filter(function(p){return !p.sessao_id;});
+  var cardsSess=sess.length?'<div class="cards">'+sess.map(cardSessao).join("")+'</div>':'<div class="empty">Nenhuma sessão ainda — crie a primeira.</div>';
+  layout('<div class="bread"><a onclick="go(\'mesa\',\''+id+'\')">‹ '+esc(mesa.nome)+'</a> › Área do Mestre</div>'
+    +'<h1>🎭 Área do Mestre — '+esc(mesa.nome)+'</h1>'
+    +'<p class="vis-leg">Atrás da tela. O que estiver com visibilidade “só mestre” aqui não aparece para os jogadores.</p>'
+    +'<h2>Estrutura & preparação geral</h2><p class="vis-leg">Argumento da campanha e notas que não pertencem a uma sessão específica.</p><p><a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento geral</a></p>'
+    +(geral.length?listar(geral):'<div class="empty">Nada na preparação geral ainda.</div>')
+    +'<h2>Sessões</h2><p><a class="btn" onclick="go(\'novaSessao\',\''+id+'\')">+ Nova sessão</a></p>'+cardsSess); }
+async function telaSessao(id){ layout('<p>Carregando…</p>'); var se=await umaSessao(id); if(!se){ layout('<div class="aviso">Sessão não encontrada.</div>'); return; }
+  var mesa=S.mesas.find(function(m){return m.id===se.mesa_id;}); var ehMestre=!!(mesa&&mestreDe(mesa));
+  var pubs=await pubsDaSessao(id);
+  var plan=pubs.filter(function(p){return ['mestre','autor_mestre','privado'].indexOf(p.visibilidade)>=0;});
+  var publi=pubs.filter(function(p){return ['publico','mesa'].indexOf(p.visibilidade)>=0;});
+  var actsM=ehMestre?'<p><a class="btn" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento</a> <a class="btn sec" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'resumo de sessão\',vis:\'mesa\'})">+ Resumo</a> <a class="btn sec" onclick="go(\'editarSessao\',\''+id+'\')">✎ Editar sessão</a> <button class="btn sec" style="border-color:#c08" onclick="excluirSessao(\''+id+'\',\''+se.mesa_id+'\')">🗑 Excluir</button></p>':'';
+  layout('<div class="bread"><a onclick="go(\'mesa\',\''+se.mesa_id+'\')">‹ Mesa</a> › Sessão</div>'
+    +'<h1>🎲 '+esc(se.titulo)+'</h1>'+(se.data?'<p class="vis-leg">'+esc(se.data)+'</p>':'')+actsM
+    +(ehMestre?'<h2>🔒 Planejamento (só o mestre vê)</h2>'+(plan.length?listar(plan):'<div class="empty">Nenhum planejamento nesta sessão ainda.</div>'):'')
+    +'<h2>Resumos & público</h2>'+(publi.length?listar(publi):'<div class="empty">Nenhum resumo publicado nesta sessão ainda.</div>')); }
+function formSessao(mesaId, se){ return '<div class="bread">'+(se?'Editar sessão':'Nova sessão')+'</div><h1>🎲 '+(se?'Editar sessão':'Nova sessão')+'</h1>'
+  +'<div class="form"><label>Título</label><input id="se_titulo" value="'+esc(se?se.titulo:"")+'" placeholder="Ex.: Sessão 1 — Ecos na Cidade dos Corvos">'
+  +'<div class="row"><div><label>Ordem (número, opcional)</label><input id="se_ordem" type="number" value="'+esc(se&&se.ordem!=null?se.ordem:"")+'"></div>'
+  +'<div><label>Data (opcional)</label><input id="se_data" type="date" value="'+esc(se&&se.data?se.data:"")+'"></div></div>'
+  +'<p style="margin-top:14px"><button class="btn" onclick="salvarSessao(\''+mesaId+'\','+(se?"'"+se.id+"'":"null")+')">'+(se?'Salvar':'Criar sessão')+'</button> <button class="btn sec" onclick="'+(se?"go('sessao','"+se.id+"')":"go('areaMestre','"+mesaId+"')")+'">Cancelar</button></p></div>'; }
+function telaNovaSessao(mesaId){ layout(formSessao(mesaId,null)); }
+async function telaEditarSessao(id){ layout('<p>Carregando…</p>'); var se=await umaSessao(id); if(!se){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formSessao(se.mesa_id,se)); }
+async function salvarSessao(mesaId, editId){ try{ var t=val("se_titulo").trim(); if(!t)return erro("Dê um título à sessão."); var ord=val("se_ordem").trim(); var dt=val("se_data").trim();
+  var reg={ titulo:t, ordem:(ord!==""?parseInt(ord,10):null), data:(dt||null) };
+  if(editId){ var u=await sb.from("sessoes").update(reg).eq("id",editId); if(u.error)throw u.error; go("sessao",editId); }
+  else { reg.mesa_id=mesaId; var r=await sb.from("sessoes").insert(reg).select().single(); if(r.error)throw r.error; go("sessao",r.data.id); }
+}catch(e){erro(e);} }
+async function excluirSessao(id,mesaId){ if(!confirm("Excluir esta sessão? O conteúdo dela não é apagado, só desvinculado."))return; try{ var r=await sb.from("sessoes").delete().eq("id",id); if(r.error)throw r.error; go("areaMestre",mesaId); }catch(e){erro(e);} }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
@@ -546,6 +589,10 @@ function render(){
   else if(t==="novoJornal") telaNovoJornal();
   else if(t==="editarJornal") telaEditarJornal(S.view.arg);
   else if(t==="creditos") telaCreditos();
+  else if(t==="areaMestre") telaMestre(S.view.arg);
+  else if(t==="sessao") telaSessao(S.view.arg);
+  else if(t==="novaSessao") telaNovaSessao(S.view.arg);
+  else if(t==="editarSessao") telaEditarSessao(S.view.arg);
   else telaHome();
 }
 function toggleUserMenu(e){ if(e)e.stopPropagation(); var m=document.getElementById("usermenu"); if(m) m.classList.toggle("aberto"); }
