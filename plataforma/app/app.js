@@ -263,30 +263,30 @@ async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Car
     +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a></p>':'')+exploradorHTML()); renderExpl(); }
 async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p;
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
-  var nomeAutor=await nomeDe(p.autor_id);
+  var nomeAutor=await nomeDe(p.autor_id); var podeBaixar=meu(p)||donoMundo();
   var pcLink=""; if(p.personagem_id){ var pcx=await umPersonagem(p.personagem_id); if(pcx) pcLink=' · <a onclick="go(\'personagem\',\''+p.personagem_id+'\')">🧝 '+esc(pcx.nome)+'</a>'; }
   var jorLink=""; if(p.jornal_id){ var jx=await umJornal(p.jornal_id); if(jx) jorLink=' · <a onclick="go(\'jornal\',\''+p.jornal_id+'\')">📰 '+esc(jx.nome)+'</a>'; }
   var vejaTb=""; if(p.tags&&p.tags.length){ var vt=await sb.from("publicacoes").select("*").eq("mundo_id",p.mundo_id).overlaps("tags",p.tags).neq("id",p.id).limit(8); if(vt.data&&vt.data.length){ vejaTb='<h2>Veja também</h2>'+listar(vt.data); } }
   var mid=await sb.from("midias").select("*").eq("publicacao_id",id); var media="";
-  if(mid.data){ mid.data.forEach(function(m){ media += (m.tipo==="video")?'<p class="vis-leg">🎬 <a href="'+esc(m.url)+'" target="_blank">'+esc(m.legenda||m.url)+'</a></p>':'<img class="capa" src="'+esc(m.url)+'" alt="">'; }); }
+  if(mid.data){ mid.data.forEach(function(m){ media += (m.tipo==="video")?'<p class="vis-leg">🎬 <a href="'+esc(m.url)+'" target="_blank">'+esc(m.legenda||m.url)+'</a></p>':imagemComAcoes(m.url,(m.legenda||""),podeBaixar); }); }
   var voltar = p.mesa_id ? "go('mesa','"+p.mesa_id+"')" : (p.tipo==="mapa"?"go('mapas')":"go('lore')");
   var extra="";
   if(ehPersonagem(p.tipo)){ var outros=(await pubsDoAutor(p.autor_id)).filter(function(x){return x.id!==p.id;});
     if(outros.length){ abrirExplorador(outros); extra='<h2>Mais textos de '+esc(nomeAutor)+'</h2>'+exploradorHTML(); } }
-  var acoes='<div class="acoes-pub"><button class="btn mini sec" onclick="baixarPdf()">⬇ PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button> '+botaoCompartilhar()
+  var acoes='<div class="acoes-pub">'+(podeBaixar?'<button class="btn mini sec" onclick="baixarPdf()">🖨 Imprimir / PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button> ':'')+botaoCompartilhar()
     +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">✎ Editar</a> <button class="btn mini sec" style="border-color:#c08" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
   layout('<div class="bread"><a onclick="'+voltar+'">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')
     +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
     +tagChips(p.tags)
-    +(p.capa_url?'<img class="capa" src="'+esc(p.capa_url)+'" alt="">':'')
+    +(p.capa_url?imagemComAcoes(p.capa_url,p.titulo,podeBaixar):'')
     +media+'<div class="corpo">'+md(p.corpo)+'</div>'+vejaTb+acoes+extra);
   if(extra) renderExpl(); }
 
 // ---------- export ----------
-function baixarPdf(){ var p=S.pubAtual; if(!p)return; var w=window.open("","_blank");
-  w.document.write('<html><head><meta charset="utf-8"><title>'+esc(p.titulo)+'</title><style>body{font-family:Georgia,serif;max-width:720px;margin:30px auto;padding:0 18px;line-height:1.6;color:#222}img{max-width:100%}blockquote{border-left:3px solid #aaa;margin:1em 0;padding:.3em 1em;color:#555}</style></head><body><h1>'+esc(p.titulo)+'</h1>'+md(p.corpo)+'</body></html>');
-  w.document.close(); w.focus(); setTimeout(function(){ w.print(); },400); }
+function baixarPdf(){ window.print(); }
+function imagemComAcoes(url, alt, podeBaixar){ return '<figure class="img-bloco"><img class="capa" src="'+esc(url)+'" alt="'+esc(alt||"")+'" loading="lazy"><figcaption class="img-acoes"><a class="btn mini sec" href="'+esc(url)+'" target="_blank" rel="noopener">🔍 Abrir original</a>'+(podeBaixar?' <button class="btn mini sec" onclick="baixarImagem(\''+esc(url)+'\')">⬇ Baixar imagem</button>':'')+'</figcaption></figure>'; }
+async function baixarImagem(url){ try{ var r=await fetch(url); var b=await r.blob(); var a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=decodeURIComponent((url.split("/").pop()||"imagem").split("?")[0]); document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){URL.revokeObjectURL(a.href);},4000); }catch(e){ window.open(url,"_blank"); } }
 function baixarDoc(){ var p=S.pubAtual; if(!p)return;
   var html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>'+esc(p.titulo)+'</title></head><body><h1>'+esc(p.titulo)+'</h1>'+md(p.corpo)+'</body></html>';
   var blob=new Blob(['﻿'+html],{type:"application/msword"});

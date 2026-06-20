@@ -92,7 +92,7 @@ img.capa{max-width:100%;border-radius:8px;border:1px solid var(--borda);margin:1
 .autor-cap .av{width:84px;height:84px;border-radius:50%;background:var(--perg2) center/cover no-repeat;border:2px solid var(--ouro);display:flex;align-items:center;justify-content:center;font-size:34px;color:var(--ouro)}
 .acoes-pub{margin-top:22px;padding-top:14px;border-top:1px solid var(--borda);display:flex;gap:8px;flex-wrap:wrap}
 .btn.mini{padding:6px 12px;font-size:13px}
-@media print{ .topo,.lateral,.acoes-pub,.bread{display:none!important} .layout{display:block} .conteudo{padding:0} }
+@media print{ .topo,.lateral,.acoes-pub,.bread,.img-acoes{display:none!important} .layout{display:block} .conteudo{padding:0} }
 
 /* ===== explorador: cards de categoria + abas retráteis ===== */
 .expq{width:100%;max-width:420px;padding:9px 13px;border:1px solid var(--ouro);border-radius:20px;font-family:inherit;font-size:15px;background:#fffdf6;margin:6px 0 4px}
@@ -223,3 +223,7 @@ details.bloco .cards{padding:12px}
   .autor-cap{gap:10px}
   .autor-cap .av{width:64px;height:64px;font-size:26px}
 }
+
+/* bloco de imagem com ações */
+.img-bloco{margin:10px 0}
+.img-acoes{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
