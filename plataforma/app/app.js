@@ -65,6 +65,7 @@ function hero(titulo, sub, fundo, acts){
   return '<div class="hero2">'+(fundo?'<div class="bg" style="background-image:url('+esc(fundo)+')"></div>':'')+'<div class="ov"></div>'
     +'<div class="in"><h1>'+esc(titulo)+'</h1>'+(sub?'<p>'+esc(sub)+'</p>':'')+(acts?'<div class="acts">'+acts+'</div>':'')+'</div></div>';
 }
+function secHead(ic, titulo, n, acao){ return '<div class="sec-head"><h2>'+ic+' '+esc(titulo)+(n!=null?' <span class="sec-ct">'+n+'</span>':'')+'</h2>'+(acao?'<div class="sec-acts">'+acao+'</div>':'')+'</div>'; }
 function toggleModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); renderExpl(); }
 function toggleMenu(){ var l=document.querySelector(".lateral"); if(l) l.classList.toggle("aberta"); }
 
@@ -249,15 +250,19 @@ async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Car
     +'<p class="vis-leg">Clique num personagem para ver o perfil e todo o conteúdo ligado a ele.</p>'+criar+cards); }
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; }
-  var pubs=await pubsDaMesa(id); abrirExplorador(pubs); var sess=await sessoesDaMesa(id); var pers=await personagensDaMesa(id); var mapas=pubs.filter(function(p){return p.tipo==="mapa";});
+  var pubs=await pubsDaMesa(id); var sess=await sessoesDaMesa(id); var pers=await personagensDaMesa(id);
+  var mapas=pubs.filter(function(p){return p.tipo==="mapa";}); var outros=pubs.filter(function(p){return p.tipo!=="mapa";}); abrirExplorador(outros);
+  var ehM=mestreDe(mesa);
   var acts=S.user?('<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
-    +'<a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a> '
-    +'<a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>'
-    +(mestreDe(mesa)?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')):'';
-  var secSess=sess.length?'<h2>🎲 Sessões</h2><div class="cards">'+sess.map(cardSessao).join("")+'</div>':'';
-  var secPers=pers.length?'<h2>🧝 Personagens da mesa</h2><div class="cards">'+pers.map(cardPersonagem).join("")+'</div>':'';
-  var secMapas=mapas.length?'<h2>🗺️ Mapas da mesa</h2>'+listar(mapas):'';
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+(mesa.epoca||mesa.local?'<p class="vis-leg" style="margin-top:-12px">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'')+(S.user&&!mestreDe(mesa)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'')+secPers+secMapas+'<p style="margin-top:10px"><a class="btn sec" onclick="go(\'linha\',\''+id+'\')">🕰 Linha do tempo da mesa</a></p>'+secSess+exploradorHTML()); renderExpl(); }
+    +'<a class="btn sec" onclick="go(\'linha\',\''+id+'\')">🕰 Linha do tempo</a>'
+    +(ehM?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')):'';
+  var metaHtml=(mesa.epoca||mesa.local)?'<p class="meta-mesa">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'';
+  var pedir=(S.user&&!ehM)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'';
+  var secPers='<div class="secao">'+secHead("🧝","Personagens da mesa",pers.length,(S.user?'<a class="btn mini sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a>':''))+(pers.length?'<div class="cards">'+pers.map(cardPersonagem).join("")+'</div>':'<div class="empty">Nenhum personagem nesta mesa ainda.</div>')+'</div>';
+  var secMapas='<div class="secao">'+secHead("🗺️","Mapas da mesa",mapas.length,(S.user?'<a class="btn mini sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>':''))+(mapas.length?'<div class="cards">'+mapas.map(cardPub).join("")+'</div>':'<div class="empty">Nenhum mapa nesta mesa ainda.</div>')+'</div>';
+  var secSess='<div class="secao">'+secHead("🎲","Sessões",sess.length,(ehM?'<a class="btn mini sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Gerir sessões</a>':''))+(sess.length?'<div class="cards">'+sess.map(cardSessao).join("")+'</div>':'<div class="empty">Nenhuma sessão registrada ainda.</div>')+'</div>';
+  var secOutros=outros.length?'<div class="secao">'+secHead("📚","Outros conteúdos",outros.length,"")+exploradorHTML()+'</div>':'';
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+metaHtml+pedir+secPers+secMapas+secSess+secOutros); renderExpl(); }
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
@@ -563,12 +568,12 @@ async function telaMestre(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.
   var pubs=await pubsDaMesa(id); var sess=await sessoesDaMesa(id);
   var geral=pubs.filter(function(p){return !p.sessao_id;});
   var cardsSess=sess.length?'<div class="cards">'+sess.map(cardSessao).join("")+'</div>':'<div class="empty">Nenhuma sessão ainda — crie a primeira.</div>';
+  var heroActs='<a class="btn" onclick="go(\'novaSessao\',\''+id+'\')">+ Nova sessão</a> <a class="btn sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento geral</a> <a class="btn sec" onclick="go(\'mesa\',\''+id+'\')">‹ Voltar à mesa</a>';
+  var secGeral='<div class="secao">'+secHead("🗒️","Estrutura & preparação geral",geral.length,'<a class="btn mini sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento</a>')+'<p class="vis-leg" style="margin-top:-4px">Argumento da campanha e notas que não pertencem a uma sessão específica.</p>'+(geral.length?listar(geral):'<div class="empty">Nada na preparação geral ainda.</div>')+'</div>';
+  var secSess='<div class="secao">'+secHead("🎲","Sessões",sess.length,'<a class="btn mini sec" onclick="go(\'novaSessao\',\''+id+'\')">+ Nova sessão</a>')+cardsSess+'</div>';
   layout('<div class="bread"><a onclick="go(\'mesa\',\''+id+'\')">‹ '+esc(mesa.nome)+'</a> › Área do Mestre</div>'
-    +'<h1>🎭 Área do Mestre — '+esc(mesa.nome)+'</h1>'
-    +'<p class="vis-leg">Atrás da tela. O que estiver com visibilidade “só mestre” aqui não aparece para os jogadores.</p>'
-    +'<h2>Estrutura & preparação geral</h2><p class="vis-leg">Argumento da campanha e notas que não pertencem a uma sessão específica.</p><p><a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento geral</a></p>'
-    +(geral.length?listar(geral):'<div class="empty">Nada na preparação geral ainda.</div>')
-    +'<h2>Sessões</h2><p><a class="btn" onclick="go(\'novaSessao\',\''+id+'\')">+ Nova sessão</a></p>'+cardsSess); }
+    +hero("🎭 Área do Mestre — "+mesa.nome, "Atrás da tela. Conteúdo “só mestre” não aparece para os jogadores.", mesa.fundo_url, heroActs)
+    +secGeral+secSess); }
 async function telaSessao(id){ layout('<p>Carregando…</p>'); var se=await umaSessao(id); if(!se){ layout('<div class="aviso">Sessão não encontrada.</div>'); return; }
   var mesa=S.mesas.find(function(m){return m.id===se.mesa_id;}); var ehMestre=!!(mesa&&mestreDe(mesa));
   var pubs=await pubsDaSessao(id);
