@@ -257,7 +257,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
   var secSess=sess.length?'<h2>🎲 Sessões</h2><div class="cards">'+sess.map(cardSessao).join("")+'</div>':'';
   var secPers=pers.length?'<h2>🧝 Personagens da mesa</h2><div class="cards">'+pers.map(cardPersonagem).join("")+'</div>':'';
   var secMapas=mapas.length?'<h2>🗺️ Mapas da mesa</h2>'+listar(mapas):'';
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+(mesa.epoca||mesa.local?'<p class="vis-leg" style="margin-top:-12px">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'')+(S.user&&!mestreDe(mesa)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'')+secPers+secMapas+secSess+exploradorHTML()); renderExpl(); }
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+(mesa.epoca||mesa.local?'<p class="vis-leg" style="margin-top:-12px">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'')+(S.user&&!mestreDe(mesa)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'')+secPers+secMapas+'<p style="margin-top:10px"><a class="btn sec" onclick="go(\'linha\',\''+id+'\')">🕰 Linha do tempo da mesa</a></p>'+secSess+exploradorHTML()); renderExpl(); }
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
@@ -620,35 +620,74 @@ async function telaBusca(q){ if(!S.mundo){go("mundos");return;} q=(q||"").trim()
   if(!html) html='<div class="empty">Nada encontrado para “'+esc(q)+'”.</div>';
   var box=document.getElementById("buscares"); if(box) box.innerHTML=html; }
 // ===== Linha do tempo do mundo =====
-async function eventosMundo(){ if(!S.mundo)return []; var r=await sb.from("eventos").select("*").eq("mundo_id",S.mundo.id).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
+async function eventosMundo(){ if(!S.mundo)return []; var r=await sb.from("eventos").select("*").eq("mundo_id",S.mundo.id).is("mesa_id",null).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
 async function umEvento(id){ var r=await sb.from("eventos").select("*").eq("id",id).maybeSingle(); return r.data; }
-async function telaLinhaTempo(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var evs=await eventosMundo();
-  var linkMap={};
-  if(evs.length){ var ids=evs.map(function(e){return e.id;});
-    var lk=await sb.from("evento_links").select("*").in("evento_id",ids); var links=lk.data||[];
-    var pubIds=[],perIds=[]; links.forEach(function(l){ if(l.tipo==="personagem")perIds.push(l.alvo_id); else pubIds.push(l.alvo_id); });
-    var tit={};
-    if(pubIds.length){ var pr=await sb.from("publicacoes").select("id,titulo").in("id",pubIds); (pr.data||[]).forEach(function(x){tit["publicacao:"+x.id]={t:x.titulo,r:"pub"};}); }
-    if(perIds.length){ var cr=await sb.from("personagens").select("id,nome").in("id",perIds); (cr.data||[]).forEach(function(x){tit["personagem:"+x.id]={t:x.nome,r:"personagem"};}); }
-    links.forEach(function(l){ var info=tit[l.tipo+":"+l.alvo_id]; if(info){ (linkMap[l.evento_id]=linkMap[l.evento_id]||[]).push({t:info.t,r:info.r,id:l.alvo_id}); } });
-  }
-  var criar=S.user?'<a class="btn" onclick="go(\'novoEvento\')">+ Novo evento</a>':'';
-  var tl=evs.length?'<div class="tl">'+evs.map(function(e){ var podeE=S.user&&(donoMundo()||e.autor_id===S.user.id); var lks=linkMap[e.id]?'<p class="vis-leg" style="margin:6px 0 0">🔗 '+linkMap[e.id].map(function(x){return '<a onclick="go(\''+x.r+'\',\''+x.id+'\')">'+esc(x.t)+'</a>';}).join(" · ")+'</p>':''; return '<div class="tl-item"><span class="tl-dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span><div class="tl-card">'+(e.quando?'<div class="tl-quando">'+esc(e.quando)+'</div>':'')+'<h3>'+esc(e.titulo)+'</h3>'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+lks+(podeE?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">✎ editar</a> · <a onclick="excluirEvento(\''+e.id+'\')">🗑 excluir</a></p>':'')+'</div></div>'; }).join("")+'</div>':'<div class="empty">Nenhum acontecimento na linha do tempo ainda.'+(S.user?' Adicione o primeiro.':'')+'</div>';
-  layout(hero("🕰 Linha do Tempo — "+S.mundo.nome,"A cronologia do mundo, dos primórdios aos dias atuais", S.mundo.fundo_url, criar)+'<p class="vis-leg">Dica: use o campo “Ordem” para encadear os acontecimentos na sequência certa.</p>'+tl); }
-function formEvento(e){ return '<div class="bread"><a onclick="go(\'linha\')">‹ Linha do tempo</a></div><h1>🕰 '+(e?'Editar evento':'Novo evento')+'</h1>'
+async function eventosDaMesa(mid){ var r=await sb.from("eventos").select("*").eq("mesa_id",mid).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
+async function periodosDe(mesaId){ var q=sb.from("periodos").select("*"); if(mesaId){ q=q.eq("mesa_id",mesaId); } else { q=q.eq("mundo_id",S.mundo.id).is("mesa_id",null); } var r=await q.order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
+async function umPeriodo(id){ var r=await sb.from("periodos").select("*").eq("id",id).maybeSingle(); return r.data; }
+async function carregarLinkMap(evs){ var linkMap={}; if(!evs.length) return linkMap; var ids=evs.map(function(e){return e.id;});
+  var lk=await sb.from("evento_links").select("*").in("evento_id",ids); var links=lk.data||[];
+  var pubIds=[],perIds=[]; links.forEach(function(l){ if(l.tipo==="personagem")perIds.push(l.alvo_id); else pubIds.push(l.alvo_id); });
+  var tit={};
+  if(pubIds.length){ var pr=await sb.from("publicacoes").select("id,titulo").in("id",pubIds); (pr.data||[]).forEach(function(x){tit["publicacao:"+x.id]={t:x.titulo,r:"pub"};}); }
+  if(perIds.length){ var cr=await sb.from("personagens").select("id,nome").in("id",perIds); (cr.data||[]).forEach(function(x){tit["personagem:"+x.id]={t:x.nome,r:"personagem"};}); }
+  links.forEach(function(l){ var info=tit[l.tipo+":"+l.alvo_id]; if(info){ (linkMap[l.evento_id]=linkMap[l.evento_id]||[]).push({t:info.t,r:info.r,id:l.alvo_id}); } });
+  return linkMap; }
+function renderEvento(e, linkMap, podeEditar, mesaId){
+  var lks=linkMap[e.id]?'🔗 '+linkMap[e.id].map(function(x){return '<a onclick="go(\''+x.r+'\',\''+x.id+'\')">'+esc(x.t)+'</a>';}).join(" · "):'';
+  return '<details class="tl2-ev"><summary><span class="dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span>'+(e.quando?'<span class="qd">'+esc(e.quando)+'</span> ':'')+'<span class="evt">'+esc(e.titulo)+'</span></summary><div class="tl2-ev-body">'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+(lks?'<p class="vis-leg" style="margin:6px 0 0">'+lks+'</p>':'')+(podeEditar?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">✎ editar</a> · <a onclick="excluirEvento(\''+e.id+'\',\''+(mesaId||"")+'\')">🗑 excluir</a></p>':'')+'</div></details>'; }
+function renderPeriodo(p, eventos, linkMap, podeEditar, mesaId){
+  var head='<summary class="tl2-per-head">'+(p.imagem_url?'<span class="bg" style="background-image:url('+esc(p.imagem_url)+')"></span><span class="ov"></span>':'')+'<span class="nm">'+esc(p.nome)+'</span><span class="ct">'+eventos.length+'</span>'+((podeEditar&&p.id)?'<a class="ped" onclick="event.stopPropagation();go(\'editarPeriodo\',\''+p.id+'\')">✎</a>':'')+'</summary>';
+  var evHtml=eventos.map(function(e){ return renderEvento(e, linkMap, podeEditar, mesaId); }).join("");
+  if(!evHtml) evHtml='<p class="vis-leg" style="padding:4px 0 8px;margin:0">Nenhum evento neste período ainda.</p>';
+  return '<details class="tl2-periodo" open>'+head+'<div class="tl2-eventos">'+evHtml+'</div></details>'; }
+async function telaLinhaTempo(mesaId){ if(!S.mundo){go("mundos");return;}
+  var emMesa=!!mesaId; var mesa=emMesa?S.mesas.find(function(m){return m.id===mesaId;}):null;
+  if(emMesa && !mesa){ layout('<div class="aviso">Mesa não encontrada.</div>'); return; }
+  layout('<p>Carregando…</p>');
+  var evs= emMesa ? await eventosDaMesa(mesaId) : await eventosMundo();
+  var pers= await periodosDe(mesaId);
+  var podeEditarTL= emMesa ? mestreDe(mesa) : donoMundo();
+  var linkMap= await carregarLinkMap(evs);
+  var porPer={}, semPer=[];
+  evs.forEach(function(e){ if(e.periodo_id){ (porPer[e.periodo_id]=porPer[e.periodo_id]||[]).push(e); } else semPer.push(e); });
+  var blocos=pers.map(function(p){ return renderPeriodo(p, porPer[p.id]||[], linkMap, podeEditarTL, mesaId); }).join("");
+  if(semPer.length) blocos+=renderPeriodo({id:null,nome:"Sem período definido"}, semPer, linkMap, podeEditarTL, mesaId);
+  var criar= podeEditarTL ? '<a class="btn" onclick="go(\'novoEvento\',\''+(mesaId||"")+'\')">+ Novo evento</a> <a class="btn sec" onclick="go(\'novoPeriodo\',\''+(mesaId||"")+'\')">+ Novo período</a>' : '';
+  var titulo= emMesa ? ("🕰 Linha do Tempo — "+mesa.nome) : ("🕰 Linha do Tempo — "+S.mundo.nome);
+  var sub= emMesa ? "A cronologia desta campanha." : "A cronologia do mundo, dos primórdios aos dias atuais.";
+  var fundo= emMesa ? mesa.fundo_url : S.mundo.fundo_url;
+  var bread= emMesa ? '<div class="bread"><a onclick="go(\'mesa\',\''+mesaId+'\')">‹ Mesa</a> › Linha do tempo</div>' : '';
+  layout(bread+hero(titulo, sub, fundo, criar)+((evs.length||pers.length)?'<div class="tl2">'+blocos+'</div>':'<div class="empty">Nenhum acontecimento ainda.'+(podeEditarTL?' Crie um período e adicione eventos.':'')+'</div>')); }
+function formEvento(e, mesaId){ var pers=S.periodosForm||[]; return '<div class="bread"><a onclick="go(\'linha\',\''+(mesaId||"")+'\')">‹ Linha do tempo</a></div><h1>🕰 '+(e?'Editar evento':'Novo evento')+'</h1>'
   +'<div class="form"><label>Título do acontecimento</label><input id="ev_titulo" value="'+esc(e?e.titulo:"")+'">'
-  +'<div class="row"><div><label>Quando (texto livre: ano, era…)</label><input id="ev_quando" value="'+esc(e&&e.quando?e.quando:"")+'" placeholder="ex.: Ano 2068"></div>'
-  +'<div><label>Ordem (número p/ a sequência)</label><input id="ev_ordem" type="number" value="'+esc(e&&e.ordem!=null?e.ordem:"")+'"></div></div>'
+  +(pers.length?'<label>Período (ano/era)</label><select id="ev_periodo"><option value="">— sem período —</option>'+pers.map(function(p){return '<option value="'+p.id+'"'+((e&&e.periodo_id===p.id)?' selected':'')+'>'+esc(p.nome)+'</option>';}).join("")+'</select>':'')
+  +'<div class="row"><div><label>Quando (data/ano exato, opcional)</label><input id="ev_quando" value="'+esc(e&&e.quando?e.quando:"")+'" placeholder="ex.: Ano 2068"></div>'
+  +'<div><label>Ordem (dentro do período)</label><input id="ev_ordem" type="number" value="'+esc(e&&e.ordem!=null?e.ordem:"")+'"></div></div>'
   +'<label>Descrição (Markdown — aceita [[links]] e imagens)</label><textarea id="ev_desc" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(e&&e.descricao?e.descricao:"")+'</textarea>'
   +'<label>Cor do marcador</label><input id="ev_cor" type="color" value="'+esc(e&&e.cor?e.cor:"#7c1c14")+'" style="width:64px;height:36px;padding:2px">'
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarEvento('+(e?"'"+e.id+"'":"null")+')">'+(e?'Salvar':'Criar evento')+'</button> <button class="btn sec" onclick="go(\'linha\')">Cancelar</button></p></div>'; }
-async function telaNovoEvento(){ S.evPendentes=[]; if(S.mundo) await carregarLinkOpts(); layout(formEvento(null)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Vincule conteúdos agora — serão salvos junto ao criar o evento.</p><div id="evnovo"></div>'); renderEvNovo(); }
-async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formEvento(e)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Relacione este acontecimento a conteúdos do mundo — eles aparecem no card do evento.</p><div id="evlinks">Carregando…</div>'); renderEventoLinks(id); }
-async function salvarEvento(editId){ try{ var t=val("ev_titulo").trim(); if(!t)return erro("Dê um título ao evento."); var ord=val("ev_ordem").trim();
-  var reg={ titulo:t, quando:(val("ev_quando").trim()||null), ordem:(ord!==""?parseInt(ord,10):null), descricao:val("ev_desc"), cor:(val("ev_cor")||null) };
-  if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; go("linha"); }
-  else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg).select().single(); if(r.error)throw r.error; if(S.evPendentes&&S.evPendentes.length){ var rows=S.evPendentes.map(function(l){return {evento_id:r.data.id,tipo:l.tipo,alvo_id:l.alvo_id};}); var ri=await sb.from("evento_links").insert(rows); if(ri.error)throw ri.error; } S.evPendentes=[]; go("linha"); } }catch(e){erro(e);} }
-async function excluirEvento(id){ if(!confirm("Excluir este evento da linha do tempo?"))return; try{ var r=await sb.from("eventos").delete().eq("id",id); if(r.error)throw r.error; go("linha"); }catch(e){erro(e);} }
+  +'<p style="margin-top:14px"><button class="btn" onclick="salvarEvento('+(e?"'"+e.id+"'":"null")+',\''+(mesaId||"")+'\')">'+(e?'Salvar':'Criar evento')+'</button> <button class="btn sec" onclick="go(\'linha\',\''+(mesaId||"")+'\')">Cancelar</button></p></div>'; }
+async function telaNovoEvento(mesaId){ S.evPendentes=[]; if(S.mundo){ await carregarLinkOpts(); S.periodosForm=await periodosDe(mesaId); } layout(formEvento(null, mesaId)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Vincule conteúdos agora — serão salvos junto ao criar o evento.</p><div id="evnovo"></div>'); renderEvNovo(); }
+async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} S.periodosForm=await periodosDe(e.mesa_id); layout(formEvento(e, e.mesa_id)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Relacione este acontecimento a conteúdos — eles aparecem ao abrir o evento.</p><div id="evlinks">Carregando…</div>'); renderEventoLinks(id); }
+async function salvarEvento(editId, mesaId){ try{ var t=val("ev_titulo").trim(); if(!t)return erro("Dê um título ao evento."); var ord=val("ev_ordem").trim();
+  var reg={ titulo:t, quando:(val("ev_quando").trim()||null), ordem:(ord!==""?parseInt(ord,10):null), descricao:val("ev_desc"), cor:(val("ev_cor")||null), periodo_id:(val("ev_periodo")||null) };
+  if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; go("linha",mesaId||""); }
+  else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.mesa_id=mesaId||null; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg).select().single(); if(r.error)throw r.error; if(S.evPendentes&&S.evPendentes.length){ var rows=S.evPendentes.map(function(l){return {evento_id:r.data.id,tipo:l.tipo,alvo_id:l.alvo_id};}); var ri=await sb.from("evento_links").insert(rows); if(ri.error)throw ri.error; } S.evPendentes=[]; go("linha",mesaId||""); } }catch(e){erro(e);} }
+async function excluirEvento(id, mesaId){ if(!confirm("Excluir este evento da linha do tempo?"))return; try{ var r=await sb.from("eventos").delete().eq("id",id); if(r.error)throw r.error; go("linha",mesaId||""); }catch(e){erro(e);} }
+function formPeriodo(mundoId, mesaId, p){ return '<div class="bread"><a onclick="go(\'linha\',\''+(mesaId||"")+'\')">‹ Linha do tempo</a></div><h1>🕰 '+(p?'Editar período':'Novo período')+'</h1>'
+  +'<div class="form"><label>Nome do período / ano / era</label><input id="pr_nome" value="'+esc(p?p.nome:"")+'" placeholder="ex.: Ano 2068 · Era Primordial">'
+  +'<label>Ordem (número p/ a sequência dos blocos)</label><input id="pr_ordem" type="number" value="'+esc(p&&p.ordem!=null?p.ordem:"")+'">'
+  +campoImagem('Imagem de fundo do período (opcional)','pr_img',(p&&p.imagem_url?p.imagem_url:""))
+  +'<p style="margin-top:14px"><button class="btn" onclick="salvarPeriodo(\''+(mesaId||"")+'\','+(p?"'"+p.id+"'":"null")+')">'+(p?'Salvar':'Criar período')+'</button> <button class="btn sec" onclick="go(\'linha\',\''+(mesaId||"")+'\')">Cancelar</button>'+(p?' <button class="btn sec" style="border-color:#c08" onclick="excluirPeriodo(\''+p.id+'\',\''+(mesaId||"")+'\')">🗑 Excluir período</button>':'')+'</p></div>'; }
+function telaNovoPeriodo(mesaId){ layout(formPeriodo(S.mundo.id, mesaId||null, null)); }
+async function telaEditarPeriodo(id){ layout('<p>Carregando…</p>'); var p=await umPeriodo(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPeriodo(p.mundo_id, p.mesa_id, p)); }
+async function salvarPeriodo(mesaId, editId){ try{ var nome=val("pr_nome").trim(); if(!nome)return erro("Dê um nome ao período."); var ord=val("pr_ordem").trim();
+  var reg={ nome:nome, ordem:(ord!==""?parseInt(ord,10):null), imagem_url:(val("pr_img").trim()||null) };
+  if(editId){ var u=await sb.from("periodos").update(reg).eq("id",editId); if(u.error)throw u.error; }
+  else { reg.mundo_id=S.mundo.id; reg.mesa_id=mesaId||null; var r=await sb.from("periodos").insert(reg); if(r.error)throw r.error; }
+  go("linha",mesaId||""); }catch(e){erro(e);} }
+async function excluirPeriodo(id, mesaId){ if(!confirm("Excluir este período? Os eventos não são apagados, só ficam sem período."))return; try{ var r=await sb.from("periodos").delete().eq("id",id); if(r.error)throw r.error; go("linha",mesaId||""); }catch(e){erro(e);} }
+
 // ===== Pedidos de acesso (colaboração) =====
 async function pedidosPendentes(tipo, alvoId){ var r=await sb.from("pedidos_acesso").select("*").eq("tipo",tipo).eq("alvo_id",alvoId).eq("estado","pendente").order("criado_em"); return r.error?[]:(r.data||[]); }
 async function pedirAcesso(tipo, alvoId){ if(!S.user){go("login");return;} try{
@@ -757,9 +796,11 @@ function render(){
   else if(t==="busca") telaBusca(S.view.arg);
   else if(t==="novaRecompensa") telaNovaRecompensa(S.view.arg);
   else if(t==="editarRecompensa") telaEditarRecompensa(S.view.arg);
-  else if(t==="linha") telaLinhaTempo();
-  else if(t==="novoEvento") telaNovoEvento();
+  else if(t==="linha") telaLinhaTempo(S.view.arg);
+  else if(t==="novoEvento") telaNovoEvento(S.view.arg);
   else if(t==="editarEvento") telaEditarEvento(S.view.arg);
+  else if(t==="novoPeriodo") telaNovoPeriodo(S.view.arg);
+  else if(t==="editarPeriodo") telaEditarPeriodo(S.view.arg);
   else if(t==="areaMestre") telaMestre(S.view.arg);
   else if(t==="sessao") telaSessao(S.view.arg);
   else if(t==="novaSessao") telaNovaSessao(S.view.arg);
