@@ -241,9 +241,9 @@ async function telaMapas(){ if(!S.mundo){go("mundos");return;} layout('<p>Carreg
     +(mp.length?barraModo()+listar(mp):'<div class="empty">Nenhum mapa visível ainda.</div>')); }
 async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>');
   var todos=await personagensMundo(); var dono=S.mundo.dono_id;
-  var lista=(qual==="mes")?todos.filter(function(c){return c.jogador_id===dono;}):todos.filter(function(c){return c.jogador_id!==dono;});
+  var lista=(qual==="mes")?todos.filter(function(c){return c.tipo==="npc";}):todos.filter(function(c){return c.tipo!=="npc";});
   var titulo=(qual==="mes")?"🎭 Personagens do Mestre (NPCs)":"👥 Personagens dos Jogadores";
-  var criar=S.user?'<p><a class="btn" onclick="go(\'novoPersonagem\',{mesa:null})">+ Novo personagem</a></p>':'';
+  var criar=S.user?'<p><a class="btn" onclick="go(\'novoPersonagem\',{mesa:null,tp:\''+(qual==="mes"?"npc":"jogador")+'\'})">+ Novo '+(qual==="mes"?"NPC":"personagem")+'</a></p>':'';
   var cards=lista.length?barraModo()+gridOuLista(lista,cardPersonagem,liPersonagem):'<div class="empty">Nenhum personagem ainda.</div>';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Personagens</div><h1>'+titulo+'</h1>'
     +'<p class="vis-leg">Clique num personagem para ver o perfil e todo o conteúdo ligado a ele.</p>'+criar+cards); }
@@ -405,7 +405,7 @@ async function umPersonagem(id){ var r=await sb.from("personagens").select("*").
 async function pubsDoPersonagem(id){ var r=await sb.from("publicacoes").select("*").eq("personagem_id",id).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function personagensMundo(){ if(!S.mundo)return []; var r=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).order("nome"); return r.error?[]:(r.data||[]); }
 async function meusPersonagens(){ if(!S.user||!S.mundo)return []; var r=await sb.from("personagens").select("id,nome").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
-function cardPersonagem(c){ return '<div class="card clic" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,"🧝")+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
+function cardPersonagem(c){ return '<div class="card clic" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,"🧝")+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
 async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; }
   var nomeAutor=await nomeDe(c.jogador_id); var pubs=await pubsDoPersonagem(id);
@@ -432,9 +432,14 @@ function formPersonagem(opts, c){
   var mesaId=c?c.mesa_id:(opts.mesa||null); var emMesa=!!opts.mesa;
   var visOpts=mesaId?[["publico","público (todos)"],["mesa","mesa (todos da campanha)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
   var seletorMesa=(!emMesa && S.mesas.length)?'<label>Mesa (opcional)</label><select id="pc_mesa"><option value="">— sem mesa —</option>'+S.mesas.map(function(m){return '<option value="'+m.id+'"'+(c&&c.mesa_id===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join("")+'</select>':'';
+  var tipoSel=c?(c.tipo||"jogador"):(opts.tp||"jogador");
+  var podeAtribuir=donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin");
+  var seletorTipo='<label>Tipo de personagem</label><select id="pc_tipo">'+opt([["jogador","Personagem de jogador"],["npc","NPC do mestre"]],tipoSel)+'</select>';
+  var seletorAtrib=(podeAtribuir && S.perfis && S.perfis.length)?'<label>Dono do personagem (atribuir a um jogador)</label><select id="pc_jogador">'+S.perfis.map(function(u){return '<option value="'+u.id+'"'+(((c?c.jogador_id:S.user.id)===u.id)?' selected':'')+'>'+esc(u.nome)+(u.id===S.user.id?' (você)':'')+'</option>';}).join("")+'</select>':'';
   return '<div class="bread">'+(c?'Editar personagem':'Novo personagem')+'</div><h1>🧝 '+(c?'Editar personagem':'Novo personagem')+'</h1>'
     +'<div class="form"><label>Nome</label><input id="pc_nome" value="'+esc(c?c.nome:"")+'">'
     +'<label>Epíteto / título (opcional)</label><input id="pc_epiteto" value="'+esc(c&&c.epiteto?c.epiteto:"")+'" placeholder="ex.: o Errante, a Branca">'
+    +seletorTipo+seletorAtrib
     +seletorMesa
     +campoImagem('Foto do personagem (opcional)','pc_img',(c&&c.imagem_url?c.imagem_url:""))
     +'<label>Resumo curto (opcional)</label><input id="pc_resumo" value="'+esc(c&&c.resumo?c.resumo:"")+'" placeholder="uma linha sobre o personagem">'
@@ -443,14 +448,14 @@ function formPersonagem(opts, c){
     +'<div><label>Visibilidade</label><select id="pc_vis">'+opt(visOpts,c?c.visibilidade:(mesaId?"mesa":"publico"))+'</select></div></div>'
     +'<p style="margin-top:16px"><button class="btn" onclick="salvarPersonagem('+(c?"'"+c.id+"'":"null")+')">'+(c?'Salvar':'Criar personagem')+'</button> <button class="btn sec" onclick="'+(c?"go('personagem','"+c.id+"')":"go('pers','jog')")+'">Cancelar</button></p></div>';
 }
-function telaNovoPersonagem(opts){ layout(formPersonagem(opts||{},null)); }
-async function telaEditarPersonagem(id){ layout('<p>Carregando…</p>'); var c=await umPersonagem(id); if(!c){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPersonagem({},c)); }
+async function telaNovoPersonagem(opts){ opts=opts||{}; if(donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin")) await perfis(); layout(formPersonagem(opts,null)); }
+async function telaEditarPersonagem(id){ layout('<p>Carregando…</p>'); var c=await umPersonagem(id); if(!c){layout('<div class="aviso">Sem permissão.</div>');return;} if(donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin")) await perfis(); layout(formPersonagem({},c)); }
 async function salvarPersonagem(editId){ try{
   var nome=val("pc_nome").trim(); if(!nome)return erro("Dê um nome ao personagem.");
-  var mesaSel=document.getElementById("pc_mesa")?val("pc_mesa"):"";
-  var reg={ nome:nome, slug:slug(nome), epiteto:(val("pc_epiteto").trim()||null), imagem_url:(val("pc_img").trim()||null), resumo:(val("pc_resumo").trim()||null), corpo:val("pc_corpo"), estado:val("pc_estado"), visibilidade:val("pc_vis") };
-  if(editId){ if(document.getElementById("pc_mesa")) reg.mesa_id=mesaSel||null; var u=await sb.from("personagens").update(reg).eq("id",editId); if(u.error)throw u.error; go("personagem",editId); }
-  else { reg.mundo_id=S.mundo?S.mundo.id:null; reg.mesa_id=mesaSel||null; reg.jogador_id=S.user.id; var r=await sb.from("personagens").insert(reg).select().single(); if(r.error)throw r.error; go("personagem",r.data.id); }
+  var mesaSel=document.getElementById("pc_mesa")?val("pc_mesa"):""; var jid=document.getElementById("pc_jogador")?(val("pc_jogador")||S.user.id):S.user.id;
+  var reg={ nome:nome, slug:slug(nome), epiteto:(val("pc_epiteto").trim()||null), imagem_url:(val("pc_img").trim()||null), resumo:(val("pc_resumo").trim()||null), corpo:val("pc_corpo"), estado:val("pc_estado"), visibilidade:val("pc_vis"), tipo:(val("pc_tipo")||"jogador") };
+  if(editId){ if(document.getElementById("pc_mesa")) reg.mesa_id=mesaSel||null; if(document.getElementById("pc_jogador")) reg.jogador_id=jid; var u=await sb.from("personagens").update(reg).eq("id",editId); if(u.error)throw u.error; go("personagem",editId); }
+  else { reg.mundo_id=S.mundo?S.mundo.id:null; reg.mesa_id=mesaSel||null; reg.jogador_id=jid; var r=await sb.from("personagens").insert(reg).select().single(); if(r.error)throw r.error; go("personagem",r.data.id); }
 }catch(e){erro(e);} }
 async function excluirPersonagem(id){ if(!confirm("Excluir este personagem? Não dá para desfazer.")) return; try{ var r=await sb.from("personagens").delete().eq("id",id); if(r.error)throw r.error; go("pers","jog"); }catch(e){erro(e);} }
 async function subirImgPers(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("pc_img_st"); if(st)st.textContent="enviando…"; try{ var u=await uploadArquivo(f); var c=document.getElementById("pc_img"); if(c)c.value=u; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
