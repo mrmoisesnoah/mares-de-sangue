@@ -613,8 +613,17 @@ async function telaBusca(q){ if(!S.mundo){go("mundos");return;} q=(q||"").trim()
 async function eventosMundo(){ if(!S.mundo)return []; var r=await sb.from("eventos").select("*").eq("mundo_id",S.mundo.id).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
 async function umEvento(id){ var r=await sb.from("eventos").select("*").eq("id",id).maybeSingle(); return r.data; }
 async function telaLinhaTempo(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var evs=await eventosMundo();
+  var linkMap={};
+  if(evs.length){ var ids=evs.map(function(e){return e.id;});
+    var lk=await sb.from("evento_links").select("*").in("evento_id",ids); var links=lk.data||[];
+    var pubIds=[],perIds=[]; links.forEach(function(l){ if(l.tipo==="personagem")perIds.push(l.alvo_id); else pubIds.push(l.alvo_id); });
+    var tit={};
+    if(pubIds.length){ var pr=await sb.from("publicacoes").select("id,titulo").in("id",pubIds); (pr.data||[]).forEach(function(x){tit["publicacao:"+x.id]={t:x.titulo,r:"pub"};}); }
+    if(perIds.length){ var cr=await sb.from("personagens").select("id,nome").in("id",perIds); (cr.data||[]).forEach(function(x){tit["personagem:"+x.id]={t:x.nome,r:"personagem"};}); }
+    links.forEach(function(l){ var info=tit[l.tipo+":"+l.alvo_id]; if(info){ (linkMap[l.evento_id]=linkMap[l.evento_id]||[]).push({t:info.t,r:info.r,id:l.alvo_id}); } });
+  }
   var criar=S.user?'<a class="btn" onclick="go(\'novoEvento\')">+ Novo evento</a>':'';
-  var tl=evs.length?'<div class="tl">'+evs.map(function(e){ var podeE=S.user&&(donoMundo()||e.autor_id===S.user.id); return '<div class="tl-item"><span class="tl-dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span><div class="tl-card">'+(e.quando?'<div class="tl-quando">'+esc(e.quando)+'</div>':'')+'<h3>'+esc(e.titulo)+'</h3>'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+(podeE?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">✎ editar</a> · <a onclick="excluirEvento(\''+e.id+'\')">🗑 excluir</a></p>':'')+'</div></div>'; }).join("")+'</div>':'<div class="empty">Nenhum acontecimento na linha do tempo ainda.'+(S.user?' Adicione o primeiro.':'')+'</div>';
+  var tl=evs.length?'<div class="tl">'+evs.map(function(e){ var podeE=S.user&&(donoMundo()||e.autor_id===S.user.id); var lks=linkMap[e.id]?'<p class="vis-leg" style="margin:6px 0 0">🔗 '+linkMap[e.id].map(function(x){return '<a onclick="go(\''+x.r+'\',\''+x.id+'\')">'+esc(x.t)+'</a>';}).join(" · ")+'</p>':''; return '<div class="tl-item"><span class="tl-dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span><div class="tl-card">'+(e.quando?'<div class="tl-quando">'+esc(e.quando)+'</div>':'')+'<h3>'+esc(e.titulo)+'</h3>'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+lks+(podeE?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">✎ editar</a> · <a onclick="excluirEvento(\''+e.id+'\')">🗑 excluir</a></p>':'')+'</div></div>'; }).join("")+'</div>':'<div class="empty">Nenhum acontecimento na linha do tempo ainda.'+(S.user?' Adicione o primeiro.':'')+'</div>';
   layout(hero("🕰 Linha do Tempo — "+S.mundo.nome,"A cronologia do mundo, dos primórdios aos dias atuais", S.mundo.fundo_url, criar)+'<p class="vis-leg">Dica: use o campo “Ordem” para encadear os acontecimentos na sequência certa.</p>'+tl); }
 function formEvento(e){ return '<div class="bread"><a onclick="go(\'linha\')">‹ Linha do tempo</a></div><h1>🕰 '+(e?'Editar evento':'Novo evento')+'</h1>'
   +'<div class="form"><label>Título do acontecimento</label><input id="ev_titulo" value="'+esc(e?e.titulo:"")+'">'
@@ -624,7 +633,7 @@ function formEvento(e){ return '<div class="bread"><a onclick="go(\'linha\')">�
   +'<label>Cor do marcador</label><input id="ev_cor" type="color" value="'+esc(e&&e.cor?e.cor:"#7c1c14")+'" style="width:64px;height:36px;padding:2px">'
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarEvento('+(e?"'"+e.id+"'":"null")+')">'+(e?'Salvar':'Criar evento')+'</button> <button class="btn sec" onclick="go(\'linha\')">Cancelar</button></p></div>'; }
 function telaNovoEvento(){ layout(formEvento(null)); }
-async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formEvento(e)); }
+async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formEvento(e)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Relacione este acontecimento a conteúdos do mundo — eles aparecem no card do evento.</p><div id="evlinks">Carregando…</div>'); renderEventoLinks(id); }
 async function salvarEvento(editId){ try{ var t=val("ev_titulo").trim(); if(!t)return erro("Dê um título ao evento."); var ord=val("ev_ordem").trim();
   var reg={ titulo:t, quando:(val("ev_quando").trim()||null), ordem:(ord!==""?parseInt(ord,10):null), descricao:val("ev_desc"), cor:(val("ev_cor")||null) };
   if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; }
@@ -662,6 +671,24 @@ function gridOuLista(items, cardFn, liFn){ return S.modo==="lista" ? '<ul class=
 function liPersonagem(c){ return '<li class="li-clic" onclick="go(\'personagem\',\''+c.id+'\')"><span class="li-ic">🧝</span><span class="li-tit">'+esc(c.nome)+'</span>'+(c.epiteto?'<span class="tipo">'+esc(c.epiteto)+'</span>':'')+visChip(c.visibilidade)+'</li>'; }
 function liJornal(j){ return '<li class="li-clic" onclick="go(\'jornal\',\''+j.id+'\')"><span class="li-ic">📰</span><span class="li-tit">'+esc(j.nome)+'</span>'+(j.descricao?'<span class="vis-leg" style="flex:1">'+esc(j.descricao)+'</span>':'')+'</li>'; }
 function tagChips(tags){ return (tags&&tags.length)?'<p style="margin:8px 0">'+tags.map(function(t){return '<a class="tagc" onclick="go(\'busca\',\''+esc(t)+'\')">#'+esc(t)+'</a>';}).join("")+'</p>':''; }
+// ===== Vínculos de evento <-> conteúdo =====
+async function carregarLinkOpts(){ if(S.linkOpts&&S.linkOpts._m===S.mundo.id) return S.linkOpts;
+  var pr=await sb.from("publicacoes").select("id,titulo").eq("mundo_id",S.mundo.id).order("titulo");
+  var cr=await sb.from("personagens").select("id,nome").eq("mundo_id",S.mundo.id).order("nome");
+  S.linkOpts={_m:S.mundo.id, pubs:(pr.data||[]), pers:(cr.data||[])}; return S.linkOpts; }
+async function eventoLinks(id){ var r=await sb.from("evento_links").select("*").eq("evento_id",id); return r.error?[]:(r.data||[]); }
+async function addEventoLink(id){ var v=val("ev_link_sel"); if(!v)return; var i=v.indexOf(":"); var tipo=v.slice(0,i), alvo=v.slice(i+1); try{ var r=await sb.from("evento_links").insert({evento_id:id,tipo:tipo,alvo_id:alvo}); if(r.error)throw r.error; await renderEventoLinks(id); }catch(e){erro(e);} }
+async function removerEventoLink(linkId, eventoId){ try{ var r=await sb.from("evento_links").delete().eq("id",linkId); if(r.error)throw r.error; await renderEventoLinks(eventoId); }catch(e){erro(e);} }
+async function renderEventoLinks(id){ var box=document.getElementById("evlinks"); if(!box)return;
+  var links=await eventoLinks(id); var op=await carregarLinkOpts();
+  var nomePub=function(a){ var x=op.pubs.find(function(p){return p.id===a;}); return x?x.titulo:"(conteúdo)"; };
+  var nomePer=function(a){ var x=op.pers.find(function(p){return p.id===a;}); return x?x.nome:"(personagem)"; };
+  var ja={}; links.forEach(function(l){ja[l.tipo+":"+l.alvo_id]=1;});
+  var linhas=links.map(function(l){ var nm=l.tipo==="personagem"?nomePer(l.alvo_id):nomePub(l.alvo_id); var ic=l.tipo==="personagem"?"🧝":"📄"; return '<li class="li-clic" style="cursor:default"><span class="li-ic">'+ic+'</span><span class="li-tit">'+esc(nm)+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerEventoLink(\''+l.id+'\',\''+id+'\')">remover</button></li>'; }).join("");
+  var opcPer=op.pers.filter(function(p){return !ja["personagem:"+p.id];}).map(function(p){return '<option value="personagem:'+p.id+'">🧝 '+esc(p.nome)+'</option>';}).join("");
+  var opcPub=op.pubs.filter(function(p){return !ja["publicacao:"+p.id];}).map(function(p){return '<option value="publicacao:'+p.id+'">📄 '+esc(p.titulo)+'</option>';}).join("");
+  var add='<div class="expbar" style="margin-top:10px"><select id="ev_link_sel" style="max-width:340px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6"><option value="">— escolher conteúdo —</option>'+(opcPer?'<optgroup label="Personagens">'+opcPer+'</optgroup>':'')+(opcPub?'<optgroup label="Conteúdos">'+opcPub+'</optgroup>':'')+'</select> <button class="btn mini" onclick="addEventoLink(\''+id+'\')">+ Vincular</button></div>';
+  box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Nenhum conteúdo vinculado ainda.</li>')+'</ul>'+add; }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
