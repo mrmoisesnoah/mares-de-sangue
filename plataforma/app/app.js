@@ -133,7 +133,7 @@ async function carregarPublico(){
     S.mundos=m.data||[]; S.mundo=S.mundos[0]||null; if(S.mundo) await carregarMesas(); rota();
   }catch(e){ erro(e); }
 }
-async function selecionarMundo(id){ S.mundo=S.mundos.find(function(w){return w.id===id;})||S.mundo; await carregarMesas(); go("home"); }
+async function selecionarMundo(id){ S.mundo=S.mundos.find(function(w){return w.id===id;})||S.mundo; await carregarMesas(); await carregarFavs(); go("mundoHome"); }
 async function carregarMesas(){ var r=await sb.from("mesas").select("*").eq("mundo_id",S.mundo.id).order("criado_em"); S.mesas=r.error?[]:(r.data||[]); }
 async function pubsDaMesa(id){ var r=await sb.from("publicacoes").select("*").eq("mesa_id",id).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function loreDoMundo(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).or("mesa_id.is.null,visibilidade.eq.publico").order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
@@ -168,18 +168,17 @@ function sidebar(){
   var on=function(x){return S.view.t===x?' class="on"':'';};
   var nav='<a class="nav-home"'+on("home")+' onclick="go(\'home\')">⌂ Início</a>';
   if(S.mundo){
+    nav+='<a'+(S.view.t==="mundoHome"?' class="on"':'')+' onclick="go(\'mundoHome\')">🏰 Home do mundo</a>';
     nav+='<a'+on("busca")+' onclick="go(\'busca\',\'\')">🔎 Buscar</a>';
     nav+='<a'+on("lore")+' onclick="go(\'lore\')">📖 Enciclopédia</a>';
     nav+='<a'+on("mapas")+' onclick="go(\'mapas\')">🗺️ Mapas</a>';
     nav+='<a class="destaque'+(S.view.t==="jornais"?' on':'')+'" onclick="go(\'jornais\')">📰 Jornais</a>';
-    nav+='<a'+on("linha")+' onclick="go(\'linha\')">🕰 Linha do tempo</a>';
+    nav+='<a'+(S.view.t==="linha"&&!S.view.arg?' class="on"':'')+' onclick="go(\'linha\')">🕰 Linha do tempo</a>';
     nav+='<a onclick="go(\'pers\',\'jog\')">👥 Personagens dos Jogadores</a>';
     nav+='<a onclick="go(\'pers\',\'mes\')">🎭 Personagens do Mestre</a>';
-    if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a'+(S.view.t==="mesa"&&S.view.arg===m.id?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
+    if(S.mesas.length){ nav+='<h4>Mesas</h4>'+S.mesas.map(function(m){return '<a'+(S.view.arg===m.id&&(S.view.t==="mesa"||S.view.t==="linha")?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">⚔ '+esc(m.nome)+'</a>';}).join(""); }
     var mestreMesas=S.mesas.filter(mestreDe);
-    if(mestreMesas.length){ nav+='<h4>🎭 Área do Mestre</h4>';
-      if(mestreMesas.length===1){ nav+='<a'+(S.view.t==="areaMestre"?' class="on"':'')+' onclick="go(\'areaMestre\',\''+mestreMesas[0].id+'\')">🎭 '+esc(mestreMesas[0].nome)+'</a>'; }
-      else { nav+='<select class="nav-select" onchange="if(this.value)go(\'areaMestre\',this.value)"><option value="">— ir à mesa…—</option>'+mestreMesas.map(function(m){return '<option value="'+m.id+'">'+esc(m.nome)+'</option>';}).join("")+'</select>'; } }
+    if(mestreMesas.length){ nav+='<h4>🎭 Área do Mestre</h4>'+mestreMesas.map(function(m){return '<a'+(S.view.t==="areaMestre"&&S.view.arg===m.id?' class="on"':'')+' onclick="go(\'areaMestre\',\''+m.id+'\')">🎭 '+esc(m.nome)+'</a>';}).join(""); }
     if(S.user){
       nav+='<a'+(S.view.t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">★ Favoritos</a><h4>Criar</h4><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a><a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a><a onclick="go(\'novoJornal\')">+ Jornal</a><a onclick="go(\'novaMesa\')">+ Mesa</a>';
     } else { nav+='<a onclick="go(\'login\')">🔑 Entrar para participar</a>'; }
@@ -211,19 +210,25 @@ function botoesCriar(){
 }
 async function telaHome(){
   layout('<p>Carregando…</p>');
-  var mundoCards=S.mundos.map(function(w){return '<div class="card clic'+(S.mundo&&w.id===S.mundo.id?' sel':'')+'" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,"🌍")+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
-  var topo=hero("Mares de Sangue","Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", (S.mundo?S.mundo.fundo_url:null), botoesCriar());
-  if(!S.mundo){
-    layout(topo+'<h2>Mundos</h2>'+(mundoCards?'<div class="cards">'+mundoCards+'</div>':'<div class="empty">'+(S.user?'Nenhum mundo ainda — crie o primeiro acima.':'Nenhum mundo público disponível.')+'</div>')); return;
-  }
+  var topo=hero("Mares de Sangue","Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", null, (S.user?botoesCriar():'<a class="btn" onclick="go(\'login\')">Entrar</a>'));
+  var mundoCards=S.mundos.map(function(w){return '<div class="card clic" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,"🌍")+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
+  var mundosHtml='<h2>🌍 Escolha um mundo</h2><p class="vis-leg" style="margin-top:-6px">Clique em um mundo para entrar nele.</p>'+(mundoCards?'<div class="cards">'+mundoCards+'</div>':'<div class="empty">'+(S.user?'Nenhum mundo ainda — crie o primeiro acima.':'Nenhum mundo público disponível.')+'</div>');
+  var rec=visitasRecentes();
+  var contHtml=(S.user&&rec.length)?'<h2>↩ Continuar de onde parou</h2><div class="cards">'+rec.map(function(v){var rta={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[v.tipo]||"pub"; var ica={publicacao:"📄",personagem:"🧝",jornal:"📰",mesa:"⚔"}[v.tipo]||"📄"; return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div><h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+(v.mundoNome?esc(v.mundoNome)+' · ':'')+esc(v.tipo)+'</p></div>';}).join("")+'</div>':'';
+  var favHtml=S.user?'<p style="margin-top:12px"><a class="btn sec" onclick="go(\'favoritos\')">★ Meus favoritos</a></p>':'';
+  var nov=await novidadesGlobais();
+  var novHtml=nov.length?'<h2>📣 Novidades na plataforma</h2><p class="vis-leg" style="margin-top:-6px">As publicações mais recentes que você tem permissão para ver.</p>'+listar(nov):'';
+  layout(topo+mundosHtml+favHtml+contHtml+novHtml);
+}
+async function novidadesGlobais(){ var r=await sb.from("publicacoes").select("*").order("criado_em",{ascending:false}).limit(8); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
+async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>Carregando…</p>');
   var lore=await loreDoMundo(); var recs=await recentes();
   var nMesas=S.mesas.length, nLore=lore.length, nMapas=lore.filter(function(p){return p.tipo==="mapa";}).length;
   var heroDash=hero(S.mundo.nome, S.mundo.descricao||"Plataforma para Criação de Mundos — uma produção TOGA", S.mundo.fundo_url, botoesCriar()+(donoMundo()?' <a class="btn sec" onclick="go(\'editarMundo\')">✎ Editar mundo</a>':''));
-  var rec=visitasRecentes();
-  var contHtml=rec.length?'<h2>↩ Continuar de onde parou</h2><div class="cards">'+rec.map(function(v){var rta={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[v.tipo]||"pub"; var ica={publicacao:"📄",personagem:"🧝",jornal:"📰",mesa:"⚔"}[v.tipo]||"📄"; return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div><h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+esc(v.tipo)+'</p></div>';}).join("")+'</div>':'';
-  var trocaHtml=(S.mundos.length>1)?'<h2>🌍 Trocar de mundo</h2><div class="cards">'+S.mundos.map(function(w){return '<div class="card clic'+(w.id===S.mundo.id?' sel':'')+'" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,"🌍")+'<h3>'+esc(w.nome)+'</h3></div>';}).join("")+'</div>':'';
   function dcard(ic,nm,ds,ac){ return '<div class="card clic dash" onclick="'+ac+'"><div class="dash-ic">'+ic+'</div><h3>'+nm+'</h3><p class="res">'+ds+'</p></div>'; }
-  layout(heroDash
+  var rec=visitasRecentes(S.mundo.id);
+  var contHtml=rec.length?'<h2>↩ Continuar de onde parou</h2><div class="cards">'+rec.map(function(v){var rta={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[v.tipo]||"pub"; var ica={publicacao:"📄",personagem:"🧝",jornal:"📰",mesa:"⚔"}[v.tipo]||"📄"; return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div><h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+esc(v.tipo)+'</p></div>';}).join("")+'</div>':'';
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+esc(S.mundo.nome)+'</div>'+heroDash
     +'<div class="stats"><div class="stat"><b>'+nLore+'</b><span>artigos</span></div><div class="stat"><b>'+nMesas+'</b><span>mesas</span></div><div class="stat"><b>'+nMapas+'</b><span>mapas</span></div></div>'+contHtml
     +(S.user&&!donoMundo()?'<p><a class="btn sec" onclick="pedirAcesso(\'mundo\',\''+S.mundo.id+'\')">🔑 Pedir acesso para colaborar</a></p>':'')+'<h2>Explorar o mundo</h2><div class="cards">'
       +dcard("📖","Enciclopédia","Conhecimento público do mundo","go(\'lore\')")
@@ -235,7 +240,7 @@ async function telaHome(){
       +(S.user?dcard("★","Favoritos","Seus conteúdos marcados","go(\'favoritos\')"):'')
     +'</div>'
     +(S.mesas.length?'<h2>'+(S.user?'Suas mesas':'Mesas e Campanhas')+'</h2><div class="cards">'+S.mesas.map(function(m){return '<div class="card clic" onclick="go(\'mesa\',\''+m.id+'\')">'+thumb(m.capa_url||m.fundo_url,"⚔")+'<h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("")+'</div>':'')
-    +trocaHtml+(recs.length?'<h2>Novidades — adições recentes</h2>'+listar(recs):''));
+    +(recs.length?'<h2>Novidades — adições recentes</h2>'+listar(recs):''));
 }
 async function telaMundos(){
   var cards=S.mundos.map(function(w){return '<div class="card clic'+(S.mundo&&w.id===S.mundo.id?' sel':'')+'" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,"🌍")+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
@@ -797,8 +802,8 @@ async function telaFavoritos(){ if(!S.user){ go("login"); return; } layout('<p>C
   var rt={mesa:"mesa",publicacao:"pub",personagem:"personagem",jornal:"jornal"}; var ic={mesa:"⚔",publicacao:"📄",personagem:"🧝",jornal:"📰",mundo:"🌍"};
   var html=favs.length?'<ul class="lista2">'+favs.map(function(f){ var alvo=rt[f.tipo]; var acao=alvo?"go('"+alvo+"','"+f.alvo_id+"')":"selecionarMundo('"+f.alvo_id+"')"; return '<li class="li-clic" onclick="'+acao+'"><span class="li-tit">'+(ic[f.tipo]||"⭐")+' '+esc(f.titulo||"(sem título)")+'</span><span class="chip">'+esc(f.tipo)+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="event.stopPropagation();desfav(\''+f.tipo+'\',\''+f.alvo_id+'\')">remover</button></li>'; }).join("")+'</ul>':'<div class="empty">Nenhum favorito ainda. Use o botão ☆ Favoritar nos conteúdos.</div>';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Favoritos</div><h1>★ Favoritos</h1>'+html); }
-function registrarVisita(tipo,id,titulo){ try{ var k="mds_recent_"+(S.mundo?S.mundo.id:"x"); var arr=JSON.parse(localStorage.getItem(k)||"[]"); arr=arr.filter(function(x){return !(x.tipo===tipo&&x.id===id);}); arr.unshift({tipo:tipo,id:id,titulo:String(titulo||""),t:Date.now()}); arr=arr.slice(0,6); localStorage.setItem(k,JSON.stringify(arr)); }catch(e){} }
-function visitasRecentes(){ try{ var k="mds_recent_"+(S.mundo?S.mundo.id:"x"); return JSON.parse(localStorage.getItem(k)||"[]"); }catch(e){ return []; } }
+function registrarVisita(tipo,id,titulo){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=arr.filter(function(x){return !(x.tipo===tipo&&x.id===id);}); arr.unshift({tipo:tipo,id:id,titulo:String(titulo||""),mundoId:(S.mundo?S.mundo.id:null),mundoNome:(S.mundo?S.mundo.nome:""),t:Date.now()}); arr=arr.slice(0,12); localStorage.setItem("mds_recent",JSON.stringify(arr)); }catch(e){} }
+function visitasRecentes(mundoId){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=mundoId?arr.filter(function(x){return x.mundoId===mundoId;}):arr; return arr.slice(0,6); }catch(e){ return []; } }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
@@ -836,6 +841,7 @@ function render(){
   else if(t==="sessao") telaSessao(S.view.arg);
   else if(t==="novaSessao") telaNovaSessao(S.view.arg);
   else if(t==="editarSessao") telaEditarSessao(S.view.arg);
+  else if(t==="mundoHome") telaMundoHome();
   else if(t==="favoritos") telaFavoritos();
   else telaHome();
 }
