@@ -632,12 +632,12 @@ function formEvento(e){ return '<div class="bread"><a onclick="go(\'linha\')">�
   +'<label>Descrição (Markdown — aceita [[links]] e imagens)</label><textarea id="ev_desc" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(e&&e.descricao?e.descricao:"")+'</textarea>'
   +'<label>Cor do marcador</label><input id="ev_cor" type="color" value="'+esc(e&&e.cor?e.cor:"#7c1c14")+'" style="width:64px;height:36px;padding:2px">'
   +'<p style="margin-top:14px"><button class="btn" onclick="salvarEvento('+(e?"'"+e.id+"'":"null")+')">'+(e?'Salvar':'Criar evento')+'</button> <button class="btn sec" onclick="go(\'linha\')">Cancelar</button></p></div>'; }
-function telaNovoEvento(){ layout(formEvento(null)); }
+async function telaNovoEvento(){ S.evPendentes=[]; if(S.mundo) await carregarLinkOpts(); layout(formEvento(null)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Vincule conteúdos agora — serão salvos junto ao criar o evento.</p><div id="evnovo"></div>'); renderEvNovo(); }
 async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formEvento(e)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Relacione este acontecimento a conteúdos do mundo — eles aparecem no card do evento.</p><div id="evlinks">Carregando…</div>'); renderEventoLinks(id); }
 async function salvarEvento(editId){ try{ var t=val("ev_titulo").trim(); if(!t)return erro("Dê um título ao evento."); var ord=val("ev_ordem").trim();
   var reg={ titulo:t, quando:(val("ev_quando").trim()||null), ordem:(ord!==""?parseInt(ord,10):null), descricao:val("ev_desc"), cor:(val("ev_cor")||null) };
   if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; go("linha"); }
-  else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg).select().single(); if(r.error)throw r.error; go("editarEvento",r.data.id); } }catch(e){erro(e);} }
+  else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg).select().single(); if(r.error)throw r.error; if(S.evPendentes&&S.evPendentes.length){ var rows=S.evPendentes.map(function(l){return {evento_id:r.data.id,tipo:l.tipo,alvo_id:l.alvo_id};}); var ri=await sb.from("evento_links").insert(rows); if(ri.error)throw ri.error; } S.evPendentes=[]; go("linha"); } }catch(e){erro(e);} }
 async function excluirEvento(id){ if(!confirm("Excluir este evento da linha do tempo?"))return; try{ var r=await sb.from("eventos").delete().eq("id",id); if(r.error)throw r.error; go("linha"); }catch(e){erro(e);} }
 // ===== Pedidos de acesso (colaboração) =====
 async function pedidosPendentes(tipo, alvoId){ var r=await sb.from("pedidos_acesso").select("*").eq("tipo",tipo).eq("alvo_id",alvoId).eq("estado","pendente").order("criado_em"); return r.error?[]:(r.data||[]); }
@@ -688,6 +688,16 @@ async function renderEventoLinks(id){ var box=document.getElementById("evlinks")
   var opcPub=op.pubs.filter(function(p){return !ja["publicacao:"+p.id];}).map(function(p){return '<option value="publicacao:'+p.id+'">📄 '+esc(p.titulo)+'</option>';}).join("");
   var add='<div class="expbar" style="margin-top:10px"><select id="ev_link_sel" style="max-width:340px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6"><option value="">— escolher conteúdo —</option>'+(opcPer?'<optgroup label="Personagens">'+opcPer+'</optgroup>':'')+(opcPub?'<optgroup label="Conteúdos">'+opcPub+'</optgroup>':'')+'</select> <button class="btn mini" onclick="addEventoLink(\''+id+'\')">+ Vincular</button></div>';
   box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Nenhum conteúdo vinculado ainda.</li>')+'</ul>'+add; }
+// ===== Vínculos pendentes na criação de evento =====
+function renderEvNovo(){ var box=document.getElementById("evnovo"); if(!box)return; var op=S.linkOpts||{pubs:[],pers:[]}; S.evPendentes=S.evPendentes||[];
+  var ja={}; S.evPendentes.forEach(function(l){ja[l.tipo+":"+l.alvo_id]=1;});
+  var linhas=S.evPendentes.map(function(l,i){ var ic=l.tipo==="personagem"?"🧝":"📄"; return '<li class="li-clic" style="cursor:default"><span class="li-ic">'+ic+'</span><span class="li-tit">'+esc(l.nome)+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removePendente('+i+')">remover</button></li>'; }).join("");
+  var opcPer=op.pers.filter(function(p){return !ja["personagem:"+p.id];}).map(function(p){return '<option value="personagem:'+p.id+'">🧝 '+esc(p.nome)+'</option>';}).join("");
+  var opcPub=op.pubs.filter(function(p){return !ja["publicacao:"+p.id];}).map(function(p){return '<option value="publicacao:'+p.id+'">📄 '+esc(p.titulo)+'</option>';}).join("");
+  var add='<div class="expbar" style="margin-top:10px"><select id="ev_link_sel" style="max-width:340px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6"><option value="">— escolher conteúdo —</option>'+(opcPer?'<optgroup label="Personagens">'+opcPer+'</optgroup>':'')+(opcPub?'<optgroup label="Conteúdos">'+opcPub+'</optgroup>':'')+'</select> <button class="btn mini" onclick="addPendente()">+ Vincular</button></div>';
+  box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Nenhum conteúdo vinculado ainda.</li>')+'</ul>'+add; }
+function addPendente(){ var v=val("ev_link_sel"); if(!v)return; var i=v.indexOf(":"); var tipo=v.slice(0,i), alvo=v.slice(i+1); var op=S.linkOpts||{pubs:[],pers:[]}; var nome=tipo==="personagem"?((op.pers.find(function(p){return p.id===alvo;})||{}).nome||"personagem"):((op.pubs.find(function(p){return p.id===alvo;})||{}).titulo||"conteúdo"); S.evPendentes=S.evPendentes||[]; S.evPendentes.push({tipo:tipo,alvo_id:alvo,nome:nome}); renderEvNovo(); }
+function removePendente(i){ S.evPendentes.splice(i,1); renderEvNovo(); }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
