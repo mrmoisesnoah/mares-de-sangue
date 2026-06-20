@@ -25,7 +25,8 @@ h2{font-family:'Cinzel',serif;color:var(--tinta);border-bottom:1px solid var(--b
 .card.clic{cursor:pointer}.card.clic:hover{transform:translateY(-2px);border-color:var(--ouro);box-shadow:0 5px 14px var(--sombra)}
 .card h3{font-family:'Cinzel',serif;margin:.3em 0 .1em;color:var(--sangue);font-size:17px}
 .card .res{color:var(--tinta2);font-size:14px;margin:.2em 0}
-.thumb{height:130px;border-radius:8px;background:#e8dcc0 center/cover no-repeat;border:1px solid var(--borda);margin:-2px 0 2px}
+.thumb{height:130px;border-radius:8px;overflow:hidden;background:var(--perg2);border:1px solid var(--borda);margin:-2px 0 2px}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .thumb.noimg{display:flex;align-items:center;justify-content:center;font-size:40px;color:var(--ouro);background:var(--perg2)}
 .chip{display:inline-block;border-radius:12px;padding:1px 10px;font-size:12px;color:#fff;margin:2px 4px 2px 0}
 .c-mestre{background:var(--mestre)}.c-mesa{background:var(--mesa)}.c-privado{background:var(--privado)}
@@ -192,3 +193,7 @@ details.bloco .cards{padding:12px}
 /* cards do dashboard do mundo */
 .card.dash{text-align:center}
 .dash-ic{font-size:34px;line-height:1;margin:2px 0 6px}
+
+/* botões legíveis sobre o hero (imagem de fundo) */
+.hero2 .acts .btn.sec{color:#fff;border-color:rgba(255,255,255,.7);background:rgba(0,0,0,.22)}
+.hero2 .acts .btn.sec:hover{background:rgba(0,0,0,.4);border-color:#fff}
