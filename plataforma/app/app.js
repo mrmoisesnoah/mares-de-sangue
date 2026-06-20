@@ -238,13 +238,13 @@ async function telaLore(){ if(!S.mundo){go("mundos");return;} layout('<p>Carrega
 async function telaMapas(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var lore=await loreDoMundo(); var mp=lore.filter(function(p){return p.tipo==="mapa";});
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mapas</div><h1>🗺️ Mapas</h1>'
     +(S.user?'<p><a class="btn" onclick="go(\'nova\',{mesa:null,tipo:\'mapa\'})">+ Novo mapa</a></p>':'')
-    +(mp.length?listar(mp):'<div class="empty">Nenhum mapa visível ainda.</div>')); }
+    +(mp.length?barraModo()+listar(mp):'<div class="empty">Nenhum mapa visível ainda.</div>')); }
 async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>');
   var todos=await personagensMundo(); var dono=S.mundo.dono_id;
   var lista=(qual==="mes")?todos.filter(function(c){return c.jogador_id===dono;}):todos.filter(function(c){return c.jogador_id!==dono;});
   var titulo=(qual==="mes")?"🎭 Personagens do Mestre (NPCs)":"👥 Personagens dos Jogadores";
   var criar=S.user?'<p><a class="btn" onclick="go(\'novoPersonagem\',{mesa:null})">+ Novo personagem</a></p>':'';
-  var cards=lista.length?'<div class="cards">'+lista.map(cardPersonagem).join("")+'</div>':'<div class="empty">Nenhum personagem ainda.</div>';
+  var cards=lista.length?barraModo()+gridOuLista(lista,cardPersonagem,liPersonagem):'<div class="empty">Nenhum personagem ainda.</div>';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Personagens</div><h1>'+titulo+'</h1>'
     +'<p class="vis-leg">Clique num personagem para ver o perfil e todo o conteúdo ligado a ele.</p>'+criar+cards); }
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
@@ -278,7 +278,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
   layout('<div class="bread"><a onclick="'+voltar+'">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')
     +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
-    +(p.tags&&p.tags.length?'<p class="vis-leg">'+p.tags.map(esc).join(", ")+'</p>':'')
+    +tagChips(p.tags)
     +(p.capa_url?'<img class="capa" src="'+esc(p.capa_url)+'" alt="">':'')
     +media+'<div class="corpo">'+md(p.corpo)+'</div>'+vejaTb+acoes+extra);
   if(extra) renderExpl(); }
@@ -487,7 +487,7 @@ async function meusJornais(){ if(!S.user||!S.mundo)return []; var r=await sb.fro
 function cardJornal(j){ return '<div class="card clic" onclick="go(\'jornal\',\''+j.id+'\')">'+thumb(j.imagem_url,"📰")+'<h3>'+esc(j.nome)+'</h3>'+(j.descricao?'<p class="res">'+esc(j.descricao)+'</p>':'')+'</div>'; }
 async function telaJornais(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var js=await jornaisMundo();
   var criar=S.user?'<a class="btn" onclick="go(\'novoJornal\')">+ Criar jornal</a>':'';
-  var cards=js.length?'<div class="cards">'+js.map(cardJornal).join("")+'</div>':'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
+  var cards=js.length?barraModo()+gridOuLista(js,cardJornal,liJornal):'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
   layout(hero("📰 Jornais de "+S.mundo.nome,"Periódicos do mundo — notícias, crônicas e boatos publicados pelos jornais", S.mundo.fundo_url, criar)+cards); }
 async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){ layout('<div class="aviso">Jornal não encontrado ou sem permissão.</div>'); return; }
   var nomeDono=await nomeDe(j.dono_id); var noticias=await pubsDoJornal(id);
@@ -655,6 +655,13 @@ async function aprovarPedido(pid, tipo, alvoId, uid){ try{
   else { renderContribPers(alvoId); renderPedidos("personagem",alvoId,"pedidospers"); }
 }catch(e){erro(e);} }
 async function recusarPedido(pid, tipo, alvoId){ try{ var u=await sb.from("pedidos_acesso").update({estado:"recusado"}).eq("id",pid); if(u.error)throw u.error; var box=tipo==="mundo"?"pedidosmundo":(tipo==="mesa"?"pedidosmesa":"pedidospers"); renderPedidos(tipo,alvoId,box); }catch(e){erro(e);} }
+// ===== Alternância cards/lista (telas de entidades) + tags =====
+function togModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); render(); }
+function barraModo(){ return '<div class="expbar" style="margin:6px 0"><button class="btn mini sec" onclick="togModo()">'+(S.modo==="lista"?"▦ Ver em cards":"☰ Ver em lista")+'</button></div>'; }
+function gridOuLista(items, cardFn, liFn){ return S.modo==="lista" ? '<ul class="lista2">'+items.map(liFn).join("")+'</ul>' : '<div class="cards">'+items.map(cardFn).join("")+'</div>'; }
+function liPersonagem(c){ return '<li class="li-clic" onclick="go(\'personagem\',\''+c.id+'\')"><span class="li-ic">🧝</span><span class="li-tit">'+esc(c.nome)+'</span>'+(c.epiteto?'<span class="tipo">'+esc(c.epiteto)+'</span>':'')+visChip(c.visibilidade)+'</li>'; }
+function liJornal(j){ return '<li class="li-clic" onclick="go(\'jornal\',\''+j.id+'\')"><span class="li-ic">📰</span><span class="li-tit">'+esc(j.nome)+'</span>'+(j.descricao?'<span class="vis-leg" style="flex:1">'+esc(j.descricao)+'</span>':'')+'</li>'; }
+function tagChips(tags){ return (tags&&tags.length)?'<p style="margin:8px 0">'+tags.map(function(t){return '<a class="tagc" onclick="go(\'busca\',\''+esc(t)+'\')">#'+esc(t)+'</a>';}).join("")+'</p>':''; }
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;

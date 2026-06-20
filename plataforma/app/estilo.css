@@ -197,3 +197,7 @@ details.bloco .cards{padding:12px}
 /* botões legíveis sobre o hero (imagem de fundo) */
 .hero2 .acts .btn.sec{color:#fff;border-color:rgba(255,255,255,.7);background:rgba(0,0,0,.22)}
 .hero2 .acts .btn.sec:hover{background:rgba(0,0,0,.4);border-color:#fff}
+
+/* tags como chips clicáveis */
+.tagc{display:inline-block;background:var(--perg2);border:1px solid var(--ouro);color:var(--sangue);border-radius:12px;padding:2px 10px;font-size:12.5px;margin:2px 5px 2px 0;cursor:pointer}
+.tagc:hover{background:var(--ouro);color:#fff}
