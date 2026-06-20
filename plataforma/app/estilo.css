@@ -260,3 +260,7 @@ details.bloco .cards{padding:12px}
 .form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:var(--sangue);box-shadow:0 0 0 3px rgba(124,28,20,.13)}
 .form>p:last-child{border-top:1px solid var(--borda);padding-top:15px}
 @media(max-width:600px){.sec-head h2{font-size:17px}.sec-head{padding-bottom:5px}.secao{margin:18px 0}}
+
+/* ===== Favoritos + combobox da lateral ===== */
+.fav-btn.on{background:var(--ouro);color:#fff;border-color:var(--ouro)}
+.nav-select{width:calc(100% - 4px);margin:4px 2px;padding:7px 9px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6;font-family:inherit;font-size:14px;color:var(--tinta)}
