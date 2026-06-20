@@ -636,9 +636,8 @@ function telaNovoEvento(){ layout(formEvento(null)); }
 async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formEvento(e)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Relacione este acontecimento a conteúdos do mundo — eles aparecem no card do evento.</p><div id="evlinks">Carregando…</div>'); renderEventoLinks(id); }
 async function salvarEvento(editId){ try{ var t=val("ev_titulo").trim(); if(!t)return erro("Dê um título ao evento."); var ord=val("ev_ordem").trim();
   var reg={ titulo:t, quando:(val("ev_quando").trim()||null), ordem:(ord!==""?parseInt(ord,10):null), descricao:val("ev_desc"), cor:(val("ev_cor")||null) };
-  if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; }
-  else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg); if(r.error)throw r.error; }
-  go("linha"); }catch(e){erro(e);} }
+  if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; go("linha"); }
+  else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg).select().single(); if(r.error)throw r.error; go("editarEvento",r.data.id); } }catch(e){erro(e);} }
 async function excluirEvento(id){ if(!confirm("Excluir este evento da linha do tempo?"))return; try{ var r=await sb.from("eventos").delete().eq("id",id); if(r.error)throw r.error; go("linha"); }catch(e){erro(e);} }
 // ===== Pedidos de acesso (colaboração) =====
 async function pedidosPendentes(tipo, alvoId){ var r=await sb.from("pedidos_acesso").select("*").eq("tipo",tipo).eq("alvo_id",alvoId).eq("estado","pendente").order("criado_em"); return r.error?[]:(r.data||[]); }
