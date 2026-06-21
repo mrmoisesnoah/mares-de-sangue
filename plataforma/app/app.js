@@ -73,7 +73,7 @@ function toggleMenu(){ var l=document.querySelector(".lateral"); if(l) l.classLi
 function abrirExplorador(pubs){ regTags(pubs); S.expl={pubs:pubs,q:"",cat:null}; }
 function exploradorHTML(){
   return '<div class="expbar"><input class="expq" id="expq" placeholder="🔎 Filtrar por título, tag ou texto…" oninput="explBusca(this.value)">'
-    +'<button class="btn mini sec" onclick="toggleModo()" id="btmodo">'+(S.modo==="lista"?"▦ Cards":"☰ Lista")+'</button></div>'
+    +'</div>'
     +'<div class="cards-cat" id="expcats"></div><div id="expconteudo"></div>';
 }
 function gruposDe(pubs){ var g={}; pubs.forEach(function(p){var s=secaoDe(p.tipo);var k=s[0]+"|"+s[1];(g[k]=g[k]||[]).push(p);}); return g; }
@@ -123,12 +123,12 @@ async function carregar(){
     var m=await sb.from("mundos").select("*").order("criado_em"); if(m.error)throw m.error;
     S.mundos=m.data||[]; S.mundo=S.mundos[0]||null;
     if(S.mundo) await carregarMesas();
-    await carregarFavs();
+    await carregarFavs(); await carregarNotifs();
     rota();
   }catch(e){ erro(e); }
 }
 async function carregarPublico(){
-  try{ S.user=null; S.profile=null; S.mesas=[]; S.favs={};
+  try{ S.user=null; S.profile=null; S.mesas=[]; S.favs={}; S.notifs=[];
     var m=await sb.from("mundos").select("*").eq("publico",true).order("criado_em");
     S.mundos=m.data||[]; S.mundo=S.mundos[0]||null; if(S.mundo) await carregarMesas(); rota();
   }catch(e){ erro(e); }
@@ -197,7 +197,7 @@ function layout(conteudo){
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
     +'<div class="marca" onclick="go(\'home\')">⚜ Mares de Sangue</div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="🔎 Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
-    +'<div class="userbox">'+ub+'</div></header>'
+    +'<div class="userbox">'+modoBtnHTML()+(S.user?bellHTML():'')+ub+'</div></header>'
     +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
 }
 
@@ -221,10 +221,11 @@ async function telaHome(){
   layout(topo+mundosHtml+favHtml+contHtml+novHtml);
 }
 async function novidadesGlobais(){ var r=await sb.from("publicacoes").select("*").order("criado_em",{ascending:false}).limit(8); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
+function botoesCriarMundo(){ if(!S.user) return '<a class="btn" onclick="go(\'login\')">Entrar para criar</a>'; return '<a class="btn" onclick="go(\'novaMesa\')">+ Criar Mesa</a> <a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:null})">+ Criar Personagem</a>'; }
 async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>Carregando…</p>');
   var lore=await loreDoMundo(); var recs=await recentes();
   var nMesas=S.mesas.length, nLore=lore.length, nMapas=lore.filter(function(p){return p.tipo==="mapa";}).length;
-  var heroDash=hero(S.mundo.nome, S.mundo.descricao||"Plataforma para Criação de Mundos — uma produção TOGA", S.mundo.fundo_url, botoesCriar()+(donoMundo()?' <a class="btn sec" onclick="go(\'editarMundo\')">✎ Editar mundo</a>':''));
+  var heroDash=hero(S.mundo.nome, S.mundo.descricao||"Plataforma para Criação de Mundos — uma produção TOGA", S.mundo.fundo_url, botoesCriarMundo()+(donoMundo()?' <a class="btn sec" onclick="go(\'editarMundo\')">✎ Editar mundo</a>':''));
   function dcard(ic,nm,ds,ac){ return '<div class="card clic dash" onclick="'+ac+'"><div class="dash-ic">'+ic+'</div><h3>'+nm+'</h3><p class="res">'+ds+'</p></div>'; }
   var rec=visitasRecentes(S.mundo.id);
   var contHtml=rec.length?'<h2>↩ Continuar de onde parou</h2><div class="cards">'+rec.map(function(v){var rta={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[v.tipo]||"pub"; var ica={publicacao:"📄",personagem:"🧝",jornal:"📰",mesa:"⚔"}[v.tipo]||"📄"; return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div><h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+esc(v.tipo)+'</p></div>';}).join("")+'</div>':'';
@@ -253,13 +254,13 @@ async function telaLore(){ if(!S.mundo){go("mundos");return;} layout('<p>Carrega
 async function telaMapas(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var lore=await loreDoMundo(); var mp=lore.filter(function(p){return p.tipo==="mapa";});
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mapas</div><h1>🗺️ Mapas</h1>'
     +(S.user?'<p><a class="btn" onclick="go(\'nova\',{mesa:null,tipo:\'mapa\'})">+ Novo mapa</a></p>':'')
-    +(mp.length?barraModo()+listar(mp):'<div class="empty">Nenhum mapa visível ainda.</div>')); }
+    +(mp.length?listar(mp):'<div class="empty">Nenhum mapa visível ainda.</div>')); }
 async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>');
   var todos=await personagensMundo(); var dono=S.mundo.dono_id;
   var lista=(qual==="mes")?todos.filter(function(c){return c.tipo==="npc";}):todos.filter(function(c){return c.tipo!=="npc";});
   var titulo=(qual==="mes")?"🎭 Personagens do Mestre (NPCs)":"👥 Personagens dos Jogadores";
   var criar=S.user?'<p><a class="btn" onclick="go(\'novoPersonagem\',{mesa:null,tp:\''+(qual==="mes"?"npc":"jogador")+'\'})">+ Novo '+(qual==="mes"?"NPC":"personagem")+'</a></p>':'';
-  var cards=lista.length?barraModo()+gridOuLista(lista,cardPersonagem,liPersonagem):'<div class="empty">Nenhum personagem ainda.</div>';
+  var cards=lista.length?gridOuLista(lista,cardPersonagem,liPersonagem):'<div class="empty">Nenhum personagem ainda.</div>';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Personagens</div><h1>'+titulo+'</h1>'
     +'<p class="vis-leg">Clique num personagem para ver o perfil e todo o conteúdo ligado a ele.</p>'+criar+cards); }
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
@@ -301,8 +302,8 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
     +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
     +tagChips(p.tags)
     +(p.capa_url?imagemComAcoes(p.capa_url,p.titulo,podeBaixar):'')
-    +media+anexo+'<div class="corpo">'+md(p.corpo)+'</div>'+vejaTb+acoes+extra);
-  if(extra) renderExpl(); }
+    +media+anexo+'<div class="corpo">'+md(p.corpo)+'</div>'+vejaTb+acoes+extra+secaoComentarios("publicacao",p.id,p.autor_id));
+  if(extra) renderExpl(); renderComentarios("publicacao",p.id); }
 
 // ---------- export ----------
 function baixarPdf(){ window.print(); }
@@ -372,7 +373,7 @@ function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><div class=
   +fHead('🌍','Criar Mundo','Um mundo agrupa toda a sua ambientação, mesas e personagens.')
   +fGrupo('Identidade do mundo','<label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: O Mundo de Skard"><label>Descrição</label>'+mdEditor('m_desc',''))
   +fGrupo('Aparência',campoImagem('Imagem de fundo (hero)','m_fundo',''))
-  +fAcoes('Criar mundo','salvarMundo()',"go('home')")+'</div>'); }
+  +fGrupo('Tema visual',seletorTema('m_tema','medieval'),'As cores do mundo. Inspirado no gênero — pode mudar depois.')+fAcoes('Criar mundo','salvarMundo()',"go('home')")+'</div>'); }
 function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><div class="form">'
   +fHead('⚔','Criar Mesa','Uma mesa é uma campanha dentro do mundo, com seu próprio tempo e lugar.')
   +fGrupo('Identidade','<label>Nome</label><input id="me_nome" placeholder="Ex.: Ecos na Cidade dos Corvos"><label>Descrição</label>'+mdEditor('me_desc',''))
@@ -383,7 +384,7 @@ async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Edit
   +fHead('🌍','Editar mundo','')
   +fGrupo('Identidade do mundo','<label>Nome</label><input id="w_nome" value="'+esc(w.nome)+'"><label>Descrição</label>'+mdEditor('w_desc',w.descricao||""))
   +fGrupo('Aparência',campoImagem('Imagem de fundo (hero)','w_fundo',(w.fundo_url||"")))
-  +fAcoes('Salvar','salvarMundoEdit()',"go('mundoHome')")+'</div>'
+  +fGrupo('Tema visual',seletorTema('w_tema',w.tema||'medieval'),'As cores do mundo.')+fAcoes('Salvar','salvarMundoEdit()',"go('mundoHome')")+'</div>'
   +'<h2>Colaboradores do mundo</h2><p class="vis-leg">Quem pode criar conteúdo neste mundo. Você (dono) sempre pode.</p><div id="colabmundo">Carregando…</div><div id="pedidosmundo"></div>');
   renderColabMundo(w.id); renderPedidos("mundo",w.id,"pedidosmundo"); }
 async function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===id;}); if(!m){layout('<div class="aviso">Mesa não encontrada.</div>');return;}
@@ -415,10 +416,10 @@ async function subirMundoFundo(inp){ var f=inp.files&&inp.files[0]; if(!f)return
 
 // ---------- gravações ----------
 async function salvarMundo(){ try{ var n=val("m_nome").trim(); if(!n)return erro("Dê um nome ao mundo.");
-  var r=await sb.from("mundos").insert({nome:n,slug:slug(n)+"-"+Date.now().toString(36),descricao:val("m_desc"),dono_id:S.user.id,publico:true,fundo_url:val("m_fundo").trim()||null}).select().single();
-  if(r.error)throw r.error; S.mundos.push(r.data); S.mundo=r.data; await carregarMesas(); go("home"); }catch(e){erro(e);} }
-async function salvarMundoEdit(){ try{ var upd={nome:val("w_nome").trim(),descricao:val("w_desc"),fundo_url:val("w_fundo").trim()||null};
-  var r=await sb.from("mundos").update(upd).eq("id",S.mundo.id).select().single(); if(r.error)throw r.error; S.mundo=r.data; var i=S.mundos.findIndex(function(w){return w.id===r.data.id;}); if(i>=0)S.mundos[i]=r.data; go("home"); }catch(e){erro(e);} }
+  var r=await sb.from("mundos").insert({nome:n,slug:slug(n)+"-"+Date.now().toString(36),descricao:val("m_desc"),dono_id:S.user.id,publico:true,fundo_url:val("m_fundo").trim()||null,tema:(val("m_tema")||"medieval")}).select().single();
+  if(r.error)throw r.error; S.mundos.push(r.data); S.mundo=r.data; await carregarMesas(); aplicarTema(r.data.tema); go("mundoHome"); }catch(e){erro(e);} }
+async function salvarMundoEdit(){ try{ var upd={nome:val("w_nome").trim(),descricao:val("w_desc"),fundo_url:val("w_fundo").trim()||null,tema:(val("w_tema")||"medieval")};
+  var r=await sb.from("mundos").update(upd).eq("id",S.mundo.id).select().single(); if(r.error)throw r.error; S.mundo=r.data; var i=S.mundos.findIndex(function(w){return w.id===r.data.id;}); if(i>=0)S.mundos[i]=r.data; aplicarTema(r.data.tema); go("mundoHome"); }catch(e){erro(e);} }
 async function salvarMesa(){ try{ var n=val("me_nome").trim(); if(!n)return erro("Dê um nome à mesa.");
   var reg={mundo_id:S.mundo.id,nome:n,slug:slug(n),descricao:val("me_desc"),mestre_id:S.user.id}; var f=val("me_fundo").trim(); if(f)reg.fundo_url=f; reg.epoca=val("me_epoca").trim()||null; reg.local=val("me_local").trim()||null;
   var r=await sb.from("mesas").insert(reg).select().single(); if(r.error)throw r.error; await carregarMesas(); go("mesa",r.data.id); }catch(e){erro(e);} }
@@ -480,9 +481,9 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
     +'<p class="vis-leg">'+visChip(c.visibilidade)+(c.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+' · por <a onclick="go(\'autor\',\''+c.jogador_id+'\')">'+esc(nomeAutor)+'</a>'+(mesaNome?' · <a onclick="go(\'mesa\',\''+c.mesa_id+'\')">⚔ '+esc(mesaNome)+'</a>':'')+'</p></div></div>'
     +(c.resumo?'<p>'+esc(c.resumo)+'</p>':'')
     +(c.corpo?'<div class="corpo">'+md(c.corpo)+'</div>':'')
-    +acoes+fichaHtml+rel+painel);
+    +acoes+fichaHtml+rel+painel+secaoComentarios("personagem",id,c.jogador_id));
   if(relPubs.length) renderExpl();
-  if(podeEditar){ renderContribPers(id); renderPedidos("personagem",id,"pedidospers"); } }
+  if(podeEditar){ renderContribPers(id); renderPedidos("personagem",id,"pedidospers"); } renderComentarios("personagem",id); }
 function formPersonagem(opts, c){
   var mesaId=c?c.mesa_id:(opts.mesa||null); var emMesa=!!opts.mesa;
   var visOpts=mesaId?[["publico","público (todos)"],["mesa","mesa (todos da campanha)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
@@ -543,7 +544,7 @@ async function meusJornais(){ if(!S.user||!S.mundo)return []; var r=await sb.fro
 function cardJornal(j){ return '<div class="card clic" onclick="go(\'jornal\',\''+j.id+'\')">'+thumb(j.imagem_url,"📰")+'<h3>'+esc(j.nome)+'</h3>'+(j.descricao?'<p class="res">'+esc(j.descricao)+'</p>':'')+'</div>'; }
 async function telaJornais(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var js=await jornaisMundo();
   var criar=S.user?'<a class="btn" onclick="go(\'novoJornal\')">+ Criar jornal</a>':'';
-  var cards=js.length?barraModo()+gridOuLista(js,cardJornal,liJornal):'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
+  var cards=js.length?gridOuLista(js,cardJornal,liJornal):'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
   layout(hero("📰 Jornais de "+S.mundo.nome,"Periódicos do mundo — notícias, crônicas e boatos publicados pelos jornais", S.mundo.fundo_url, criar)+cards); }
 async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){ layout('<div class="aviso">Jornal não encontrado ou sem permissão.</div>'); return; } registrarVisita("jornal",id,j.nome);
   var nomeDono=await nomeDe(j.dono_id); var noticias=await pubsDoJornal(id);
@@ -558,8 +559,8 @@ async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJor
   var painel=podeEditar?'<h2>Escritores do jornal</h2><p class="vis-leg">Autorize quem pode publicar notícias por este jornal (além de você).</p><div id="escritores">Carregando…</div>':'';
   layout('<div class="bread"><a onclick="go(\'jornais\')">‹ Jornais</a></div>'
     +'<div class="autor-cap">'+logo+'<div><h1 style="margin:0">'+esc(j.nome)+'</h1>'+(j.descricao?'<p class="vis-leg" style="font-style:italic">'+esc(j.descricao)+'</p>':'')+'<p class="vis-leg">'+visChip(j.visibilidade)+' · fundado por <a onclick="go(\'autor\',\''+j.dono_id+'\')">'+esc(nomeDono)+'</a></p></div></div>'
-    +acoes+'<h2>Edições / Notícias</h2>'+lista+painel);
-  if(podeEditar) renderEscritores(id); }
+    +acoes+'<h2>Edições / Notícias</h2>'+lista+painel+secaoComentarios("jornal",id,j.dono_id));
+  if(podeEditar) renderEscritores(id); renderComentarios("jornal",id); }
 function formJornal(j){
   var visOpts=[["publico","público (todos)"],["privado","privado (só eu)"]];
   return '<div class="bread">'+(j?'Editar jornal':'Novo jornal')+'</div><div class="form">'
@@ -737,7 +738,7 @@ async function pedirAcesso(tipo, alvoId){ if(!S.user){go("login");return;} try{
   var ex=await sb.from("pedidos_acesso").select("id,estado").eq("tipo",tipo).eq("alvo_id",alvoId).eq("solicitante_id",S.user.id).limit(1);
   if(ex.data&&ex.data.length){ S.msg='<div class="ok">Você já tem um pedido ('+esc(ex.data[0].estado)+') para este item.</div>'; render(); return; }
   var r=await sb.from("pedidos_acesso").insert({tipo:tipo,alvo_id:alvoId,solicitante_id:S.user.id,estado:"pendente"}); if(r.error)throw r.error;
-  S.msg='<div class="ok">Pedido de acesso enviado! O criador será avisado para aprovar.</div>'; render();
+  var dono=await donoDoAlvo(tipo,alvoId); var nmp=(S.profile&&S.profile.nome)?S.profile.nome:"Alguém"; notificar(dono,"pedido",nmp+" pediu acesso a um conteúdo seu.",(tipo==="mundo"?null:tipo),(tipo==="mundo"?null:alvoId)); S.msg='<div class="ok">Pedido de acesso enviado! O criador será avisado para aprovar.</div>'; render();
 }catch(e){erro(e);} }
 async function renderPedidos(tipo, alvoId, boxId){ var box=document.getElementById(boxId); if(!box)return;
   var ps=await pedidosPendentes(tipo, alvoId); if(!ps.length){ box.innerHTML=""; return; }
@@ -756,6 +757,8 @@ async function aprovarPedido(pid, tipo, alvoId, uid){ try{
 }catch(e){erro(e);} }
 async function recusarPedido(pid, tipo, alvoId){ try{ var u=await sb.from("pedidos_acesso").update({estado:"recusado"}).eq("id",pid); if(u.error)throw u.error; var box=tipo==="mundo"?"pedidosmundo":(tipo==="mesa"?"pedidosmesa":"pedidospers"); renderPedidos(tipo,alvoId,box); }catch(e){erro(e);} }
 // ===== Alternância cards/lista (telas de entidades) + tags =====
+function alternarModo(){ S.modo=(S.modo==="lista"?"cards":"lista"); localStorage.setItem("mds_modo",S.modo); render(); }
+function modoBtnHTML(){ return '<button class="modo-btn" onclick="alternarModo()" title="Alternar entre cards e lista (vale para o site todo)">'+(S.modo==="lista"?"▦ Cards":"☰ Lista")+'</button>'; }
 function togModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); render(); }
 function barraModo(){ return '<div class="expbar" style="margin:6px 0"><button class="btn mini sec" onclick="togModo()">'+(S.modo==="lista"?"▦ Ver em cards":"☰ Ver em lista")+'</button></div>'; }
 function gridOuLista(items, cardFn, liFn){ return S.modo==="lista" ? '<ul class="lista2">'+items.map(liFn).join("")+'</ul>' : '<div class="cards">'+items.map(cardFn).join("")+'</div>'; }
@@ -874,7 +877,12 @@ function abrirCropper(fieldId){
   };
 }
 
+function aplicarTema(t){ document.body.setAttribute("data-tema", t||"medieval"); }
+function escolherTema(inputId,t,btn){ var h=document.getElementById(inputId); if(h)h.value=t; var bs=btn.parentNode.querySelectorAll(".tema-opt"); for(var i=0;i<bs.length;i++)bs[i].classList.remove("on"); btn.classList.add("on"); aplicarTema(t); }
+function seletorTema(inputId,atual){ atual=atual||"medieval"; var temas=[["medieval","⚔ Medieval","D&D"],["horror","🦇 Horror","Vampiro"],["lovecraft","🐙 Lovecraft","Cthulhu"],["anos80","📼 Anos 80","Tales from the Loop"],["scifi","🚀 Sci-fi","Cyberpunk / Duna"],["samurai","🎴 Samurai","L5R"]]; return '<input type="hidden" id="'+inputId+'" value="'+esc(atual)+'"><div class="tema-grid">'+temas.map(function(t){return '<button type="button" class="tema-opt tema-sw-'+t[0]+(t[0]===atual?" on":"")+'" data-t="'+t[0]+'" onclick="escolherTema(\''+inputId+'\',\''+t[0]+'\',this)"><span class="tema-nm">'+t[1]+'</span><span class="tema-sub">'+t[2]+'</span></button>';}).join("")+'</div>'; }
 function render(){
+  aplicarTema(S.mundo&&S.mundo.tema?S.mundo.tema:"medieval");
+  document.body.classList.toggle("modo-lista", S.modo==="lista");
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
   if(t==="mundos") telaMundos();
@@ -915,7 +923,24 @@ function render(){
   else if(t==="favoritos") telaFavoritos();
   else telaHome();
 }
+// ===== Notificações =====
+function tempoRel(ts){ try{ var d=(Date.now()-new Date(ts).getTime())/1000; if(d<60)return "agora"; if(d<3600)return Math.floor(d/60)+" min"; if(d<86400)return Math.floor(d/3600)+" h"; if(d<2592000)return Math.floor(d/86400)+" d"; return new Date(ts).toLocaleDateString("pt-BR"); }catch(e){ return ""; } }
+async function carregarNotifs(){ S.notifs=[]; if(!S.user)return; try{ var r=await sb.from("notificacoes").select("*").order("criado_em",{ascending:false}).limit(20); S.notifs=r.error?[]:(r.data||[]); }catch(e){} }
+async function notificar(userId,tipo,texto,lt,lid){ if(!userId||!S.user||userId===S.user.id)return; try{ await sb.from("notificacoes").insert({user_id:userId,tipo:tipo,texto:texto,link_tipo:lt||null,link_id:lid||null}); }catch(e){} }
+function notifListHTML(){ var ns=S.notifs||[]; var top='<div class="sino-top"><b>Notificações</b>'+(ns.some(function(x){return !x.lida;})?' <a onclick="marcarTodasLidas()">marcar todas lidas</a>':'')+'</div>'; if(!ns.length)return top+'<div class="sino-vazio">Sem notificações ainda.</div>'; return top+ns.map(function(n){ return '<a class="sino-item'+(n.lida?'':' nlida')+'" onclick="abrirNotif(\''+n.id+'\',\''+(n.link_tipo||"")+'\',\''+(n.link_id||"")+'\')"><span class="sino-tx">'+esc(n.texto)+'</span><span class="sino-data">'+tempoRel(n.criado_em)+'</span></a>'; }).join(""); }
+function bellHTML(){ var n=(S.notifs||[]).filter(function(x){return !x.lida;}).length; return '<div class="sino-wrap"><button class="sino-btn" onclick="toggleNotif(event)" title="Notificações">🔔'+(n?'<span class="sino-ct">'+(n>9?"9+":n)+'</span>':'')+'</button><div class="sino-menu" id="sinomenu">'+notifListHTML()+'</div></div>'; }
+function toggleNotif(e){ if(e)e.stopPropagation(); var m=document.getElementById("sinomenu"); if(m)m.classList.toggle("aberto"); }
+async function abrirNotif(id,lt,lid){ try{ await sb.from("notificacoes").update({lida:true}).eq("id",id); var n=(S.notifs||[]).find(function(x){return x.id===id;}); if(n)n.lida=true; }catch(e){} var rt={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[lt]; if(rt&&lid){ go(rt,lid); } else { render(); } }
+async function marcarTodasLidas(){ try{ await sb.from("notificacoes").update({lida:true}).eq("user_id",S.user.id).eq("lida",false); (S.notifs||[]).forEach(function(n){n.lida=true;}); render(); }catch(e){} }
+async function donoDoAlvo(tipo,id){ try{ if(tipo==="mundo"){ var a=await sb.from("mundos").select("dono_id").eq("id",id).maybeSingle(); return a.data&&a.data.dono_id; } if(tipo==="mesa"){ var b=await sb.from("mesas").select("mestre_id").eq("id",id).maybeSingle(); return b.data&&b.data.mestre_id; } if(tipo==="personagem"){ var c=await sb.from("personagens").select("jogador_id").eq("id",id).maybeSingle(); return c.data&&c.data.jogador_id; } }catch(e){} return null; }
+// ===== Comentários =====
+async function comentariosDe(tipo,id){ var r=await sb.from("comentarios").select("*").eq("alvo_tipo",tipo).eq("alvo_id",id).order("criado_em"); return r.error?[]:(r.data||[]); }
+function secaoComentarios(tipo,id,donoId){ return '<div class="secao"><div class="sec-head"><h2>💬 Comentários</h2></div><div id="coms-lista">Carregando…</div>'+(S.user?'<div class="com-form"><textarea id="com_txt" placeholder="Escreva um comentário (Markdown)…"></textarea><div style="margin-top:8px"><button class="btn" onclick="enviarComentario(\''+tipo+'\',\''+id+'\','+(donoId?"'"+donoId+"'":"null")+')">Comentar</button></div></div>':'<p class="vis-leg"><a onclick="go(\'login\')">Entre</a> para comentar.</p>')+'</div>'; }
+async function renderComentarios(tipo,id){ var c=document.getElementById("coms-lista"); if(!c)return; var cs=await comentariosDe(tipo,id); var perf=await perfis(); var nm=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"Alguém"; }; if(!cs.length){ c.innerHTML='<div class="empty">Seja o primeiro a comentar.</div>'; return; } c.innerHTML=cs.map(function(cm){ return '<div class="com-item"><div class="com-top"><b>'+esc(nm(cm.autor_id))+'</b> <span class="sino-data">'+tempoRel(cm.criado_em)+'</span>'+((S.user&&cm.autor_id===S.user.id)?' <a class="com-del" onclick="excluirComentario(\''+cm.id+'\',\''+tipo+'\',\''+id+'\')">excluir</a>':'')+'</div><div class="com-corpo corpo">'+md(cm.corpo)+'</div></div>'; }).join(""); }
+async function enviarComentario(tipo,id,donoId){ var t=val("com_txt").trim(); if(!t)return; try{ var r=await sb.from("comentarios").insert({mundo_id:(S.mundo?S.mundo.id:null),alvo_tipo:tipo,alvo_id:id,autor_id:S.user.id,corpo:t}).select().single(); if(r.error)throw r.error; var ta=document.getElementById("com_txt"); if(ta)ta.value=""; var nome=(S.profile&&S.profile.nome)?S.profile.nome:"Alguém"; notificar(donoId,"comentario",nome+" comentou em algo seu.",tipo,id); renderComentarios(tipo,id); }catch(e){ erro(e); } }
+async function excluirComentario(cid,tipo,id){ if(!confirm("Excluir este comentário?"))return; try{ var r=await sb.from("comentarios").delete().eq("id",cid); if(r.error)throw r.error; renderComentarios(tipo,id); }catch(e){ erro(e); } }
+
 function toggleUserMenu(e){ if(e)e.stopPropagation(); var m=document.getElementById("usermenu"); if(m) m.classList.toggle("aberto"); }
 function toggleWorldMenu(e){ if(e)e.stopPropagation(); var w=document.getElementById("worldmenu"); if(w) w.classList.toggle("aberto"); }
-document.addEventListener("click", function(e){ var wl=(e.target&&e.target.closest)?e.target.closest(".wikilink"):null; if(wl){ e.preventDefault(); irPorTitulo(wl.getAttribute("data-alvo")); } var m=document.getElementById("usermenu"); if(m) m.classList.remove("aberto"); var w=document.getElementById("worldmenu"); if(w) w.classList.remove("aberto"); });
+document.addEventListener("click", function(e){ var wl=(e.target&&e.target.closest)?e.target.closest(".wikilink"):null; if(wl){ e.preventDefault(); irPorTitulo(wl.getAttribute("data-alvo")); } var m=document.getElementById("usermenu"); if(m) m.classList.remove("aberto"); var w=document.getElementById("worldmenu"); if(w) w.classList.remove("aberto"); var sn=document.getElementById("sinomenu"); if(sn) sn.classList.remove("aberto"); });
 init();
