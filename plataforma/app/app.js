@@ -269,7 +269,7 @@ async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Car
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; } registrarVisita("mesa",id,mesa.nome);
   var pubs=await pubsDaMesa(id); var sess=await sessoesDaMesa(id); var pers=await personagensDaMesa(id);
-  var mapas=pubs.filter(function(p){return p.tipo==="mapa";}); var semMapa=pubs.filter(function(p){return p.tipo!=="mapa";}); var mural=semMapa.filter(function(p){return !p.sessao_id && (p.visibilidade==="publico"||p.visibilidade==="mesa");}); var outros=semMapa.filter(function(p){return !p.sessao_id && !(p.visibilidade==="publico"||p.visibilidade==="mesa");}); abrirExplorador(outros);
+  var mapas=pubs.filter(function(p){return p.tipo==="mapa";}); var semMapa=pubs.filter(function(p){return p.tipo!=="mapa";}); var autoMural=semMapa.filter(function(p){return !p.sessao_id && (p.visibilidade==="publico"||p.visibilidade==="mesa");}); var outros=semMapa.filter(function(p){return !p.sessao_id && !(p.visibilidade==="publico"||p.visibilidade==="mesa");}); abrirExplorador(outros); var _pins=await sb.from("mural_pins").select("alvo_id").eq("mesa_id",id).eq("tipo","publicacao"); var pinIds=(_pins.data||[]).map(function(x){return x.alvo_id;}); var pinnedPubs=[]; if(pinIds.length){ var _pp=await sb.from("publicacoes").select("*").in("id",pinIds); pinnedPubs=_pp.error?[]:(_pp.data||[]); } var _mm={}; autoMural.concat(pinnedPubs).forEach(function(p){_mm[p.id]=p;}); var mural=Object.keys(_mm).map(function(k){return _mm[k];});
   var ehM=mestreDe(mesa);
   var acts=S.user?('<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
     +'<a class="btn sec" onclick="go(\'linha\',\''+id+'\')">'+ic("linha")+' Linha do tempo</a>'
@@ -277,7 +277,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
   var metaHtml=(mesa.epoca||mesa.local)?'<p class="meta-mesa">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'';
   var pedir=(S.user&&!ehM)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'';
   var secPers='<div class="secao">'+secHead("🧝","Personagens da mesa",pers.length,(S.user?'<a class="btn mini sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a>':''))+(pers.length?'<div class="pers-circ-grid">'+pers.map(cardPersonagemRound).join("")+'</div>':'<div class="empty">Nenhum personagem nesta mesa ainda.</div>')+'</div>';
-  var secMural=(S.user||mural.length)?'<div class="secao mural-sec">'+secHead("📌","Mural da Campanha",mural.length,(S.user?'<a class="btn mini" onclick="go(\'nova\',{mesa:\''+id+'\',vis:\'mesa\'})">+ Postar para os jogadores</a>':''))+'<p class="vis-leg" style="margin-top:-6px">Avisos, resumos e materiais que o mestre disponibiliza para os jogadores.</p>'+(mural.length?'<div class="mural">'+mural.map(muralItem).join("")+'</div>':'<div class="empty">Nada no mural ainda.</div>')+'</div>':'';
+  var secMural=(S.user||mural.length)?'<div class="secao mural-sec">'+secHead("📌","Mural da Campanha",mural.length,(S.user?'<a class="btn mini" onclick="go(\'nova\',{mesa:\''+id+'\',vis:\'mesa\'})">+ Postar para os jogadores</a>':''))+'<p class="vis-leg" style="margin-top:-6px">Avisos, resumos e materiais que o mestre disponibiliza para os jogadores.</p>'+(mural.length?'<div class="mural">'+mural.map(function(mp){return muralItem(mp,id,ehM&&pinIds.indexOf(mp.id)>=0);}).join("")+'</div>':'<div class="empty">Nada no mural ainda.</div>')+'</div>':'';
   var secMapas='<div class="secao">'+secHead("🗺️","Mapas da mesa",mapas.length,(S.user?'<a class="btn mini sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>':''))+(mapas.length?'<div class="cards">'+mapas.map(cardPub).join("")+'</div>':'<div class="empty">Nenhum mapa nesta mesa ainda.</div>')+'</div>';
   var secSess='<div class="secao">'+secHead("🎲","Sessões",sess.length,(ehM?'<a class="btn mini sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Gerir sessões</a>':''))+(sess.length?'<div class="cards">'+sess.map(cardSessao).join("")+'</div>':'<div class="empty">Nenhuma sessão registrada ainda.</div>')+'</div>';
   var secOutros=outros.length?'<div class="secao">'+secHead("📚","Outros conteúdos",outros.length,"")+exploradorHTML()+'</div>':'';
@@ -299,7 +299,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
   var extra="";
   if(ehPersonagem(p.tipo)){ var outros=(await pubsDoAutor(p.autor_id)).filter(function(x){return x.id!==p.id;});
     if(outros.length){ abrirExplorador(outros); extra='<h2>Mais textos de '+esc(nomeAutor)+'</h2>'+exploradorHTML(); } }
-  var acoes='<div class="acoes-pub">'+(podeBaixar?'<button class="btn mini sec" onclick="baixarPdf()">🖨 Imprimir / PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button> ':'')+botaoCompartilhar()+' '+botaoFav("publicacao",p.id,p.titulo)
+  var acoes='<div class="acoes-pub">'+(podeBaixar?'<button class="btn mini sec" onclick="baixarPdf()">🖨 Imprimir / PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button> ':'')+botaoCompartilhar()+' '+botaoFav("publicacao",p.id,p.titulo)+((S.mesas&&S.mesas.some(mestreDe))?' <button class="btn mini sec" onclick="pinarMural(\''+p.id+'\')">📌 Fixar no Mural</button>':'')
     +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">✎ Editar</a> <button class="btn mini sec" style="border-color:#b23b3b" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
   layout('<div class="bread"><a onclick="'+voltar+'">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="chip-rascunho">✎ rascunho</span>':'')
@@ -932,10 +932,19 @@ function telaGuia(){ layout(
  +'<p class="guia-cta"><a class="btn" onclick="go(\'home\')">Começar a explorar →</a></p>'
  ); }
 
-function muralItem(p){ return '<a class="mural-item" onclick="go(\'pub\',\''+p.id+'\')"><span class="mural-pin">📌</span><span class="mural-tipo">'+esc(p.tipo)+'</span><span class="mural-tit">'+esc(p.titulo)+'</span></a>'; }
+function muralItem(p, mesaId, podeDespinar){ return '<a class="mural-item" onclick="go(\'pub\',\''+p.id+'\')"><span class="mural-pin">📌</span>'+(podeDespinar?'<button type="button" class="mural-x" title="Remover do mural" onclick="event.stopPropagation();despinarMural(\''+mesaId+'\',\''+p.id+'\')">✕</button>':'')+'<span class="mural-tipo">'+esc(p.tipo)+'</span><span class="mural-tit">'+esc(p.titulo)+'</span></a>'; }
 function jornalResumo(c){ c=(""+(c||"")).replace(/!\[[^\]]*\]\([^)]*\)/g,"").replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/[#*_>`~]/g,"").replace(/\s+/g," ").trim(); return c.slice(0,200)+(c.length>200?"…":""); }
 function jornalEdicao(p, jnome){ return '<a class="jn-ed" onclick="go(\'pub\',\''+p.id+'\')"><div class="jn-mast">'+esc(jnome)+'</div><div class="jn-rule"></div><h3 class="jn-hl">'+esc(p.titulo)+'</h3><div class="jn-corpo">'+esc(jornalResumo(p.corpo))+'</div><div class="jn-foot">Ler a edição →</div></a>'; }
 function jornalEdicoes(noticias, jnome){ return '<div class="jn-grid">'+noticias.map(function(p){return jornalEdicao(p,jnome);}).join("")+'</div>'; }
+
+function pinarMural(pubId){ var mm=(S.mesas||[]).filter(mestreDe); if(!mm.length){ toast("Você precisa ser mestre de uma mesa para fixar.","erro"); return; }
+  var ov=document.createElement("div"); ov.className="crop-ov";
+  ov.innerHTML='<div class="crop-box" style="max-width:380px"><h3>📌 Fixar no Mural da Mesa</h3><p class="vis-leg" style="margin:0 0 10px">Em qual mesa você quer fixar este conteúdo?</p><div class="pin-mesas">'+mm.map(function(m){return '<button type="button" class="btn sec" onclick="confirmarPin(\''+pubId+'\',\''+m.id+'\',this)">⚔ '+esc(m.nome)+'</button>';}).join("")+'</div><div style="margin-top:14px"><button type="button" class="btn sec" onclick="this.closest(\'.crop-ov\').remove()">Cancelar</button></div></div>';
+  ov.onclick=function(e){ if(e.target===ov)ov.remove(); };
+  document.body.appendChild(ov);
+}
+async function confirmarPin(pubId, mesaId, btn){ try{ var _c=await sb.from("mural_pins").select("id",{count:"exact",head:true}).eq("mesa_id",mesaId).eq("tipo","publicacao"); if(!_c.error && _c.count>=6){ toast("Limite de 6 conteúdos fixados nesta mesa — remova um para fixar outro.","erro"); var _ov=btn.closest(".crop-ov"); if(_ov)_ov.remove(); return; } var r=await sb.from("mural_pins").insert({mesa_id:mesaId,tipo:"publicacao",alvo_id:pubId,fixado_por:(S.user?S.user.id:null)}); if(r.error&&!/duplicate|unique|already/i.test(r.error.message)) throw r.error; toast(r.error?"Esse conteúdo já está fixado nessa mesa.":"Fixado no mural! 📌","ok"); var ov=btn.closest(".crop-ov"); if(ov)ov.remove(); }catch(e){ toast(e.message||(""+e),"erro"); } }
+async function despinarMural(mesaId, pubId){ try{ await sb.from("mural_pins").delete().eq("mesa_id",mesaId).eq("tipo","publicacao").eq("alvo_id",pubId); toast("Removido do mural.","ok"); go("mesa",mesaId); }catch(e){ toast(e.message||(""+e),"erro"); } }
 
 function render(){
   aplicarTema(S.mundo&&S.mundo.tema?S.mundo.tema:"medieval");

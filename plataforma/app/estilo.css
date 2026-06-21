@@ -487,3 +487,9 @@ body.modo-lista .pc-circ .pc-nm{font-size:16px}
 .jn-capa .jn-rule{margin:8px 16px 9px}
 .jc-lema{font-family:'EB Garamond',Georgia,serif;font-style:italic;text-align:center;font-size:14px;color:#3a2f22;padding:0 16px 4px}
 .jc-foot{margin:auto 16px 14px;padding-top:9px;border-top:1px solid #cbb88f;font-size:12px;color:#7c1c14;font-style:italic;text-align:right}
+
+/* ===== Fixar no mural (pin) ===== */
+.pin-mesas{display:flex;flex-direction:column;gap:8px}
+.pin-mesas .btn{text-align:left}
+.mural-x{position:absolute;top:6px;right:7px;background:none;border:0;color:var(--tinta2);cursor:pointer;font-size:12px;line-height:1;padding:2px 6px;border-radius:6px;z-index:2}
+.mural-x:hover{background:#b23b3b;color:#fff}
