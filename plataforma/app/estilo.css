@@ -427,3 +427,28 @@ body.modo-lista .pc-circ .pc-nm{font-size:16px}
 .chip-rascunho{display:inline-block;background:#caa53f;color:#2b2117;border-radius:12px;padding:1px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
 /* Placeholder de capa temático */
 .thumb.noimg{background:linear-gradient(135deg,var(--perg2),var(--perg))}
+
+/* ===== Tela-guia visual ===== */
+.guia{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:12px}
+.guia-card{background:var(--perg);border:1px solid var(--borda);border-left:3px solid var(--sangue);border-radius:10px;padding:16px 18px;box-shadow:0 1px 4px var(--sombra)}
+.guia-card .gc-ic{font-size:30px;line-height:1}
+.guia-card h3{margin:.3em 0 .2em;font-family:var(--font-head);font-size:17px;color:var(--tinta)}
+.guia-card p{margin:0;font-size:14.5px;color:var(--tinta2)}
+.guia-card code{background:var(--perg2);padding:1px 5px;border-radius:5px;font-size:13px}
+.guia-passos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:12px}
+.gp{display:flex;gap:12px;align-items:flex-start;background:var(--perg);border:1px solid var(--borda);border-radius:10px;padding:14px 16px}
+.gp-n{flex:0 0 32px;width:32px;height:32px;border-radius:50%;background:var(--sangue);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-weight:700;font-size:16px}
+.gp b{font-family:var(--font-head);color:var(--tinta)}
+.gp p{margin:.25em 0 0;font-size:14px;color:var(--tinta2)}
+.guia-vis{background:var(--perg);border:1px solid var(--ouro);border-radius:10px;padding:16px 18px;margin-top:12px}
+.guia-vis>p{margin:0 0 10px}
+.gv-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px dashed var(--borda)}
+.gv-row:last-child{border-bottom:none}
+.gv-row>span:last-child{color:var(--tinta2);font-size:14.5px}
+.guia-p{font-size:15px;max-width:760px}
+.guia-dicas{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+.gd{background:var(--perg2);border:1px solid var(--borda);border-radius:10px;padding:16px 18px}
+.gd h3{margin:0 0 .3em;font-family:var(--font-head);color:var(--sangue)}
+.gd p{margin:0;font-size:14.5px;color:var(--tinta)}
+.guia-cta{text-align:center;margin:24px 0 8px}
+@media(max-width:600px){.guia-dicas{grid-template-columns:1fr}}

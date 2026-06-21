@@ -201,7 +201,7 @@ function layout(conteudo){
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
     +'<div class="marca" onclick="go(\'home\')">'+temaIcone(S.mundo&&S.mundo.tema)+' Mares de Sangue</div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="🔎 Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
     +'<div class="userbox">'+modoBtnHTML()+(S.user?bellHTML():'')+ub+'</div></header>'
-    +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
+    +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'guia\')">📖 Guia de uso</a> · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
 }
 
 // ---------- telas ----------
@@ -213,7 +213,7 @@ function botoesCriar(){
 }
 async function telaHome(){
   layout('<p>Carregando…</p>');
-  var topo=hero("Mares de Sangue","Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", null, (S.user?botoesCriar():'<a class="btn" onclick="go(\'login\')">Entrar</a>'));
+  var topo=hero("Mares de Sangue","Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", "https://niepiaiwusptmwepgmlq.supabase.co/storage/v1/object/public/midias/c3ed4547-f032-47f6-8650-360684451acc/1781893414276-gemini-25-flash-image-agora-faca-uma-ultima-versao-no-estilo-alan-lee-e-nao-deixe-um-brazao-no-bar-0jpg.jpg", (S.user?botoesCriar():'<a class="btn" onclick="go(\'login\')">Entrar</a>'));
   var mundoCards=S.mundos.map(function(w){return '<div class="card clic" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,"🌍",w.nome)+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
   var mundosHtml='<h2>🌍 Escolha um mundo</h2><p class="vis-leg" style="margin-top:-6px">Clique em um mundo para entrar nele.</p>'+(mundoCards?'<div class="cards">'+mundoCards+'</div>':'<div class="empty">'+(S.user?'Nenhum mundo ainda — crie o primeiro acima.':'Nenhum mundo público disponível.')+'</div>');
   var rec=visitasRecentes();
@@ -894,6 +894,42 @@ function temaIcone(t){ return ({medieval:"⚜",horror:"🦇",lovecraft:"🐙",an
 function aplicarTema(t){ document.body.setAttribute("data-tema", t||"medieval"); }
 function escolherTema(inputId,t,btn){ var h=document.getElementById(inputId); if(h)h.value=t; var bs=btn.parentNode.querySelectorAll(".tema-opt"); for(var i=0;i<bs.length;i++)bs[i].classList.remove("on"); btn.classList.add("on"); aplicarTema(t); }
 function seletorTema(inputId,atual){ atual=atual||"medieval"; var temas=[["medieval","⚔ Medieval","D&D"],["horror","🦇 Horror","Vampiro"],["lovecraft","🐙 Lovecraft","Cthulhu"],["anos80","📼 Anos 80","Tales from the Loop"],["scifi","🚀 Sci-fi","Cyberpunk / Duna"],["samurai","🎴 Samurai","L5R"]]; return '<input type="hidden" id="'+inputId+'" value="'+esc(atual)+'"><div class="tema-grid">'+temas.map(function(t){return '<button type="button" class="tema-opt tema-sw-'+t[0]+(t[0]===atual?" on":"")+'" data-t="'+t[0]+'" onclick="escolherTema(\''+inputId+'\',\''+t[0]+'\',this)"><span class="tema-nm">'+t[1]+'</span><span class="tema-sub">'+t[2]+'</span></button>';}).join("")+'</div>'; }
+function guiaCard(ic,tit,txt){ return '<div class="guia-card"><div class="gc-ic">'+ic+'</div><h3>'+tit+'</h3><p>'+txt+'</p></div>'; }
+function telaGuia(){ layout(
+ '<div class="bread"><a onclick="go(\'home\')">Início</a> › Guia de uso</div>'
+ +hero("📖 Guia de Uso","Aprenda a usar a plataforma — um guia rápido para mestres e jogadores", (S.mundo?S.mundo.fundo_url:null), "")
+ +'<div class="secao"><div class="sec-head"><h2>① Primeiros passos</h2></div>'
+ +'<div class="guia-passos">'
+   +'<div class="gp"><span class="gp-n">1</span><div><b>Entrar</b><p>Crie sua conta ou entre. Sem conta você explora o conteúdo público; com conta você cria, comenta e favorita.</p></div></div>'
+   +'<div class="gp"><span class="gp-n">2</span><div><b>Escolher um mundo</b><p>Na Home, clique no card de um mundo para entrar nele.</p></div></div>'
+   +'<div class="gp"><span class="gp-n">3</span><div><b>Navegar</b><p>Pela barra lateral: Enciclopédia, Linha do tempo, Personagens, Jornais e Mapas. No topo, 🔎 busca e ☰/▦ alterna lista/cards.</p></div></div>'
+ +'</div></div>'
+ +'<div class="secao"><div class="sec-head"><h2>② O que dá para fazer</h2></div>'
+ +'<div class="guia">'
+   +guiaCard("📝","Criar conteúdo","Escreva em <b>Markdown</b> (com barra de formatação e pré-visualização), cole imagens, anexe arquivos e use <code>[[Links]]</code> entre artigos.")
+   +guiaCard("🧝","Personagens & Fichas","Crie personagens com foto e história. Disponibilize a <b>ficha</b> em texto ou anexando o <b>PDF</b> — com visibilidade própria.")
+   +guiaCard("⚔","Mesas & Mestre","Cada campanha tem personagens, mapas, sessões e linha do tempo próprios. O mestre organiza tudo na <b>Área do Mestre</b>.")
+   +guiaCard("📰","Jornais & Linha do tempo","Publique notícias em jornais do mundo e registre a cronologia na linha do tempo, com eventos ligados aos artigos.")
+   +guiaCard("★","Favoritos","Salve conteúdos para acesso rápido pelo atalho <b>★ Favoritos</b> na lateral.")
+   +guiaCard("💬","Comentários & 🔔 Avisos","Comente em conteúdos; o <b>sino</b> avisa quando alguém comenta no seu conteúdo ou pede acesso.")
+ +'</div></div>'
+ +'<div class="secao"><div class="sec-head"><h2>③ Visibilidade — o segredo do mestre</h2></div>'
+ +'<div class="guia-vis"><p>Todo conteúdo tem um <b>estado</b> e uma <b>visibilidade</b>. É assim que você prepara segredos e revela na hora certa:</p>'
+   +'<div class="gv-row"><span class="chip-rascunho">✎ rascunho</span><span>só você vê, até publicar</span></div>'
+   +'<div class="gv-row">'+visChip("publico")+'<span>todos veem</span></div>'
+   +'<div class="gv-row">'+visChip("mesa")+'<span>só quem participa da campanha</span></div>'
+   +'<div class="gv-row">'+visChip("privado")+'<span>só você</span></div>'
+   +'<div class="gv-row">'+visChip("mestre")+'<span>bastidores — só o mestre da mesa</span></div>'
+ +'</div></div>'
+ +'<div class="secao"><div class="sec-head"><h2>④ Temas do mundo</h2></div>'
+ +'<p class="guia-p">Ao <b>criar ou editar um mundo</b>, escolha um tema visual que muda cores, fontes e ícones do site: <b>Medieval, Horror, Lovecraft, Anos 80, Sci-fi</b> ou <b>Samurai</b>. Cada mundo guarda o seu.</p></div>'
+ +'<div class="guia-dicas">'
+   +'<div class="gd"><h3>🎭 Para mestres</h3><p>Prepare segredos em <b>rascunho</b> ou visibilidade <b>só mestre</b>; quando for a hora, troque para <b>público/mesa</b>. Use a <b>linha do tempo da mesa</b> e as <b>sessões</b> para registrar o que aconteceu e distribuir <b>recompensas</b> (XP, itens).</p></div>'
+   +'<div class="gd"><h3>🧝 Para jogadores</h3><p>Mantenha a página do seu personagem viva: adicione <b>histórias</b> e disponibilize sua <b>ficha</b>. <b>Comente</b> e <b>favorite</b> o que achar importante. Contribua com o mundo!</p></div>'
+ +'</div>'
+ +'<p class="guia-cta"><a class="btn" onclick="go(\'home\')">Começar a explorar →</a></p>'
+ ); }
+
 function render(){
   aplicarTema(S.mundo&&S.mundo.tema?S.mundo.tema:"medieval");
   document.body.classList.toggle("modo-lista", S.modo==="lista");
@@ -920,6 +956,7 @@ function render(){
   else if(t==="jornal") telaJornal(S.view.arg);
   else if(t==="novoJornal") telaNovoJornal();
   else if(t==="editarJornal") telaEditarJornal(S.view.arg);
+  else if(t==="guia") telaGuia();
   else if(t==="creditos") telaCreditos();
   else if(t==="busca") telaBusca(S.view.arg);
   else if(t==="novaRecompensa") telaNovaRecompensa(S.view.arg);
