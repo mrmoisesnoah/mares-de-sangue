@@ -296,7 +296,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
   if(ehPersonagem(p.tipo)){ var outros=(await pubsDoAutor(p.autor_id)).filter(function(x){return x.id!==p.id;});
     if(outros.length){ abrirExplorador(outros); extra='<h2>Mais textos de '+esc(nomeAutor)+'</h2>'+exploradorHTML(); } }
   var acoes='<div class="acoes-pub">'+(podeBaixar?'<button class="btn mini sec" onclick="baixarPdf()">🖨 Imprimir / PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button> ':'')+botaoCompartilhar()+' '+botaoFav("publicacao",p.id,p.titulo)
-    +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">✎ Editar</a> <button class="btn mini sec" style="border-color:#c08" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
+    +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">✎ Editar</a> <button class="btn mini sec" style="border-color:#b23b3b" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
   layout('<div class="bread"><a onclick="'+voltar+'">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
     +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')
     +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
@@ -400,7 +400,7 @@ async function renderMembros(id){
   var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
   var ja={}; ms.forEach(function(x){ja[x.user_id]=1;});
   var linhas=ms.map(function(x){
-    var rem=(x.papel==="mestre")?"":' <button class="btn mini sec" style="border-color:#c08" onclick="removerMembro(\''+id+'\',\''+x.user_id+'\')">remover</button>';
+    var rem=(x.papel==="mestre")?"":' <button class="btn mini sec" style="border-color:#b23b3b" onclick="removerMembro(\''+id+'\',\''+x.user_id+'\')">remover</button>';
     return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span><span class="chip c-'+(x.papel==="mestre"?"mestre":"mesa")+'">'+esc(x.papel)+'</span>'+rem+'</li>';
   }).join("");
   var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
@@ -466,7 +466,7 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var av=c.imagem_url?'<div class="av" style="width:120px;height:120px;background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px">'+esc((c.nome||"?")[0].toUpperCase())+'</div>';
   var mesaNome=c.mesa_id?((S.mesas.find(function(m){return m.id===c.mesa_id;})||{}).nome||null):null;
   var btnAdd=podeAdd?'<a class="btn" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+'})">+ Adicionar texto</a> ':'';
-  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
+  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
   var acoes='<p>'+btnAdd+btnEdit+(S.user&&!podeEditar&&!souContrib?'<a class="btn sec" onclick="pedirAcesso(\'personagem\',\''+id+'\')">🔑 Pedir p/ escrever</a> ':'')+((btnAdd||btnEdit)?' ':'')+botaoCompartilhar()+' '+botaoFav("personagem",id,c.nome)+'</p>';
   var fichas=pubs.filter(function(x){return x.tipo==="ficha";}); var relPubs=pubs.filter(function(x){return x.tipo!=="ficha";});
   var fichaHtml='<div class="secao"><div class="sec-head"><h2>📋 Ficha do personagem</h2>'+(podeAdd&&!fichas.length?'<div class="sec-acts"><a class="btn mini" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+',tipo:\'ficha\'})">+ Disponibilizar ficha</a></div>':'')+'</div>';
@@ -520,7 +520,7 @@ async function renderColabMundo(id){ var box=document.getElementById("colabmundo
   var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
   var ja={}; ms.forEach(function(x){ja[x.user_id]=1;}); ja[donoId]=1;
   var linhaDono='<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(donoId))+'</span><span class="chip c-mestre">dono</span></li>';
-  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span><span class="chip c-mesa">colaborador</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerColabMundo(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
+  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span><span class="chip c-mesa">colaborador</span> <button class="btn mini sec" style="border-color:#b23b3b" onclick="removerColabMundo(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
   var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
   var add=opc?'<div class="expbar" style="margin-top:10px"><select id="mw_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addColabMundo(\''+id+'\')">+ Adicionar colaborador</button></div>':'<p class="vis-leg">Todos os usuários já podem criar neste mundo.</p>';
   box.innerHTML='<ul class="lista2">'+linhaDono+linhas+'</ul>'+add; }
@@ -532,7 +532,7 @@ async function renderContribPers(id){ var box=document.getElementById("contribpe
   var ms=await contribPersonagem(id); var perf=await perfis();
   var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
   var ja={}; ms.forEach(function(x){ja[x.user_id]=1;}); if(S.user)ja[S.user.id]=1;
-  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerContribPers(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
+  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span> <button class="btn mini sec" style="border-color:#b23b3b" onclick="removerContribPers(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
   var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
   var add=opc?'<div class="expbar" style="margin-top:10px"><select id="cp_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addContribPers(\''+id+'\')">+ Autorizar</button></div>':'<p class="vis-leg">Todos os usuários já estão autorizados.</p>';
   box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Só você, por enquanto.</li>')+'</ul>'+add; }
@@ -553,7 +553,7 @@ async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJor
   var podePublicar=podeEditar||souEscr;
   var logo=j.imagem_url?'<div class="av" style="width:120px;height:120px;border-radius:12px;background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px;border-radius:12px">📰</div>';
   var btnPub=podePublicar?'<a class="btn" onclick="go(\'nova\',{jornal:\''+id+'\',tipo:\'jornal\'})">+ Publicar notícia</a> ':'';
-  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarJornal\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirJornal(\''+id+'\')">🗑 Excluir</button>':'';
+  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarJornal\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirJornal(\''+id+'\')">🗑 Excluir</button>':'';
   var acoes='<p>'+btnPub+btnEdit+((btnPub||btnEdit)?' ':'')+botaoCompartilhar()+' '+botaoFav("jornal",id,j.nome)+'</p>';
   var lista=noticias.length?listar(noticias):'<div class="empty">Nenhuma notícia publicada ainda.'+(podePublicar?' Use o botão “+ Publicar notícia”.':'')+'</div>';
   var painel=podeEditar?'<h2>Escritores do jornal</h2><p class="vis-leg">Autorize quem pode publicar notícias por este jornal (além de você).</p><div id="escritores">Carregando…</div>':'';
@@ -585,7 +585,7 @@ async function renderEscritores(id){ var box=document.getElementById("escritores
   var ms=await escritoresJornal(id); var perf=await perfis();
   var nome=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
   var ja={}; ms.forEach(function(x){ja[x.user_id]=1;}); if(S.user)ja[S.user.id]=1;
-  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerEscritor(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
+  var linhas=ms.map(function(x){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span> <button class="btn mini sec" style="border-color:#b23b3b" onclick="removerEscritor(\''+id+'\',\''+x.user_id+'\')">remover</button></li>'; }).join("");
   var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
   var add=opc?'<div class="expbar" style="margin-top:10px"><select id="je_add" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addEscritor(\''+id+'\')">+ Autorizar escritor</button></div>':'<p class="vis-leg">Todos os usuários já podem escrever.</p>';
   box.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Só você, por enquanto.</li>')+'</ul>'+add; }
@@ -622,7 +622,7 @@ async function telaSessao(id){ layout('<p>Carregando…</p>'); var se=await umaS
   var pubs=await pubsDaSessao(id);
   var plan=pubs.filter(function(p){return ['mestre','autor_mestre','privado'].indexOf(p.visibilidade)>=0;});
   var publi=pubs.filter(function(p){return ['publico','mesa'].indexOf(p.visibilidade)>=0;});
-  var actsM=ehMestre?'<p><a class="btn" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento</a> <a class="btn sec" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'resumo de sessão\',vis:\'mesa\'})">+ Resumo</a> <a class="btn sec" onclick="go(\'editarSessao\',\''+id+'\')">✎ Editar sessão</a> <button class="btn sec" style="border-color:#c08" onclick="excluirSessao(\''+id+'\',\''+se.mesa_id+'\')">🗑 Excluir</button></p>':'';
+  var actsM=ehMestre?'<p><a class="btn" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento</a> <a class="btn sec" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'resumo de sessão\',vis:\'mesa\'})">+ Resumo</a> <a class="btn sec" onclick="go(\'editarSessao\',\''+id+'\')">✎ Editar sessão</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirSessao(\''+id+'\',\''+se.mesa_id+'\')">🗑 Excluir</button></p>':'';
   var recs=await recompensasDaSessao(id); var persMesa=await personagensDaMesa(se.mesa_id);
   var secRec='<h2>🏆 Recompensas (XP, itens, prêmios)</h2>'+(ehMestre?'<p><a class="btn sec" onclick="go(\'novaRecompensa\',\''+id+'\')">+ Adicionar recompensa</a></p>':'')+(recs.length?renderRecsHTML(recs,persMesa,ehMestre,id):'<div class="empty">Nenhuma recompensa registrada nesta sessão ainda.</div>');
   layout('<div class="bread"><a onclick="go(\'mesa\',\''+se.mesa_id+'\')">‹ Mesa</a> › Sessão</div>'
@@ -722,7 +722,7 @@ async function excluirEvento(id, mesaId){ if(!confirm("Excluir este evento da li
 function formPeriodo(mundoId, mesaId, p){ return '<div class="bread"><a onclick="go(\'linha\',\''+(mesaId||"")+'\')">‹ Linha do tempo</a></div><div class="form">'
   +fHead('🕰',(p?'Editar período':'Novo período'),'Um período agrupa eventos (um ano, uma era). Pode ter imagem de fundo.')
   +fGrupo('Período','<label>Nome do período / ano / era</label><input id="pr_nome" value="'+esc(p?p.nome:"")+'" placeholder="ex.: Ano 2068 · Era Primordial"><label>Ordem (número p/ a sequência dos blocos)</label><input id="pr_ordem" type="number" value="'+esc(p&&p.ordem!=null?p.ordem:"")+'">'+campoImagem('Imagem de fundo do período (opcional)','pr_img',(p&&p.imagem_url?p.imagem_url:"")))
-  +'<div class="form-acoes"><button class="btn" onclick="salvarPeriodo(\''+(mesaId||"")+'\','+(p?"'"+p.id+"'":"null")+')">'+(p?'Salvar':'Criar período')+'</button> <button class="btn sec" onclick="go(\'linha\',\''+(mesaId||"")+'\')">Cancelar</button>'+(p?' <button class="btn sec" style="border-color:#c08" onclick="excluirPeriodo(\''+p.id+'\',\''+(mesaId||"")+'\')">🗑 Excluir período</button>':'')+'</div></div>'; }
+  +'<div class="form-acoes"><button class="btn" onclick="salvarPeriodo(\''+(mesaId||"")+'\','+(p?"'"+p.id+"'":"null")+')">'+(p?'Salvar':'Criar período')+'</button> <button class="btn sec" onclick="go(\'linha\',\''+(mesaId||"")+'\')">Cancelar</button>'+(p?' <button class="btn sec" style="border-color:#b23b3b" onclick="excluirPeriodo(\''+p.id+'\',\''+(mesaId||"")+'\')">🗑 Excluir período</button>':'')+'</div></div>'; }
 function telaNovoPeriodo(mesaId){ layout(formPeriodo(S.mundo.id, mesaId||null, null)); }
 async function telaEditarPeriodo(id){ layout('<p>Carregando…</p>'); var p=await umPeriodo(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPeriodo(p.mundo_id, p.mesa_id, p)); }
 async function salvarPeriodo(mesaId, editId){ try{ var nome=val("pr_nome").trim(); if(!nome)return erro("Dê um nome ao período."); var ord=val("pr_ordem").trim();
@@ -780,7 +780,7 @@ async function renderEventoLinks(id){ var box=document.getElementById("evlinks")
   var nomePub=function(a){ var x=op.pubs.find(function(p){return p.id===a;}); return x?x.titulo:"(conteúdo)"; };
   var nomePer=function(a){ var x=op.pers.find(function(p){return p.id===a;}); return x?x.nome:"(personagem)"; };
   var ja={}; links.forEach(function(l){ja[l.tipo+":"+l.alvo_id]=1;});
-  var linhas=links.map(function(l){ var nm=l.tipo==="personagem"?nomePer(l.alvo_id):nomePub(l.alvo_id); var ic=l.tipo==="personagem"?"🧝":"📄"; return '<li class="li-clic" style="cursor:default"><span class="li-ic">'+ic+'</span><span class="li-tit">'+esc(nm)+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removerEventoLink(\''+l.id+'\',\''+id+'\')">remover</button></li>'; }).join("");
+  var linhas=links.map(function(l){ var nm=l.tipo==="personagem"?nomePer(l.alvo_id):nomePub(l.alvo_id); var ic=l.tipo==="personagem"?"🧝":"📄"; return '<li class="li-clic" style="cursor:default"><span class="li-ic">'+ic+'</span><span class="li-tit">'+esc(nm)+'</span> <button class="btn mini sec" style="border-color:#b23b3b" onclick="removerEventoLink(\''+l.id+'\',\''+id+'\')">remover</button></li>'; }).join("");
   var opcPer=op.pers.filter(function(p){return !ja["personagem:"+p.id];}).map(function(p){return '<option value="personagem:'+p.id+'">🧝 '+esc(p.nome)+'</option>';}).join("");
   var opcPub=op.pubs.filter(function(p){return !ja["publicacao:"+p.id];}).map(function(p){return '<option value="publicacao:'+p.id+'">📄 '+esc(p.titulo)+'</option>';}).join("");
   var add='<div class="expbar" style="margin-top:10px"><select id="ev_link_sel" style="max-width:340px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6"><option value="">— escolher conteúdo —</option>'+(opcPer?'<optgroup label="Personagens">'+opcPer+'</optgroup>':'')+(opcPub?'<optgroup label="Conteúdos">'+opcPub+'</optgroup>':'')+'</select> <button class="btn mini" onclick="addEventoLink(\''+id+'\')">+ Vincular</button></div>';
@@ -788,7 +788,7 @@ async function renderEventoLinks(id){ var box=document.getElementById("evlinks")
 // ===== Vínculos pendentes na criação de evento =====
 function renderEvNovo(){ var box=document.getElementById("evnovo"); if(!box)return; var op=S.linkOpts||{pubs:[],pers:[]}; S.evPendentes=S.evPendentes||[];
   var ja={}; S.evPendentes.forEach(function(l){ja[l.tipo+":"+l.alvo_id]=1;});
-  var linhas=S.evPendentes.map(function(l,i){ var ic=l.tipo==="personagem"?"🧝":"📄"; return '<li class="li-clic" style="cursor:default"><span class="li-ic">'+ic+'</span><span class="li-tit">'+esc(l.nome)+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="removePendente('+i+')">remover</button></li>'; }).join("");
+  var linhas=S.evPendentes.map(function(l,i){ var ic=l.tipo==="personagem"?"🧝":"📄"; return '<li class="li-clic" style="cursor:default"><span class="li-ic">'+ic+'</span><span class="li-tit">'+esc(l.nome)+'</span> <button class="btn mini sec" style="border-color:#b23b3b" onclick="removePendente('+i+')">remover</button></li>'; }).join("");
   var opcPer=op.pers.filter(function(p){return !ja["personagem:"+p.id];}).map(function(p){return '<option value="personagem:'+p.id+'">🧝 '+esc(p.nome)+'</option>';}).join("");
   var opcPub=op.pubs.filter(function(p){return !ja["publicacao:"+p.id];}).map(function(p){return '<option value="publicacao:'+p.id+'">📄 '+esc(p.titulo)+'</option>';}).join("");
   var add='<div class="expbar" style="margin-top:10px"><select id="ev_link_sel" style="max-width:340px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6"><option value="">— escolher conteúdo —</option>'+(opcPer?'<optgroup label="Personagens">'+opcPer+'</optgroup>':'')+(opcPub?'<optgroup label="Conteúdos">'+opcPub+'</optgroup>':'')+'</select> <button class="btn mini" onclick="addPendente()">+ Vincular</button></div>';
@@ -826,7 +826,7 @@ async function desfav(tipo,id){ try{ await sb.from("favoritos").delete().eq("tip
 async function telaFavoritos(){ if(!S.user){ go("login"); return; } layout('<p>Carregando…</p>'); await carregarFavs();
   var r=await sb.from("favoritos").select("*").order("criado_em",{ascending:false}); var favs=(r.error?[]:(r.data||[]));
   var rt={mesa:"mesa",publicacao:"pub",personagem:"personagem",jornal:"jornal"}; var ic={mesa:"⚔",publicacao:"📄",personagem:"🧝",jornal:"📰",mundo:"🌍"};
-  var html=favs.length?'<ul class="lista2">'+favs.map(function(f){ var alvo=rt[f.tipo]; var acao=alvo?"go('"+alvo+"','"+f.alvo_id+"')":"selecionarMundo('"+f.alvo_id+"')"; return '<li class="li-clic" onclick="'+acao+'"><span class="li-tit">'+(ic[f.tipo]||"⭐")+' '+esc(f.titulo||"(sem título)")+'</span><span class="chip">'+esc(f.tipo)+'</span> <button class="btn mini sec" style="border-color:#c08" onclick="event.stopPropagation();desfav(\''+f.tipo+'\',\''+f.alvo_id+'\')">remover</button></li>'; }).join("")+'</ul>':'<div class="empty">Nenhum favorito ainda. Use o botão ☆ Favoritar nos conteúdos.</div>';
+  var html=favs.length?'<ul class="lista2">'+favs.map(function(f){ var alvo=rt[f.tipo]; var acao=alvo?"go('"+alvo+"','"+f.alvo_id+"')":"selecionarMundo('"+f.alvo_id+"')"; return '<li class="li-clic" onclick="'+acao+'"><span class="li-tit">'+(ic[f.tipo]||"⭐")+' '+esc(f.titulo||"(sem título)")+'</span><span class="chip">'+esc(f.tipo)+'</span> <button class="btn mini sec" style="border-color:#b23b3b" onclick="event.stopPropagation();desfav(\''+f.tipo+'\',\''+f.alvo_id+'\')">remover</button></li>'; }).join("")+'</ul>':'<div class="empty">Nenhum favorito ainda. Use o botão ☆ Favoritar nos conteúdos.</div>';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Favoritos</div><h1>★ Favoritos</h1>'+html); }
 function registrarVisita(tipo,id,titulo){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=arr.filter(function(x){return !(x.tipo===tipo&&x.id===id);}); arr.unshift({tipo:tipo,id:id,titulo:String(titulo||""),mundoId:(S.mundo?S.mundo.id:null),mundoNome:(S.mundo?S.mundo.nome:""),t:Date.now()}); arr=arr.slice(0,12); localStorage.setItem("mds_recent",JSON.stringify(arr)); }catch(e){} }
 function visitasRecentes(mundoId){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=mundoId?arr.filter(function(x){return x.mundoId===mundoId;}):arr; return arr.slice(0,6); }catch(e){ return []; } }

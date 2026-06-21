@@ -257,7 +257,7 @@ details.bloco .cards{padding:12px}
 .sec-acts{display:flex;gap:8px;flex-wrap:wrap}
 .meta-mesa{color:var(--tinta2);font-style:italic;margin:-12px 0 8px}
 /* ===== Formulários — polimento uniforme ===== */
-.form input:focus,.form select:focus,.form textarea:focus{outline:none;border-color:var(--sangue);box-shadow:0 0 0 3px rgba(124,28,20,.13)}
+.form input:focus,.form select:focus,.form textarea:focus,.com-form textarea:focus{outline:2px solid var(--sangue);outline-offset:1px;border-color:var(--sangue);box-shadow:none}
 .form>p:last-child{border-top:1px solid var(--borda);padding-top:15px}
 @media(max-width:600px){.sec-head h2{font-size:17px}.sec-head{padding-bottom:5px}.secao{margin:18px 0}}
 
@@ -392,7 +392,7 @@ input.topo-busca::placeholder{color:#cbb892}
 .com-item{border:1px solid var(--borda);border-radius:9px;padding:10px 13px;margin:10px 0;background:var(--perg)}
 .com-top{font-size:13px;color:var(--tinta2);margin-bottom:4px;display:flex;align-items:center;gap:8px}
 .com-top b{color:var(--tinta);font-family:var(--font-head);font-size:14px}
-.com-del{color:#c08;font-size:12px;margin-left:auto;cursor:pointer}
+.com-del{color:#b23b3b;font-size:12px;margin-left:auto;cursor:pointer}
 .com-corpo{font-size:15px}
 .com-corpo p{margin:.3em 0}
 
