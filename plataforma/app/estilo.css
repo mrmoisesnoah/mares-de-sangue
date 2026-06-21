@@ -7,8 +7,8 @@
 body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--font-body);font-size:18px;line-height:1.65}
 a{color:var(--sangue);cursor:pointer;text-decoration:none}
 .topo{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:10px 18px;
-  background:linear-gradient(180deg,#23170f,#3a2616);color:var(--perg);border-bottom:3px solid var(--ouro)}
-.marca{font-family:var(--font-head);font-weight:700;font-size:20px;color:var(--perg);cursor:pointer}
+  background:linear-gradient(180deg,#23170f,#3a2616);color:#f0e6cf;border-bottom:3px solid var(--ouro)}
+.marca{font-family:var(--font-head);font-weight:700;font-size:20px;color:#f0e6cf;cursor:pointer}
 .marca small{display:block;font-size:11px;color:#cbb892;font-weight:500;font-style:italic}
 .userbox{margin-left:auto;font-size:13px;color:#cbb892;display:flex;align-items:center;gap:10px}
 .layout{display:flex;max-width:1180px;margin:0 auto;min-height:calc(100vh - 60px)}
@@ -135,12 +135,12 @@ details.bloco .cards{padding:12px}
 .topo{gap:10px}
 .marca{display:flex;align-items:center}
 .userbox{position:relative}
-.world-switch{display:flex;align-items:center;gap:7px;margin-left:8px;padding:5px 12px;background:rgba(255,255,255,.07);border:1px solid var(--ouro);border-radius:20px;cursor:pointer;color:var(--perg);max-width:240px}
+.world-switch{display:flex;align-items:center;gap:7px;margin-left:8px;padding:5px 12px;background:rgba(255,255,255,.07);border:1px solid var(--ouro);border-radius:20px;cursor:pointer;color:#f0e6cf;max-width:240px}
 .world-switch:hover{background:rgba(255,255,255,.16)}
 .world-switch .ws-ic{font-size:14px;line-height:1}
 .world-switch .ws-nm{font-family:var(--font-head);font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ws-ar{color:#cbb892;font-size:10px}
-.user-btn{display:flex;align-items:center;gap:8px;background:none;border:0;color:var(--perg);cursor:pointer;font-family:inherit;font-size:13.5px}
+.user-btn{display:flex;align-items:center;gap:8px;background:none;border:0;color:#f0e6cf;cursor:pointer;font-family:inherit;font-size:13.5px}
 .user-btn:hover{color:#fff}
 .avatar{width:30px;height:30px;border-radius:50%;background:var(--ouro) center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:#23170f;font-family:var(--font-head);font-weight:700;font-size:14px;flex:0 0 30px}
 .user-menu{display:none;position:absolute;right:0;top:46px;background:var(--papel);border:1px solid var(--borda);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.28);min-width:190px;padding:6px;z-index:60}
@@ -172,7 +172,7 @@ details.bloco .cards{padding:12px}
 /* wikilinks e busca no topo */
 .wikilink{border-bottom:1px dashed var(--sangue);cursor:pointer}
 .wikilink:hover{background:var(--perg2)}
-.topo-busca{flex:1;min-width:90px;max-width:300px;margin-left:8px;padding:6px 12px;border:1px solid var(--ouro);border-radius:18px;background:rgba(255,255,255,.07);color:var(--perg);font-family:inherit;font-size:13.5px}
+.topo-busca{flex:1;min-width:90px;max-width:300px;margin-left:8px;padding:6px 12px;border:1px solid var(--ouro);border-radius:18px;background:rgba(255,255,255,.07);color:#f0e6cf;font-family:inherit;font-size:13.5px}
 .topo-busca::placeholder{color:#cbb892}
 @media(max-width:600px){ .topo-busca{display:none} }
 
@@ -367,7 +367,7 @@ body[data-tema="scifi"] h2{border-bottom-color:#1f7d96}
 .form input,.form select,.form textarea,.com-form textarea,.nav-select{color:var(--tinta)}
 .form input::placeholder,.form textarea::placeholder,.com-form textarea::placeholder{color:var(--tinta2);opacity:.7}
 .tipo{color:var(--tinta)}
-input.topo-busca{color:var(--perg)}
+input.topo-busca{color:#f0e6cf}
 input.topo-busca::placeholder{color:#cbb892}
 
 /* ===== Notificações (sino) ===== */
@@ -410,3 +410,20 @@ body.modo-lista .pers-circ-grid{display:block}
 body.modo-lista .pc-circ{width:auto;text-align:left;overflow:hidden;padding:7px 2px;border-bottom:1px solid var(--borda)}
 body.modo-lista .pc-circ .pc-av{float:left;width:46px;height:46px;margin:0 14px 0 0}
 body.modo-lista .pc-circ .pc-nm{font-size:16px}
+
+/* ===== Polimento (auditoria 4 níveis) ===== */
+/* Toasts */
+#toasts{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:10000;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--tinta);color:var(--papel);padding:10px 18px;border-radius:10px;box-shadow:0 6px 22px rgba(0,0,0,.32);font-size:14px;max-width:90vw;font-family:var(--font-body);animation:toastin .25s ease}
+.toast-erro{background:#8a2018;color:#fff}
+.toast-ok{background:#2f6b3a;color:#fff}
+.toast.saindo{opacity:0;transform:translateY(8px);transition:.36s}
+@keyframes toastin{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+/* Comentários com avatar + hierarquia */
+.com-item{display:flex;gap:12px;align-items:flex-start}
+.com-av{flex:0 0 38px;width:38px;height:38px;border-radius:50%;background-color:var(--perg2);background-size:cover;background-position:center;border:1px solid var(--ouro);display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:16px;color:var(--ouro)}
+.com-body{flex:1;min-width:0}
+/* Chip rascunho mais visível */
+.chip-rascunho{display:inline-block;background:#caa53f;color:#2b2117;border-radius:12px;padding:1px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
+/* Placeholder de capa temático */
+.thumb.noimg{background:linear-gradient(135deg,var(--perg2),var(--perg))}
