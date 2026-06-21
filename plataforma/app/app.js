@@ -269,7 +269,7 @@ async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Car
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; } registrarVisita("mesa",id,mesa.nome);
   var pubs=await pubsDaMesa(id); var sess=await sessoesDaMesa(id); var pers=await personagensDaMesa(id);
-  var mapas=pubs.filter(function(p){return p.tipo==="mapa";}); var outros=pubs.filter(function(p){return p.tipo!=="mapa";}); abrirExplorador(outros);
+  var mapas=pubs.filter(function(p){return p.tipo==="mapa";}); var semMapa=pubs.filter(function(p){return p.tipo!=="mapa";}); var mural=semMapa.filter(function(p){return !p.sessao_id && (p.visibilidade==="publico"||p.visibilidade==="mesa");}); var outros=semMapa.filter(function(p){return !p.sessao_id && !(p.visibilidade==="publico"||p.visibilidade==="mesa");}); abrirExplorador(outros);
   var ehM=mestreDe(mesa);
   var acts=S.user?('<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
     +'<a class="btn sec" onclick="go(\'linha\',\''+id+'\')">'+ic("linha")+' Linha do tempo</a>'
@@ -277,10 +277,11 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
   var metaHtml=(mesa.epoca||mesa.local)?'<p class="meta-mesa">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'';
   var pedir=(S.user&&!ehM)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'';
   var secPers='<div class="secao">'+secHead("🧝","Personagens da mesa",pers.length,(S.user?'<a class="btn mini sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a>':''))+(pers.length?'<div class="pers-circ-grid">'+pers.map(cardPersonagemRound).join("")+'</div>':'<div class="empty">Nenhum personagem nesta mesa ainda.</div>')+'</div>';
+  var secMural=(S.user||mural.length)?'<div class="secao mural-sec">'+secHead("📌","Mural da Campanha",mural.length,(S.user?'<a class="btn mini" onclick="go(\'nova\',{mesa:\''+id+'\',vis:\'mesa\'})">+ Postar para os jogadores</a>':''))+'<p class="vis-leg" style="margin-top:-6px">Avisos, resumos e materiais que o mestre disponibiliza para os jogadores.</p>'+(mural.length?'<div class="mural">'+mural.map(muralItem).join("")+'</div>':'<div class="empty">Nada no mural ainda.</div>')+'</div>':'';
   var secMapas='<div class="secao">'+secHead("🗺️","Mapas da mesa",mapas.length,(S.user?'<a class="btn mini sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>':''))+(mapas.length?'<div class="cards">'+mapas.map(cardPub).join("")+'</div>':'<div class="empty">Nenhum mapa nesta mesa ainda.</div>')+'</div>';
   var secSess='<div class="secao">'+secHead("🎲","Sessões",sess.length,(ehM?'<a class="btn mini sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Gerir sessões</a>':''))+(sess.length?'<div class="cards">'+sess.map(cardSessao).join("")+'</div>':'<div class="empty">Nenhuma sessão registrada ainda.</div>')+'</div>';
   var secOutros=outros.length?'<div class="secao">'+secHead("📚","Outros conteúdos",outros.length,"")+exploradorHTML()+'</div>':'';
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+metaHtml+pedir+secPers+secMapas+secSess+secOutros); renderExpl(); }
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero("⚔ "+mesa.nome, mesa.descricao||"", mesa.fundo_url, acts)+metaHtml+pedir+secPers+secMural+secMapas+secSess+secOutros); renderExpl(); }
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
@@ -558,7 +559,7 @@ async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJor
   var btnPub=podePublicar?'<a class="btn" onclick="go(\'nova\',{jornal:\''+id+'\',tipo:\'jornal\'})">+ Publicar notícia</a> ':'';
   var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarJornal\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirJornal(\''+id+'\')">🗑 Excluir</button>':'';
   var acoes='<p>'+btnPub+btnEdit+((btnPub||btnEdit)?' ':'')+botaoCompartilhar()+' '+botaoFav("jornal",id,j.nome)+'</p>';
-  var lista=noticias.length?listar(noticias):'<div class="empty">Nenhuma notícia publicada ainda.'+(podePublicar?' Use o botão “+ Publicar notícia”.':'')+'</div>';
+  var lista=noticias.length?jornalEdicoes(noticias,j.nome):'<div class="empty">Nenhuma notícia publicada ainda.'+(podePublicar?' Use o botão “+ Publicar notícia”.':'')+'</div>';
   var painel=podeEditar?'<h2>Escritores do jornal</h2><p class="vis-leg">Autorize quem pode publicar notícias por este jornal (além de você).</p><div id="escritores">Carregando…</div>':'';
   layout('<div class="bread"><a onclick="go(\'jornais\')">‹ Jornais</a></div>'
     +'<div class="autor-cap">'+logo+'<div><h1 style="margin:0">'+esc(j.nome)+'</h1>'+(j.descricao?'<p class="vis-leg" style="font-style:italic">'+esc(j.descricao)+'</p>':'')+'<p class="vis-leg">'+visChip(j.visibilidade)+' · fundado por <a onclick="go(\'autor\',\''+j.dono_id+'\')">'+esc(nomeDono)+'</a></p></div></div>'
@@ -929,6 +930,11 @@ function telaGuia(){ layout(
  +'</div>'
  +'<p class="guia-cta"><a class="btn" onclick="go(\'home\')">Começar a explorar →</a></p>'
  ); }
+
+function muralItem(p){ return '<a class="mural-item" onclick="go(\'pub\',\''+p.id+'\')"><span class="mural-pin">📌</span><span class="mural-tit">'+esc(p.titulo)+'</span><span class="mural-tipo">'+esc(p.tipo)+'</span></a>'; }
+function jornalResumo(c){ c=(""+(c||"")).replace(/!\[[^\]]*\]\([^)]*\)/g,"").replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/[#*_>`~]/g,"").replace(/\s+/g," ").trim(); return c.slice(0,200)+(c.length>200?"…":""); }
+function jornalEdicao(p, jnome){ return '<a class="jn-ed" onclick="go(\'pub\',\''+p.id+'\')"><div class="jn-mast">'+esc(jnome)+'</div><div class="jn-rule"></div><h3 class="jn-hl">'+esc(p.titulo)+'</h3><div class="jn-corpo">'+esc(jornalResumo(p.corpo))+'</div><div class="jn-foot">Ler a edição →</div></a>'; }
+function jornalEdicoes(noticias, jnome){ return '<div class="jn-grid">'+noticias.map(function(p){return jornalEdicao(p,jnome);}).join("")+'</div>'; }
 
 function render(){
   aplicarTema(S.mundo&&S.mundo.tema?S.mundo.tema:"medieval");

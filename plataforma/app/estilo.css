@@ -452,3 +452,21 @@ body.modo-lista .pc-circ .pc-nm{font-size:16px}
 .gd p{margin:0;font-size:14.5px;color:var(--tinta)}
 .guia-cta{text-align:center;margin:24px 0 8px}
 @media(max-width:600px){.guia-dicas{grid-template-columns:1fr}}
+
+/* ===== Mural da Campanha (mesa) ===== */
+.mural-sec .sec-head{border-bottom-color:var(--sangue)}
+.mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:6px}
+.mural-item{display:flex;align-items:center;gap:10px;background:var(--perg2);border:1px solid var(--ouro);border-left:4px solid var(--sangue);border-radius:8px;padding:12px 14px;cursor:pointer;box-shadow:0 2px 6px var(--sombra);transition:.12s}
+.mural-item:hover{transform:translateY(-2px);box-shadow:0 6px 16px var(--sombra)}
+.mural-pin{font-size:18px;line-height:1}
+.mural-tit{flex:1;font-family:var(--font-head);font-size:15px;color:var(--tinta);line-height:1.2}
+.mural-tipo{font-size:10.5px;color:var(--tinta2);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+/* ===== Jornais — recorte de jornal ===== */
+.jn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;margin-top:14px}
+.jn-ed{display:block;background:#f7f1e0;color:#241c12;border:1px solid #c9b68d;border-radius:3px;padding:16px 18px 14px;cursor:pointer;box-shadow:0 2px 9px rgba(40,28,12,.22);transition:.14s}
+.jn-ed:hover{transform:translateY(-3px) rotate(-.3deg);box-shadow:0 10px 24px rgba(40,28,12,.32)}
+.jn-mast{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:700;text-align:center;font-size:14px;letter-spacing:.03em;text-transform:uppercase;color:#241c12}
+.jn-rule{border-top:3px double #241c12;margin:6px 0 11px}
+.jn-hl{font-family:'EB Garamond',Georgia,serif;font-weight:700;font-size:21px;line-height:1.15;margin:0 0 9px;text-align:center;color:#1c150c}
+.jn-corpo{font-family:'EB Garamond',Georgia,serif;font-size:14px;line-height:1.5;color:#3a2f22;text-align:justify}
+.jn-foot{margin-top:11px;padding-top:8px;border-top:1px solid #cbb88f;font-size:12px;color:#7c1c14;font-style:italic;text-align:right}
