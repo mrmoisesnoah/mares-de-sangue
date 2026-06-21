@@ -196,7 +196,7 @@ function layout(conteudo){
       +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
-    +'<div class="marca" onclick="go(\'home\')">⚜ Mares de Sangue</div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="🔎 Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
+    +'<div class="marca" onclick="go(\'home\')">'+temaIcone(S.mundo&&S.mundo.tema)+' Mares de Sangue</div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="🔎 Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
     +'<div class="userbox">'+modoBtnHTML()+(S.user?bellHTML():'')+ub+'</div></header>'
     +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
 }
@@ -878,6 +878,7 @@ function abrirCropper(fieldId){
   };
 }
 
+function temaIcone(t){ return ({medieval:"⚜",horror:"🦇",lovecraft:"🐙",anos80:"🕹️",scifi:"🛸",samurai:"⛩️"})[t]||"⚜"; }
 function aplicarTema(t){ document.body.setAttribute("data-tema", t||"medieval"); }
 function escolherTema(inputId,t,btn){ var h=document.getElementById(inputId); if(h)h.value=t; var bs=btn.parentNode.querySelectorAll(".tema-opt"); for(var i=0;i<bs.length;i++)bs[i].classList.remove("on"); btn.classList.add("on"); aplicarTema(t); }
 function seletorTema(inputId,atual){ atual=atual||"medieval"; var temas=[["medieval","⚔ Medieval","D&D"],["horror","🦇 Horror","Vampiro"],["lovecraft","🐙 Lovecraft","Cthulhu"],["anos80","📼 Anos 80","Tales from the Loop"],["scifi","🚀 Sci-fi","Cyberpunk / Duna"],["samurai","🎴 Samurai","L5R"]]; return '<input type="hidden" id="'+inputId+'" value="'+esc(atual)+'"><div class="tema-grid">'+temas.map(function(t){return '<button type="button" class="tema-opt tema-sw-'+t[0]+(t[0]===atual?" on":"")+'" data-t="'+t[0]+'" onclick="escolherTema(\''+inputId+'\',\''+t[0]+'\',this)"><span class="tema-nm">'+t[1]+'</span><span class="tema-sub">'+t[2]+'</span></button>';}).join("")+'</div>'; }

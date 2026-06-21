@@ -333,9 +333,11 @@ body[data-tema="samurai"] .topo{background:linear-gradient(180deg,#1d2533,#2a384
 body[data-tema="lovecraft"]{--papel:#eae7db;--perg:#e2dfd1;--perg2:#d8d4c2;--campo:#f4f1e7;--tinta:#262720;--tinta2:#5e6151;--sangue:#3f6b61;--ouro:#7e774c;--borda:#cbc6af;--sombra:rgba(50,50,30,.15);--font-head:'IM Fell English SC','Cinzel',serif;--font-body:'EB Garamond',Georgia,serif}
 body[data-tema="lovecraft"] .topo{background:linear-gradient(180deg,#1b211a,#28301f);border-bottom-color:#3f6b61}
 
-/* HORROR — gótico claro: osso/cinza, oxblood, tipografia decorativa */
-body[data-tema="horror"]{--papel:#ece7e6;--perg:#e4dddd;--perg2:#d9d0d1;--campo:#f6f1f1;--tinta:#241c1f;--tinta2:#615257;--sangue:#7e1d28;--ouro:#9a7a80;--borda:#cdc1c3;--sombra:rgba(40,20,25,.17);--font-head:'Cinzel Decorative','Cinzel',serif;--font-body:'EB Garamond',Georgia,serif}
-body[data-tema="horror"] .topo{background:linear-gradient(180deg,#1e1518,#2c2024);border-bottom-color:#7e1d28}
+/* HORROR — gótico pesado: charcoal-plum escuro, oxblood, bordas visíveis */
+body[data-tema="horror"]{--papel:#16121a;--perg:#1f1a25;--perg2:#2a2230;--campo:#241d2b;--tinta:#ece1e7;--tinta2:#b7a1ae;--sangue:#c52a3c;--ouro:#9a818c;--borda:#4a3b4c;--sombra:rgba(0,0,0,.5);--font-head:'Cinzel Decorative','Cinzel',serif;--font-body:'EB Garamond',Georgia,serif}
+body[data-tema="horror"] .topo{background:linear-gradient(180deg,#0e0a10,#211826);border-bottom-color:#c52a3c}
+body[data-tema="horror"] .card{box-shadow:0 2px 12px rgba(0,0,0,.5)}
+body[data-tema="horror"] h1{text-shadow:0 1px 12px rgba(197,42,60,.3)}
 
 /* ANOS 80 — pastel Memphis: lavanda/creme, magenta suave + teal */
 body[data-tema="anos80"]{--papel:#efeaf2;--perg:#e8e2ee;--perg2:#ded6e8;--campo:#faf7fc;--tinta:#2a2533;--tinta2:#6b6378;--sangue:#c24b87;--ouro:#2f8f99;--borda:#d6cce2;--sombra:rgba(120,80,160,.15);--font-head:'Audiowide','Cinzel',cursive;--font-body:'Rajdhani','EB Garamond',sans-serif}
@@ -357,7 +359,7 @@ body[data-tema="scifi"] h2{border-bottom-color:#1f7d96}
 .tema-sw-medieval{background:#f3e9d2;color:#7c1c14;border-color:#9a7b3f;font-family:'Cinzel',serif}
 .tema-sw-samurai{background:#efeae0;color:#34506e;border-color:#9c2b2e;font-family:'Shippori Mincho',serif}
 .tema-sw-lovecraft{background:#e2dfd1;color:#3f6b61;border-color:#7e774c;font-family:'IM Fell English SC',serif}
-.tema-sw-horror{background:#e4dddd;color:#7e1d28;border-color:#9a7a80;font-family:'Cinzel Decorative','Cinzel',serif}
+.tema-sw-horror{background:#1f1a25;color:#d98a96;border-color:#c52a3c;font-family:'Cinzel Decorative','Cinzel',serif}
 .tema-sw-anos80{background:#e8e2ee;color:#c24b87;border-color:#2f8f99;font-family:'Audiowide',cursive}
 .tema-sw-scifi{background:#dfe6ea;color:#1f7d96;border-color:#b07d2a;font-family:'Orbitron',sans-serif}
 
