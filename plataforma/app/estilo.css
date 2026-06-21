@@ -269,8 +269,8 @@ details.bloco .cards{padding:12px}
 .form-head{margin:2px 0 14px}
 .form-head h1{margin:0 0 .1em}
 .form-sub{color:var(--tinta2);font-style:italic;margin:0;font-size:15px}
-.form-grupo{border:1px solid var(--borda);border-radius:10px;padding:14px 16px 6px;margin:0 0 16px;background:rgba(255,255,255,.28)}
-.form-grupo>legend{font-family:var(--font-head);font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--sangue);padding:0 8px;font-weight:700}
+.form-grupo{border:1px solid var(--borda);border-left:3px solid var(--sangue);border-radius:10px;padding:14px 16px 6px;margin:0 0 16px;background:var(--perg2)}
+.form-grupo>legend{font-family:var(--font-head);font-size:12.5px;letter-spacing:.04em;text-transform:uppercase;color:var(--tinta);background:var(--perg);border:1px solid var(--borda);border-radius:20px;padding:2px 11px;font-weight:700}
 .grupo-dica{color:var(--tinta2);font-size:13px;margin:-2px 0 12px}
 .campo{margin:0 0 13px}
 .campo>label{display:block;font-family:var(--font-head);font-size:13px;color:var(--tinta2);margin:0 0 4px}
@@ -283,7 +283,7 @@ details.bloco .cards{padding:12px}
 .mded-b{cursor:pointer;border:1px solid transparent;background:transparent;border-radius:6px;padding:3px 9px;font-size:14px;font-family:inherit;color:var(--tinta);line-height:1.4}
 .mded-b:hover{background:#fff;border-color:var(--ouro)}
 .mded-sp{flex:1}
-.mded-pv{font-size:12.5px;color:var(--sangue)}
+.mded-pv{font-size:12.5px;color:var(--tinta);font-weight:600}
 .mded>textarea{border-radius:0 0 8px 8px !important;border-top:none !important;margin:0}
 .mded-prev{border:1px dashed var(--ouro);border-radius:8px;padding:12px 16px;margin-top:8px;background:var(--campo)}
 .mded-prev:empty:before{content:"(nada para pré-visualizar)";color:var(--tinta2);font-style:italic}
