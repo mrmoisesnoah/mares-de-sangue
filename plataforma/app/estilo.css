@@ -324,32 +324,30 @@ details.bloco .cards{padding:12px}
 .pc-chips{margin-top:5px}
 @media(max-width:600px){.pc-circ{width:100px}.pc-av{width:82px;height:82px}.pers-circ-grid{gap:14px;justify-content:center}}
 
-/* ===== TEMAS DO MUNDO (paleta + fontes + brilhos coerentes) ===== */
-body[data-tema="horror"]{--papel:#140e12;--perg:#1f1620;--perg2:#2a1d28;--campo:#271a25;--tinta:#f1e6ec;--tinta2:#cba8bb;--sangue:#e0263a;--ouro:#bb8b97;--borda:#3c2a38;--sombra:rgba(0,0,0,.6);--font-head:'Cinzel Decorative','Cinzel',serif;--font-body:'EB Garamond',Georgia,serif}
-body[data-tema="horror"] .topo{background:linear-gradient(180deg,#0c080b,#241521);border-bottom-color:#7a2430}
-body[data-tema="horror"] h1{text-shadow:0 1px 14px rgba(224,38,58,.35)}
-body[data-tema="horror"] .card.clic:hover{box-shadow:0 6px 18px rgba(224,38,58,.22)}
+/* ===== TEMAS DO MUNDO — paletas leves, integradas; fonte própria por tema ===== */
+/* SAMURAI — papel de arroz frio, tinta sumi, índigo + terracota */
+body[data-tema="samurai"]{--papel:#f6f2ea;--perg:#efeae0;--perg2:#e6dfd2;--campo:#fdfbf6;--tinta:#23201c;--tinta2:#6b6358;--sangue:#34506e;--ouro:#9c6f52;--borda:#d6cdba;--sombra:rgba(60,50,30,.15);--font-head:'Shippori Mincho','Cinzel',serif;--font-body:'Shippori Mincho','EB Garamond',serif}
+body[data-tema="samurai"] .topo{background:linear-gradient(180deg,#1d2533,#2a384c);border-bottom-color:#9c2b2e}
 
-body[data-tema="lovecraft"]{--papel:#0c1513;--perg:#142019;--perg2:#1c2a22;--campo:#17241d;--tinta:#e3ece0;--tinta2:#a3c4ae;--sangue:#56b681;--ouro:#9eac6e;--borda:#28403a;--sombra:rgba(0,0,0,.55);--font-head:'IM Fell English SC','Cinzel',serif;--font-body:'EB Garamond',Georgia,serif}
-body[data-tema="lovecraft"] .topo{background:linear-gradient(180deg,#081210,#13241f);border-bottom-color:#3f7d5d}
-body[data-tema="lovecraft"] h1{text-shadow:0 1px 12px rgba(86,182,129,.25)}
+/* LOVECRAFT — manuscrito anos 1920, sépia-oliva, verde-musgo dessaturado */
+body[data-tema="lovecraft"]{--papel:#eae7db;--perg:#e2dfd1;--perg2:#d8d4c2;--campo:#f4f1e7;--tinta:#262720;--tinta2:#5e6151;--sangue:#3f6b61;--ouro:#7e774c;--borda:#cbc6af;--sombra:rgba(50,50,30,.15);--font-head:'IM Fell English SC','Cinzel',serif;--font-body:'EB Garamond',Georgia,serif}
+body[data-tema="lovecraft"] .topo{background:linear-gradient(180deg,#1b211a,#28301f);border-bottom-color:#3f6b61}
 
-body[data-tema="anos80"]{--papel:#0f0a1e;--perg:#191130;--perg2:#241a40;--campo:#1f1738;--tinta:#f4edff;--tinta2:#c9b2f4;--sangue:#ff3d8b;--ouro:#2de2e6;--borda:#3a2c5e;--sombra:rgba(120,40,200,.35);--font-head:'Audiowide','Cinzel',cursive;--font-body:'Rajdhani','EB Garamond',sans-serif;font-size:17px}
-body[data-tema="anos80"] .topo{background:linear-gradient(180deg,#120b26,#241848);border-bottom-color:#2de2e6}
-body[data-tema="anos80"] h1{color:#ff5fa0;text-shadow:0 0 16px rgba(255,61,139,.55),0 0 3px rgba(45,226,230,.4)}
-body[data-tema="anos80"] h2{border-bottom-color:#2de2e6}
-body[data-tema="anos80"] a{text-shadow:0 0 8px rgba(255,61,139,.22)}
+/* HORROR — gótico claro: osso/cinza, oxblood, tipografia decorativa */
+body[data-tema="horror"]{--papel:#ece7e6;--perg:#e4dddd;--perg2:#d9d0d1;--campo:#f6f1f1;--tinta:#241c1f;--tinta2:#615257;--sangue:#7e1d28;--ouro:#9a7a80;--borda:#cdc1c3;--sombra:rgba(40,20,25,.17);--font-head:'Cinzel Decorative','Cinzel',serif;--font-body:'EB Garamond',Georgia,serif}
+body[data-tema="horror"] .topo{background:linear-gradient(180deg,#1e1518,#2c2024);border-bottom-color:#7e1d28}
 
-body[data-tema="scifi"]{--papel:#080d12;--perg:#101a24;--perg2:#16242f;--campo:#13202b;--tinta:#dcebf5;--tinta2:#97b7cb;--sangue:#22c7e6;--ouro:#f5b300;--borda:#21384a;--sombra:rgba(0,0,0,.55);--font-head:'Orbitron','Cinzel',sans-serif;--font-body:'Rajdhani','EB Garamond',sans-serif;font-size:17px}
-body[data-tema="scifi"] .topo{background:linear-gradient(180deg,#060b10,#11212d);border-bottom-color:#22c7e6}
-body[data-tema="scifi"] h1{letter-spacing:.02em;text-shadow:0 0 12px rgba(34,199,230,.45)}
-body[data-tema="scifi"] h2{border-bottom-color:#22c7e6}
+/* ANOS 80 — pastel Memphis: lavanda/creme, magenta suave + teal */
+body[data-tema="anos80"]{--papel:#efeaf2;--perg:#e8e2ee;--perg2:#ded6e8;--campo:#faf7fc;--tinta:#2a2533;--tinta2:#6b6378;--sangue:#c24b87;--ouro:#2f8f99;--borda:#d6cce2;--sombra:rgba(120,80,160,.15);--font-head:'Audiowide','Cinzel',cursive;--font-body:'Rajdhani','EB Garamond',sans-serif}
+body[data-tema="anos80"] .topo{background:linear-gradient(180deg,#241a33,#34264c);border-bottom-color:#c24b87}
+body[data-tema="anos80"] h2{border-bottom-color:#2f8f99}
 
-body[data-tema="samurai"]{--papel:#f4ede1;--perg:#ece2d0;--perg2:#e3d6bf;--campo:#fbf6ec;--tinta:#201b17;--tinta2:#665a4c;--sangue:#c01f2b;--ouro:#3f6f57;--borda:#cdbb9c;--sombra:rgba(60,40,20,.2);--font-head:'Shippori Mincho','Cinzel',serif;--font-body:'Shippori Mincho','EB Garamond',serif}
-body[data-tema="samurai"] .topo{background:linear-gradient(180deg,#1b1613,#2e2620);border-bottom-color:#c01f2b}
-body[data-tema="samurai"] h1{letter-spacing:.02em}
+/* SCI-FI — blueprint frio: cinza-azulado, teal-ciano + âmbar */
+body[data-tema="scifi"]{--papel:#e8edf0;--perg:#dfe6ea;--perg2:#d4dde2;--campo:#f4f8fa;--tinta:#1f2730;--tinta2:#566773;--sangue:#1f7d96;--ouro:#b07d2a;--borda:#c7d2d8;--sombra:rgba(30,50,60,.15);--font-head:'Orbitron','Cinzel',sans-serif;--font-body:'Rajdhani','EB Garamond',sans-serif}
+body[data-tema="scifi"] .topo{background:linear-gradient(180deg,#141d24,#1f2d37);border-bottom-color:#1f7d96}
+body[data-tema="scifi"] h2{border-bottom-color:#1f7d96}
 
-/* Seletor de tema (forms) — cada opção mostra sua própria fonte/cor */
+/* Seletor de tema (forms) — cada opção na própria fonte/cor */
 .tema-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(152px,1fr));gap:10px;margin-top:4px}
 .tema-opt{cursor:pointer;text-align:left;border:2px solid;border-radius:10px;padding:12px 13px;display:flex;flex-direction:column;gap:3px;transition:.12s}
 .tema-opt:hover{transform:translateY(-2px)}
@@ -357,11 +355,11 @@ body[data-tema="samurai"] h1{letter-spacing:.02em}
 .tema-opt .tema-nm{font-size:15px;font-weight:700;line-height:1.15}
 .tema-opt .tema-sub{font-size:11.5px;opacity:.85;font-family:var(--font-body)}
 .tema-sw-medieval{background:#f3e9d2;color:#7c1c14;border-color:#9a7b3f;font-family:'Cinzel',serif}
-.tema-sw-horror{background:#1f1620;color:#e0263a;border-color:#e0263a;font-family:'Cinzel Decorative','Cinzel',serif}
-.tema-sw-lovecraft{background:#142019;color:#56b681;border-color:#56b681;font-family:'IM Fell English SC',serif}
-.tema-sw-anos80{background:#191130;color:#ff5fa0;border-color:#2de2e6;font-family:'Audiowide',cursive}
-.tema-sw-scifi{background:#101a24;color:#22c7e6;border-color:#22c7e6;font-family:'Orbitron',sans-serif}
-.tema-sw-samurai{background:#ece2d0;color:#c01f2b;border-color:#c01f2b;font-family:'Shippori Mincho',serif}
+.tema-sw-samurai{background:#efeae0;color:#34506e;border-color:#9c2b2e;font-family:'Shippori Mincho',serif}
+.tema-sw-lovecraft{background:#e2dfd1;color:#3f6b61;border-color:#7e774c;font-family:'IM Fell English SC',serif}
+.tema-sw-horror{background:#e4dddd;color:#7e1d28;border-color:#9a7a80;font-family:'Cinzel Decorative','Cinzel',serif}
+.tema-sw-anos80{background:#e8e2ee;color:#c24b87;border-color:#2f8f99;font-family:'Audiowide',cursive}
+.tema-sw-scifi{background:#dfe6ea;color:#1f7d96;border-color:#b07d2a;font-family:'Orbitron',sans-serif}
 
 /* ===== Ajustes base de legibilidade (valem p/ todos os temas) ===== */
 .form input,.form select,.form textarea,.com-form textarea,.nav-select{color:var(--tinta)}
