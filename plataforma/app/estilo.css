@@ -4,11 +4,11 @@
   --mestre:#6b2230;--mesa:#2f5d50;--privado:#7a5c1e;--publico:#3a6ea5;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--font-body);font-size:18px;line-height:1.65}
+body{margin:0;background:var(--papel);color:var(--tinta);font-family:var(--font-body);font-size:18px;line-height:1.65;overflow-x:hidden}
 a{color:var(--sangue);cursor:pointer;text-decoration:none}
 .topo{position:sticky;top:0;z-index:20;display:flex;align-items:center;gap:14px;padding:10px 18px;
   background:linear-gradient(180deg,#23170f,#3a2616);color:#f0e6cf;border-bottom:3px solid var(--ouro)}
-.marca{font-family:var(--font-head);font-weight:700;font-size:20px;color:#f0e6cf;cursor:pointer}
+.marca{font-family:var(--font-head);font-weight:700;font-size:20px;color:#f0e6cf;cursor:pointer;white-space:nowrap}
 .marca small{display:block;font-size:11px;color:#cbb892;font-weight:500;font-style:italic}
 .userbox{margin-left:auto;font-size:13px;color:#cbb892;display:flex;align-items:center;gap:10px}
 .layout{display:flex;max-width:1180px;margin:0 auto;min-height:calc(100vh - 60px)}
@@ -205,7 +205,14 @@ details.bloco .cards{padding:12px}
 /* ===== responsividade no celular ===== */
 @media(max-width:600px){
   .topo{gap:8px;padding:8px 12px}
-  .marca{font-size:17px}
+  .marca{font-size:21px}
+  .marca-tx{display:none}
+  .topo{gap:6px;padding:8px 10px}
+  .world-switch{max-width:118px;padding:5px 9px;margin-left:2px}
+  .world-switch .ws-ic{display:none}
+  .modo-btn{padding:4px 8px;font-size:12px}
+  .jn-grid,.mural,.cards{grid-template-columns:1fr}
+  .jc-mast{font-size:17px}
   h1{font-size:23px}
   .conteudo{padding:14px}
   .hero2 .in{padding:20px 15px}
@@ -455,12 +462,12 @@ body.modo-lista .pc-circ .pc-nm{font-size:16px}
 
 /* ===== Mural da Campanha (mesa) ===== */
 .mural-sec .sec-head{border-bottom-color:var(--sangue)}
-.mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px;margin-top:6px}
-.mural-item{display:flex;align-items:center;gap:10px;background:var(--perg2);border:1px solid var(--ouro);border-left:4px solid var(--sangue);border-radius:8px;padding:12px 14px;cursor:pointer;box-shadow:0 2px 6px var(--sombra);transition:.12s}
-.mural-item:hover{transform:translateY(-2px);box-shadow:0 6px 16px var(--sombra)}
-.mural-pin{font-size:18px;line-height:1}
-.mural-tit{flex:1;font-family:var(--font-head);font-size:15px;color:var(--tinta);line-height:1.2}
-.mural-tipo{font-size:10.5px;color:var(--tinta2);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.mural{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:16px;margin-top:14px}
+.mural-item{position:relative;display:flex;flex-direction:column;gap:7px;background:var(--perg2);border:1px solid var(--ouro);border-top:3px solid var(--sangue);border-radius:9px;padding:20px 15px 15px;cursor:pointer;box-shadow:0 2px 7px var(--sombra);transition:.13s;min-height:100px}
+.mural-item:hover{transform:translateY(-3px);box-shadow:0 8px 18px var(--sombra)}
+.mural-pin{position:absolute;top:-11px;left:50%;transform:translateX(-50%);font-size:21px;line-height:1;filter:drop-shadow(0 2px 2px rgba(0,0,0,.3))}
+.mural-tipo{font-size:10px;color:var(--sangue);text-transform:uppercase;letter-spacing:.07em;font-weight:700}
+.mural-tit{font-family:var(--font-head);font-size:15.5px;color:var(--tinta);line-height:1.28;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 /* ===== Jornais — recorte de jornal ===== */
 .jn-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:18px;margin-top:14px}
 .jn-ed{display:block;background:#f7f1e0;color:#241c12;border:1px solid #c9b68d;border-radius:3px;padding:16px 18px 14px;cursor:pointer;box-shadow:0 2px 9px rgba(40,28,12,.22);transition:.14s}
@@ -470,3 +477,13 @@ body.modo-lista .pc-circ .pc-nm{font-size:16px}
 .jn-hl{font-family:'EB Garamond',Georgia,serif;font-weight:700;font-size:21px;line-height:1.15;margin:0 0 9px;text-align:center;color:#1c150c}
 .jn-corpo{font-family:'EB Garamond',Georgia,serif;font-size:14px;line-height:1.5;color:#3a2f22;text-align:justify}
 .jn-foot{margin-top:11px;padding-top:8px;border-top:1px solid #cbb88f;font-size:12px;color:#7c1c14;font-style:italic;text-align:right}
+
+/* ===== Jornais — capa de jornal (lista) ===== */
+.jn-capa{display:flex;flex-direction:column;background:#f7f1e0;color:#241c12;border:1px solid #c9b68d;border-radius:3px;cursor:pointer;box-shadow:0 2px 9px rgba(40,28,12,.22);transition:.14s;overflow:hidden}
+.jn-capa:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(40,28,12,.32)}
+.jc-img{height:130px;background-size:cover;background-position:center;background-color:#e7ddc4;border-bottom:2px solid #241c12}
+.jc-noimg{display:flex;align-items:center;justify-content:center;font-size:40px;color:#b9a06a}
+.jc-mast{font-family:'Cinzel Decorative','Cinzel',serif;font-weight:700;text-align:center;font-size:19px;letter-spacing:.02em;text-transform:uppercase;color:#241c12;padding:13px 14px 0}
+.jn-capa .jn-rule{margin:8px 16px 9px}
+.jc-lema{font-family:'EB Garamond',Georgia,serif;font-style:italic;text-align:center;font-size:14px;color:#3a2f22;padding:0 16px 4px}
+.jc-foot{margin:auto 16px 14px;padding-top:9px;border-top:1px solid #cbb88f;font-size:12px;color:#7c1c14;font-style:italic;text-align:right}

@@ -199,7 +199,7 @@ function layout(conteudo){
       +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
-    +'<div class="marca" onclick="go(\'home\')">'+temaIcone(S.mundo&&S.mundo.tema)+' Mares de Sangue</div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="🔎 Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
+    +'<div class="marca" onclick="go(\'home\')">'+temaIcone(S.mundo&&S.mundo.tema)+' <span class="marca-tx">Mares de Sangue</span></div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="🔎 Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
     +'<div class="userbox">'+modoBtnHTML()+(S.user?bellHTML():'')+ub+'</div></header>'
     +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'guia\')">📖 Guia de uso</a> · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
 }
@@ -546,9 +546,10 @@ async function umJornal(id){ var r=await sb.from("jornais").select("*").eq("id",
 async function pubsDoJornal(id){ var r=await sb.from("publicacoes").select("*").eq("jornal_id",id).order("criado_em",{ascending:false}); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function meusJornais(){ if(!S.user||!S.mundo)return []; var r=await sb.from("jornais").select("id,nome").eq("mundo_id",S.mundo.id).eq("dono_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
 function cardJornal(j){ return '<div class="card clic" onclick="go(\'jornal\',\''+j.id+'\')">'+thumb(j.imagem_url,"📰")+'<h3>'+esc(j.nome)+'</h3>'+(j.descricao?'<p class="res">'+esc(j.descricao)+'</p>':'')+'</div>'; }
+function jornalCapa(j){ var img=j.imagem_url?'<div class="jc-img" style="background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="jc-img jc-noimg">📰</div>'; return '<a class="jn-capa" onclick="go(\'jornal\',\''+j.id+'\')">'+img+'<div class="jc-mast">'+esc(j.nome)+'</div><div class="jn-rule"></div>'+(j.descricao?'<div class="jc-lema">'+esc(j.descricao)+'</div>':'')+'<div class="jc-foot">Abrir o jornal →</div></a>'; }
 async function telaJornais(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var js=await jornaisMundo();
   var criar=S.user?'<a class="btn" onclick="go(\'novoJornal\')">+ Criar jornal</a>':'';
-  var cards=js.length?gridOuLista(js,cardJornal,liJornal):'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
+  var cards=js.length?'<div class="jn-grid">'+js.map(jornalCapa).join("")+'</div>':'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
   layout(hero("📰 Jornais de "+S.mundo.nome,"Periódicos do mundo — notícias, crônicas e boatos publicados pelos jornais", S.mundo.fundo_url, criar)+cards); }
 async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){ layout('<div class="aviso">Jornal não encontrado ou sem permissão.</div>'); return; } registrarVisita("jornal",id,j.nome);
   var nomeDono=await nomeDe(j.dono_id); var noticias=await pubsDoJornal(id);
@@ -931,7 +932,7 @@ function telaGuia(){ layout(
  +'<p class="guia-cta"><a class="btn" onclick="go(\'home\')">Começar a explorar →</a></p>'
  ); }
 
-function muralItem(p){ return '<a class="mural-item" onclick="go(\'pub\',\''+p.id+'\')"><span class="mural-pin">📌</span><span class="mural-tit">'+esc(p.titulo)+'</span><span class="mural-tipo">'+esc(p.tipo)+'</span></a>'; }
+function muralItem(p){ return '<a class="mural-item" onclick="go(\'pub\',\''+p.id+'\')"><span class="mural-pin">📌</span><span class="mural-tipo">'+esc(p.tipo)+'</span><span class="mural-tit">'+esc(p.titulo)+'</span></a>'; }
 function jornalResumo(c){ c=(""+(c||"")).replace(/!\[[^\]]*\]\([^)]*\)/g,"").replace(/\[([^\]]*)\]\([^)]*\)/g,"$1").replace(/[#*_>`~]/g,"").replace(/\s+/g," ").trim(); return c.slice(0,200)+(c.length>200?"…":""); }
 function jornalEdicao(p, jnome){ return '<a class="jn-ed" onclick="go(\'pub\',\''+p.id+'\')"><div class="jn-mast">'+esc(jnome)+'</div><div class="jn-rule"></div><h3 class="jn-hl">'+esc(p.titulo)+'</h3><div class="jn-corpo">'+esc(jornalResumo(p.corpo))+'</div><div class="jn-foot">Ler a edição →</div></a>'; }
 function jornalEdicoes(noticias, jnome){ return '<div class="jn-grid">'+noticias.map(function(p){return jornalEdicao(p,jnome);}).join("")+'</div>'; }
