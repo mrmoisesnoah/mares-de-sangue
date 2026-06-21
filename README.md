@@ -45,3 +45,16 @@ mares-de-sangue/                 ← raiz do repositório
 ## Documentação
 
 Comece por `docs/ARQUITETURA.md`; para colaborar, `docs/CONTRIBUINDO.md`; para publicar, `docs/FASE4-HOSPEDAGEM.md`. Se for manter o projeto com ajuda do Claude (ou outra IA), leia o `CLAUDE.md`.
+
+
+---
+
+## ⚙️ Estado atual do deploy (atualizado)
+
+A **plataforma dinâmica** (`plataforma/app/`) agora é o site publicado, **sozinho, na raiz**:
+**https://mrmoisesnoah.github.io/mares-de-sangue**
+
+- O **site estático** antigo (gerador `gerar_site.py` + `conteudo/` + CMS `admin/`) foi **aposentado** e movido para **`arquivo/`** (nada lá é publicado; mantido só como referência).
+- O deploy (`.github/workflows/deploy.yml`) agora **publica `plataforma/app` direto na raiz** via GitHub Pages (sem build Python).
+- Para publicar mudanças: edite em `plataforma/app/`, faça `git push` na `main` — o GitHub Actions republica.
+- Banco/migrations: rodar na ordem de **`docs/MIGRACOES.md`** (Supabase → SQL Editor).
