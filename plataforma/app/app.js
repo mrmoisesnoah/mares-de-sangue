@@ -272,7 +272,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
     +(ehM?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')+(S.user?' '+botaoFav("mesa",id,mesa.nome):'')):'';
   var metaHtml=(mesa.epoca||mesa.local)?'<p class="meta-mesa">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'';
   var pedir=(S.user&&!ehM)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'';
-  var secPers='<div class="secao">'+secHead("🧝","Personagens da mesa",pers.length,(S.user?'<a class="btn mini sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a>':''))+(pers.length?'<div class="cards">'+pers.map(cardPersonagem).join("")+'</div>':'<div class="empty">Nenhum personagem nesta mesa ainda.</div>')+'</div>';
+  var secPers='<div class="secao">'+secHead("🧝","Personagens da mesa",pers.length,(S.user?'<a class="btn mini sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a>':''))+(pers.length?'<div class="pers-circ-grid">'+pers.map(cardPersonagemRound).join("")+'</div>':'<div class="empty">Nenhum personagem nesta mesa ainda.</div>')+'</div>';
   var secMapas='<div class="secao">'+secHead("🗺️","Mapas da mesa",mapas.length,(S.user?'<a class="btn mini sec" onclick="go(\'nova\',{mesa:\''+id+'\',tipo:\'mapa\'})">+ Mapa</a>':''))+(mapas.length?'<div class="cards">'+mapas.map(cardPub).join("")+'</div>':'<div class="empty">Nenhum mapa nesta mesa ainda.</div>')+'</div>';
   var secSess='<div class="secao">'+secHead("🎲","Sessões",sess.length,(ehM?'<a class="btn mini sec" onclick="go(\'areaMestre\',\''+id+'\')">🎭 Gerir sessões</a>':''))+(sess.length?'<div class="cards">'+sess.map(cardSessao).join("")+'</div>':'<div class="empty">Nenhuma sessão registrada ainda.</div>')+'</div>';
   var secOutros=outros.length?'<div class="secao">'+secHead("📚","Outros conteúdos",outros.length,"")+exploradorHTML()+'</div>':'';
@@ -284,7 +284,7 @@ async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Car
     +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a></p>':'')+exploradorHTML()); renderExpl(); }
 async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p; if(p)registrarVisita("publicacao",p.id,p.titulo);
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
-  var nomeAutor=await nomeDe(p.autor_id); var podeBaixar=meu(p)||donoMundo();
+  var nomeAutor=await nomeDe(p.autor_id); var podeBaixar=meu(p)||donoMundo(); var anexo=p.arquivo_url?'<p class="anexo-bloco">📎 Arquivo anexado: <a class="btn mini" href="'+esc(p.arquivo_url)+'" target="_blank" rel="noopener">↗ Abrir / baixar</a>'+(p.arquivo_nome?' <span class="vis-leg">('+esc(p.arquivo_nome)+')</span>':'')+'</p>':'';
   var pcLink=""; if(p.personagem_id){ var pcx=await umPersonagem(p.personagem_id); if(pcx) pcLink=' · <a onclick="go(\'personagem\',\''+p.personagem_id+'\')">🧝 '+esc(pcx.nome)+'</a>'; }
   var jorLink=""; if(p.jornal_id){ var jx=await umJornal(p.jornal_id); if(jx) jorLink=' · <a onclick="go(\'jornal\',\''+p.jornal_id+'\')">📰 '+esc(jx.nome)+'</a>'; }
   var vejaTb=""; if(p.tags&&p.tags.length){ var vt=await sb.from("publicacoes").select("*").eq("mundo_id",p.mundo_id).overlaps("tags",p.tags).neq("id",p.id).limit(8); if(vt.data&&vt.data.length){ vejaTb='<h2>Veja também</h2>'+listar(vt.data); } }
@@ -301,7 +301,7 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
     +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
     +tagChips(p.tags)
     +(p.capa_url?imagemComAcoes(p.capa_url,p.titulo,podeBaixar):'')
-    +media+'<div class="corpo">'+md(p.corpo)+'</div>'+vejaTb+acoes+extra);
+    +media+anexo+'<div class="corpo">'+md(p.corpo)+'</div>'+vejaTb+acoes+extra);
   if(extra) renderExpl(); }
 
 // ---------- export ----------
@@ -314,56 +314,85 @@ function baixarDoc(){ var p=S.pubAtual; if(!p)return;
   var a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download=slug(p.titulo)+".doc"; document.body.appendChild(a); a.click(); a.remove(); }
 
 // ---------- formulários ----------
-var TIPOS=['conto','background','diário de personagem','personagem','mapa','cidade','facção','região','reino','religião','criatura','item','evento histórico','história do mundo','resumo de sessão','crônica','planejamento do mestre','anotação privada'];
+var TIPOS=['conto','background','diário de personagem','ficha','personagem','mapa','cidade','facção','região','reino','religião','criatura','item','evento histórico','história do mundo','resumo de sessão','crônica','planejamento do mestre','anotação privada'];
 function opt(arr,sel){ return arr.map(function(o){var v,l; if(Array.isArray(o)){v=o[0];l=o[1];}else{v=o;l=o;} return '<option value="'+esc(v)+'"'+(sel===v?' selected':'')+'>'+esc(l)+'</option>';}).join(""); }
 function uploadCampo(){ return S.user?'<label>… ou enviar arquivo de imagem</label><input type="file" accept="image/*" onchange="subirCapa(this)"><span id="f_capa_st" class="vis-leg"></span>':''; }
-function campoImagem(label, id, valor){ return '<label>'+label+'</label><div class="img-campo"><input id="'+id+'" value="'+esc(valor||"")+'" placeholder="cole o link direto de uma imagem (.jpg .png .webp .gif)">'+(S.user?'<label class="img-up" title="Enviar do computador"><input type="file" accept="image/*" style="display:none" onchange="subirImg(this,&#39;'+id+'&#39;)">📁 Enviar</label>':'')+'</div><span id="'+id+'_st" class="vis-leg"></span><p class="vis-leg" style="margin:2px 0 0;font-size:12px">Cole o <b>link direto</b> de uma imagem pública (URL terminando em .jpg/.png/.webp/.gif), <b>ou</b> envie um arquivo do computador.</p>'; }
+function campoImagem(label, id, valor){ return '<label>'+label+'</label><div class="img-campo"><input id="'+id+'" value="'+esc(valor||"")+'" placeholder="cole o link direto de uma imagem (.jpg .png .webp .gif)">'+(S.user?'<label class="img-up" title="Enviar do computador"><input type="file" accept="image/*" style="display:none" onchange="subirImg(this,&#39;'+id+'&#39;)">📁 Enviar</label>':'')+(S.user?'<button type="button" class="img-up" onclick="abrirCropper(&#39;'+id+'&#39;)" title="Ajustar/recortar enquadramento">✂ Ajustar</button>':'')+'</div><span id="'+id+'_st" class="vis-leg"></span><p class="vis-leg" style="margin:2px 0 0;font-size:12px">Cole o <b>link direto</b> de uma imagem pública (URL terminando em .jpg/.png/.webp/.gif), <b>ou</b> envie um arquivo do computador.</p>'; }
 async function subirImg(inp, id){ var fl=inp.files&&inp.files[0]; if(!fl)return; var st=document.getElementById(id+"_st"); if(st)st.textContent="enviando…"; try{ var u=await uploadArquivo(fl); var c=document.getElementById(id); if(c)c.value=u; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
+function campoArquivo(valorUrl, valorNome){ var nm=esc(valorNome||"").replace(/"/g,"&quot;"); return '<input type="hidden" id="f_arquivo_url" value="'+esc(valorUrl||"")+'"><input type="hidden" id="f_arquivo_nome" value="'+nm+'">'
+  +'<div class="arq-campo"><span id="f_arquivo_st" class="arq-nome">'+(valorUrl?('📎 '+esc(valorNome||"arquivo anexado")+' <a href="'+esc(valorUrl)+'" target="_blank" rel="noopener">↗ abrir</a>'):'Nenhum arquivo anexado.')+'</span>'
+  +(S.user?'<label class="img-up"><input type="file" accept=".pdf,.doc,.docx,.odt,.rtf,.txt,image/*" style="display:none" onchange="subirArquivoFicha(this)">📎 Anexar arquivo</label>':'')
+  +(valorUrl?' <button type="button" class="btn mini sec" onclick="removerArquivoFicha()">remover</button>':'')+'</div>'
+  +'<p class="campo-help">Anexe a ficha pronta em PDF/Word (ou imagem). Fica disponível conforme a visibilidade desta publicação.</p>'; }
+async function subirArquivoFicha(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("f_arquivo_st"); if(st)st.textContent="enviando…"; try{ var u=await uploadArquivo(f); document.getElementById("f_arquivo_url").value=u; document.getElementById("f_arquivo_nome").value=f.name; if(st)st.innerHTML='📎 '+esc(f.name)+' <a href="'+esc(u)+'" target="_blank" rel="noopener">↗ abrir</a>'; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
+function removerArquivoFicha(){ var u=document.getElementById("f_arquivo_url"); if(u)u.value=""; var n=document.getElementById("f_arquivo_nome"); if(n)n.value=""; var st=document.getElementById("f_arquivo_st"); if(st)st.textContent="Arquivo removido."; }
 function datalistTags(){ var ks=Object.keys(S.tags); return '<datalist id="taglist">'+ks.map(function(t){return '<option value="'+esc(t)+'">';}).join("")+'</datalist>'; }
+// ===== Toolkit de formulários =====
+function fHead(ic,titulo,sub){ return '<div class="form-head"><h1>'+ic+' '+esc(titulo)+'</h1>'+(sub?'<p class="form-sub">'+esc(sub)+'</p>':'')+'</div>'; }
+function fGrupo(titulo,html,dica){ return '<fieldset class="form-grupo"><legend>'+esc(titulo)+'</legend>'+(dica?'<p class="grupo-dica">'+esc(dica)+'</p>':'')+html+'</fieldset>'; }
+function fCampo(label,html,help){ return '<div class="campo">'+(label?'<label>'+label+'</label>':'')+html+(help?'<p class="campo-help">'+help+'</p>':'')+'</div>'; }
+function fAcoes(prim,onPrim,onCancel){ return '<div class="form-acoes"><button class="btn" onclick="'+onPrim+'">'+esc(prim)+'</button> <button class="btn sec" onclick="'+onCancel+'">Cancelar</button></div>'; }
+function mdEditor(id,valor){ return '<div class="mded">'
+  +'<div class="mded-bar">'
+    +'<button type="button" class="mded-b" onmousedown="return false" onclick="mdIns(\''+id+'\',\'**\',\'**\',\'negrito\')" title="Negrito"><b>B</b></button>'
+    +'<button type="button" class="mded-b" onmousedown="return false" onclick="mdIns(\''+id+'\',\'*\',\'*\',\'itálico\')" title="Itálico"><i>I</i></button>'
+    +'<button type="button" class="mded-b" onmousedown="return false" onclick="mdIns(\''+id+'\',\'## \',\'\',\'Título\')" title="Subtítulo">H</button>'
+    +'<button type="button" class="mded-b" onmousedown="return false" onclick="mdIns(\''+id+'\',\'[\',\'](https://)\',\'texto do link\')" title="Link">🔗</button>'
+    +'<button type="button" class="mded-b" onmousedown="return false" onclick="mdIns(\''+id+'\',\'- \',\'\',\'item\')" title="Lista">≣</button>'
+    +'<button type="button" class="mded-b" onmousedown="return false" onclick="mdIns(\''+id+'\',\'> \',\'\',\'citação\')" title="Citação">❝</button>'
+    +'<span class="mded-sp"></span>'
+    +'<button type="button" class="mded-b mded-pv" onclick="mdPrev(\''+id+'\')">👁 Pré-visualizar</button>'
+  +'</div>'
+  +'<textarea id="'+id+'" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()" oninput="mdSync(\''+id+'\')">'+esc(valor||"")+'</textarea>'
+  +'<div class="mded-prev corpo" id="'+id+'_prev" style="display:none"></div>'
+  +'<p class="campo-help">Markdown: **negrito**, *itálico*, ## subtítulo, [link](url), [[Outro Artigo]]. Arraste ou cole imagens direto no texto.</p>'
+  +'</div>'; }
+function mdSync(id){ var pv=document.getElementById(id+"_prev"); if(pv&&pv.style.display!=="none"){ var ta=document.getElementById(id); pv.innerHTML=md(ta.value); } }
+function mdPrev(id){ var ta=document.getElementById(id),pv=document.getElementById(id+"_prev"); if(!ta||!pv)return; if(pv.style.display==="none"){ pv.innerHTML=md(ta.value); pv.style.display="block"; }else{ pv.style.display="none"; } }
+function mdIns(id,pre,suf,ph){ var ta=document.getElementById(id); if(!ta)return; var sst=ta.selectionStart,sen=ta.selectionEnd; var sel=ta.value.slice(sst,sen)||ph; ta.value=ta.value.slice(0,sst)+pre+sel+suf+ta.value.slice(sen); ta.focus(); ta.selectionStart=sst+pre.length; ta.selectionEnd=sst+pre.length+sel.length; mdSync(id); }
 function formPub(opts, p){
   var mesaId=opts.mesa||(p?p.mesa_id:null); var tipoSel=(p?p.tipo:opts.tipo)||"conto";
   var emMesa=!!opts.mesa; // veio de uma mesa específica
-  var rot=ehPersonagem(tipoSel)?"personagem":(tipoSel==="mapa"?"mapa":"conteúdo");
+  var rot=ehPersonagem(tipoSel)?"personagem":(tipoSel==="mapa"?"mapa":(tipoSel==="ficha"?"ficha":"conteúdo"));
   var visOpts=(mesaId)?[["mesa","mesa (todos da campanha)"],["publico","público (todos)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
   var seletorMesa = (!emMesa && S.mesas.length) ? '<label>Mesa (opcional — relacione a uma campanha)</label><select id="f_mesa"><option value="">— sem mesa (adicionar depois) —</option>'+S.mesas.map(function(m){return '<option value="'+m.id+'"'+(p&&p.mesa_id===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join("")+'</select>' : '';
   var seletorPers = (S.meusPers&&S.meusPers.length) ? '<label>Personagem (opcional — ligar a um personagem)</label><select id="f_personagem"><option value="">— nenhum —</option>'+S.meusPers.map(function(pc){return '<option value="'+pc.id+'"'+(((p&&p.personagem_id===pc.id)||(opts.personagem===pc.id))?' selected':'')+'>'+esc(pc.nome)+'</option>';}).join("")+'</select>' : '';
   var seletorJornal = (S.meusJornais&&S.meusJornais.length) ? '<label>Jornal (opcional — publicar por um jornal)</label><select id="f_jornal"><option value="">— nenhum —</option>'+S.meusJornais.map(function(jj){return '<option value="'+jj.id+'"'+(((p&&p.jornal_id===jj.id)||(opts.jornal===jj.id))?' selected':'')+'>'+esc(jj.nome)+'</option>';}).join("")+'</select>' : '';
   var seletorSessao = (mesaId && S.sessoesForm && S.sessoesForm.length) ? '<label>Sessão (opcional)</label><select id="f_sessao"><option value="">— nenhuma / geral —</option>'+S.sessoesForm.map(function(se){return '<option value="'+se.id+'"'+(((p&&p.sessao_id===se.id)||(opts.sessao===se.id))?' selected':'')+'>'+esc(se.titulo)+'</option>';}).join("")+'</select>' : '';
-  return '<div class="bread">'+(p?'Editar ':'Novo ')+esc(rot)+'</div><h1>'+(p?'Editar ':'Novo ')+esc(rot)+'</h1>'
-    +'<div class="form"><label>Tipo</label><select id="f_tipo">'+opt(TIPOS,tipoSel)+'</select>'
-    +seletorMesa
-    +seletorPers
-    +seletorJornal
-    +seletorSessao
-    +'<label>Título</label><input id="f_titulo" value="'+esc(p?p.titulo:"")+'">'
-    +campoImagem('Imagem de capa (opcional)','f_capa',(p&&p.capa_url?p.capa_url:""))
-    +'<label>Texto (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="f_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(p?p.corpo:"")+'</textarea>'
-    +'<div class="row"><div><label>Marcadores / tags (vírgula — digite para criar novos)</label><input id="f_tags" list="taglist" value="'+esc(p&&p.tags?p.tags.join(", "):"")+'">'+datalistTags()+'</div>'
-    +'<div><label>Estado</label><select id="f_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],p?p.estado:"publicado")+'</select></div>'
-    +'<div><label>Visibilidade</label><select id="f_vis">'+opt(visOpts,p?p.visibilidade:(opts.vis||(mesaId?"mesa":"publico")))+'</select></div></div>'
-    +'<p style="margin-top:16px"><button class="btn" onclick="salvarPub('+(mesaId?"'"+mesaId+"'":"null")+','+(p?"'"+p.id+"'":"null")+','+(emMesa?"true":"false")+')">'+(p?'Salvar':'Criar '+esc(rot))+'</button> '
-    +'<button class="btn sec" onclick="'+(mesaId?"go('mesa','"+mesaId+"')":"go('lore')")+'">Cancelar</button></p></div>';
+  var head=fHead('📝',(p?'Editar ':'Novo ')+rot, p?'Atualize os campos abaixo.':'Preencha os campos — só o título é obrigatório.');
+  var gClass=fGrupo('Classificação','<label>Tipo de conteúdo</label><select id="f_tipo">'+opt(TIPOS,tipoSel)+'</select>'+seletorMesa+seletorPers+seletorJornal+seletorSessao,'O que é e a que se relaciona (mesa, personagem, jornal, sessão).');
+  var gCont=fGrupo('Conteúdo','<label>Título</label><input id="f_titulo" value="'+esc(p?p.titulo:"")+'" placeholder="Nome do '+esc(rot)+'">'+campoImagem('Imagem de capa (opcional)','f_capa',(p&&p.capa_url?p.capa_url:""))+'<label>Texto</label>'+mdEditor('f_corpo',p?p.corpo:"")+'<label>Anexar arquivo (PDF/documento — ideal para fichas)</label>'+campoArquivo(p?p.arquivo_url:"",p?p.arquivo_nome:""));
+  var gPub=fGrupo('Publicação','<div class="row"><div><label>Marcadores / tags</label><input id="f_tags" list="taglist" value="'+esc(p&&p.tags?p.tags.join(", "):"")+'" placeholder="vírgula entre as tags">'+datalistTags()+'</div><div><label>Estado</label><select id="f_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],p?p.estado:"publicado")+'</select></div><div><label>Visibilidade</label><select id="f_vis">'+opt(visOpts,p?p.visibilidade:(opts.vis||(mesaId?"mesa":"publico")))+'</select></div></div>','Como e para quem aparece. “Rascunho” fica só para você até publicar.');
+  var acoes=fAcoes(p?'Salvar':'Criar '+rot,'salvarPub('+(mesaId?"'"+mesaId+"'":"null")+','+(p?"'"+p.id+"'":"null")+','+(emMesa?"true":"false")+')',(mesaId?"go('mesa','"+mesaId+"')":"go('lore')"));
+  return '<div class="bread">'+(p?'Editar ':'Novo ')+esc(rot)+'</div><div class="form">'+head+gClass+gCont+gPub+acoes+'</div>';
 }
 async function telaNova(opts){ opts=opts||{}; S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); if(opts.personagem&&!S.meusPers.some(function(x){return x.id===opts.personagem;})){ var pc=await umPersonagem(opts.personagem); if(pc) S.meusPers=S.meusPers.concat([{id:pc.id,nome:pc.nome}]); } if(opts.jornal&&!S.meusJornais.some(function(x){return x.id===opts.jornal;})){ var jj=await umJornal(opts.jornal); if(jj) S.meusJornais=S.meusJornais.concat([{id:jj.id,nome:jj.nome}]); } S.sessoesForm = opts.mesa? await sessoesDaMesa(opts.mesa) : []; layout(formPub(opts,null)); }
 async function telaEditar(id){ layout('<p>Carregando…</p>'); S.meusPers=await meusPersonagens(); S.meusJornais=await meusJornais(); var p=await umaPub(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} S.sessoesForm = p.mesa_id? await sessoesDaMesa(p.mesa_id) : []; layout(formPub({mesa:p.mesa_id},p)); }
-function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><h1>🌍 Criar Mundo</h1>'
-  +'<div class="form"><label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: Mares de Sangue"><label>Descrição</label><textarea id="m_desc"></textarea>'
-  +campoImagem('Imagem de fundo (hero)','m_fundo','')
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundo()">Criar mundo</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
-function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><h1>⚔ Criar Mesa</h1>'
-  +'<div class="form"><label>Nome</label><input id="me_nome"><label>Descrição</label><textarea id="me_desc"></textarea><label>Época no mundo (opcional)</label><input id="me_epoca" placeholder="ex.: Ano 2068"><label>Local / região (opcional)</label><input id="me_local" placeholder="ex.: Cidade dos Corvos">'
-  +campoImagem('Imagem de fundo (opcional)','me_fundo','')
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesa()">Criar mesa</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'); }
-async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mundo</div><h1>Editar mundo</h1>'
-  +'<div class="form"><label>Nome</label><input id="w_nome" value="'+esc(w.nome)+'"><label>Descrição</label><textarea id="w_desc">'+esc(w.descricao||"")+'</textarea>'
-  +campoImagem('Imagem de fundo (hero)','w_fundo',(w.fundo_url||""))
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMundoEdit()">Salvar</button> <button class="btn sec" onclick="go(\'home\')">Cancelar</button></p></div>'
+function telaNovoMundo(){ layout('<div class="bread">Novo mundo</div><div class="form">'
+  +fHead('🌍','Criar Mundo','Um mundo agrupa toda a sua ambientação, mesas e personagens.')
+  +fGrupo('Identidade do mundo','<label>Nome do mundo</label><input id="m_nome" placeholder="Ex.: O Mundo de Skard"><label>Descrição</label>'+mdEditor('m_desc',''))
+  +fGrupo('Aparência',campoImagem('Imagem de fundo (hero)','m_fundo',''))
+  +fAcoes('Criar mundo','salvarMundo()',"go('home')")+'</div>'); }
+function telaNovaMesa(){ layout('<div class="bread">Nova mesa</div><div class="form">'
+  +fHead('⚔','Criar Mesa','Uma mesa é uma campanha dentro do mundo, com seu próprio tempo e lugar.')
+  +fGrupo('Identidade','<label>Nome</label><input id="me_nome" placeholder="Ex.: Ecos na Cidade dos Corvos"><label>Descrição</label>'+mdEditor('me_desc',''))
+  +fGrupo('Contexto no mundo','<div class="row"><div><label>Época (opcional)</label><input id="me_epoca" placeholder="ex.: Ano 2068"></div><div><label>Local / região (opcional)</label><input id="me_local" placeholder="ex.: Cidade dos Corvos"></div></div>','Quando e onde esta campanha acontece.')
+  +fGrupo('Aparência',campoImagem('Imagem de fundo (opcional)','me_fundo',''))
+  +fAcoes('Criar mesa','salvarMesa()',"go('home')")+'</div>'); }
+async function telaEditarMundo(){ var w=S.mundo; layout('<div class="bread">Editar mundo</div><div class="form">'
+  +fHead('🌍','Editar mundo','')
+  +fGrupo('Identidade do mundo','<label>Nome</label><input id="w_nome" value="'+esc(w.nome)+'"><label>Descrição</label>'+mdEditor('w_desc',w.descricao||""))
+  +fGrupo('Aparência',campoImagem('Imagem de fundo (hero)','w_fundo',(w.fundo_url||"")))
+  +fAcoes('Salvar','salvarMundoEdit()',"go('mundoHome')")+'</div>'
   +'<h2>Colaboradores do mundo</h2><p class="vis-leg">Quem pode criar conteúdo neste mundo. Você (dono) sempre pode.</p><div id="colabmundo">Carregando…</div><div id="pedidosmundo"></div>');
   renderColabMundo(w.id); renderPedidos("mundo",w.id,"pedidosmundo"); }
 async function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===id;}); if(!m){layout('<div class="aviso">Mesa não encontrada.</div>');return;}
-  layout('<div class="bread">Editar mesa</div><h1>Editar mesa</h1><div class="form"><label>Nome</label><input id="me_nome" value="'+esc(m.nome)+'">'
-  +'<label>Descrição</label><textarea id="me_desc">'+esc(m.descricao||"")+'</textarea><label>Época no mundo (opcional)</label><input id="me_epoca" value="'+esc(m.epoca||"")+'" placeholder="ex.: Ano 2068, após a Guerra das Cinco Chaves"><label>Local / região (opcional)</label><input id="me_local" value="'+esc(m.local||"")+'" placeholder="ex.: Cidade dos Corvos, em Dranor">'+campoImagem('Imagem de fundo (opcional)','me_fundo',(m.fundo_url||""))
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarMesaEdit(\''+id+'\')">Salvar</button> <button class="btn sec" onclick="go(\'mesa\',\''+id+'\')">Cancelar</button></p></div>'+'<h2>Jogadores da mesa</h2><p class="vis-leg">Adicione jogadores para que vejam o conteúdo de visibilidade “mesa” e possam contribuir com suas histórias.</p><div id="membros">Carregando…</div><div id="pedidosmesa"></div>'); await renderMembros(id); renderPedidos("mesa",id,"pedidosmesa"); }
+  layout('<div class="bread">Editar mesa</div><div class="form">'
+  +fHead('⚔','Editar mesa','')
+  +fGrupo('Identidade','<label>Nome</label><input id="me_nome" value="'+esc(m.nome)+'"><label>Descrição</label>'+mdEditor('me_desc',m.descricao||""))
+  +fGrupo('Contexto no mundo','<div class="row"><div><label>Época (opcional)</label><input id="me_epoca" value="'+esc(m.epoca||"")+'" placeholder="ex.: Ano 2068"></div><div><label>Local / região (opcional)</label><input id="me_local" value="'+esc(m.local||"")+'" placeholder="ex.: Cidade dos Corvos"></div></div>')
+  +fGrupo('Aparência',campoImagem('Imagem de fundo (opcional)','me_fundo',(m.fundo_url||"")))
+  +fAcoes('Salvar',"salvarMesaEdit('"+id+"')","go('mesa','"+id+"')")+'</div>'+'<h2>Jogadores da mesa</h2><p class="vis-leg">Adicione jogadores para que vejam o conteúdo de visibilidade “mesa” e possam contribuir com suas histórias.</p><div id="membros">Carregando…</div><div id="pedidosmesa"></div>'); await renderMembros(id); renderPedidos("mesa",id,"pedidosmesa"); }
 async function renderMembros(id){
   var c=document.getElementById("membros"); if(!c)return;
   var ms=await membrosMesa(id); var perf=await perfis();
@@ -400,7 +429,7 @@ async function salvarPub(mesaId, editId, emMesa){ try{
   if(!emMesa){ var sel=val("f_mesa"); if(sel) mesaId=sel; }
   var reg={ tipo:val("f_tipo"), titulo:titulo, slug:slug(titulo), corpo:val("f_corpo"),
     tags:val("f_tags").split(",").map(function(s){return s.trim();}).filter(Boolean),
-    estado:val("f_estado"), visibilidade:val("f_vis"), capa_url:(val("f_capa").trim()||null), personagem_id:(val("f_personagem")||null), jornal_id:(val("f_jornal")||null), sessao_id:(val("f_sessao")||null) };
+    estado:val("f_estado"), visibilidade:val("f_vis"), capa_url:(val("f_capa").trim()||null), personagem_id:(val("f_personagem")||null), jornal_id:(val("f_jornal")||null), sessao_id:(val("f_sessao")||null), arquivo_url:(val("f_arquivo_url")||null), arquivo_nome:(val("f_arquivo_nome")||null) };
   if(reg.tipo==="mapa") reg.categoria="mapa";
   if(editId){ var u=await sb.from("publicacoes").update(reg).eq("id",editId); if(u.error)throw u.error; go("pub",editId); }
   else { reg.mundo_id=S.mundo.id; reg.mesa_id=mesaId||null; reg.autor_id=S.user.id;
@@ -410,13 +439,12 @@ async function excluirPub(id, mesaId){ if(!confirm("Excluir esta publicação? N
   try{ var r=await sb.from("publicacoes").delete().eq("id",id); if(r.error)throw r.error; if(mesaId) go("mesa",mesaId); else go("lore"); }catch(e){erro(e);} }
 
 function telaPerfil(){ if(!S.user){go("login");return;} var p=S.profile||{};
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Editar perfil</div><h1>👤 Editar perfil</h1>'
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Editar perfil</div>'
   +'<div class="autor-cap">'+(p.avatar_url?'<div class="av" id="av_prev" style="background-image:url('+esc(p.avatar_url)+')"></div>':'<div class="av" id="av_prev">'+esc(((p.nome||"?")[0]||"?").toUpperCase())+'</div>')+'<div><h2 style="margin:0">'+esc(p.nome||"Aventureiro")+'</h2><p class="vis-leg" style="font-style:italic">'+esc(p.epiteto||"")+'</p></div></div>'
-  +'<div class="form"><label>Nome de aventureiro</label><input id="pf_nome" value="'+esc(p.nome||"")+'">'
-  +'<label>Epíteto / título (ex.: o Errante, a Branca)</label><input id="pf_epiteto" value="'+esc(p.epiteto||"")+'" placeholder="opcional">'
-  +campoImagem('Foto de perfil','pf_avatar',(p.avatar_url||""))
-  +'<label>Sobre você (Markdown)</label><textarea id="pf_bio">'+esc(p.bio||"")+'</textarea>'
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarPerfil()">Salvar perfil</button> <button class="btn sec" onclick="go(\'autor\',\''+S.user.id+'\')">Ver minha página</button></p></div>'); }
+  +'<div class="form">'+fHead('👤','Editar perfil','')
+  +fGrupo('Quem é você','<label>Nome de aventureiro</label><input id="pf_nome" value="'+esc(p.nome||"")+'"><label>Epíteto / título</label><input id="pf_epiteto" value="'+esc(p.epiteto||"")+'" placeholder="ex.: o Errante, a Branca (opcional)">'+campoImagem('Foto de perfil','pf_avatar',(p.avatar_url||"")))
+  +fGrupo('Sobre você','<label>Bio</label>'+mdEditor('pf_bio',p.bio||""))
+  +fAcoes('Salvar perfil','salvarPerfil()',"go('autor','"+S.user.id+"')")+'</div>'); }
 async function subirAvatar(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("pf_avatar_st"); if(st)st.textContent="enviando…";
   try{ var u=await uploadArquivo(f); var c=document.getElementById("pf_avatar"); if(c)c.value=u; var pv=document.getElementById("av_prev"); if(pv){pv.style.backgroundImage="url("+u+")"; pv.textContent="";} if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
 async function salvarPerfil(){ try{ var nome=val("pf_nome").trim()||"Aventureiro"; var upd={nome:nome, epiteto:(val("pf_epiteto").trim()||null), avatar_url:(val("pf_avatar").trim()||null), bio:val("pf_bio")};
@@ -439,7 +467,12 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var btnAdd=podeAdd?'<a class="btn" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+'})">+ Adicionar texto</a> ':'';
   var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#c08" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
   var acoes='<p>'+btnAdd+btnEdit+(S.user&&!podeEditar&&!souContrib?'<a class="btn sec" onclick="pedirAcesso(\'personagem\',\''+id+'\')">🔑 Pedir p/ escrever</a> ':'')+((btnAdd||btnEdit)?' ':'')+botaoCompartilhar()+' '+botaoFav("personagem",id,c.nome)+'</p>';
-  var rel; if(pubs.length){ abrirExplorador(pubs); rel='<h2>Conteúdo relacionado</h2>'+exploradorHTML(); } else { rel='<h2>Conteúdo relacionado</h2><div class="empty">Nenhum conteúdo ligado a este personagem ainda.'+(podeAdd?' Use o botão “+ Adicionar texto”.':'')+'</div>'; }
+  var fichas=pubs.filter(function(x){return x.tipo==="ficha";}); var relPubs=pubs.filter(function(x){return x.tipo!=="ficha";});
+  var fichaHtml='<div class="secao"><div class="sec-head"><h2>📋 Ficha do personagem</h2>'+(podeAdd&&!fichas.length?'<div class="sec-acts"><a class="btn mini" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+',tipo:\'ficha\'})">+ Disponibilizar ficha</a></div>':'')+'</div>';
+  if(fichas.length){ fichaHtml+=fichas.map(function(fp){ return '<div class="ficha-bloco"><div class="ficha-top">'+visChip(fp.visibilidade)+(fp.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+(meu(fp)?' <a class="btn mini sec" onclick="go(\'editar\',\''+fp.id+'\')">✎ Editar</a> <a class="btn mini sec" onclick="go(\'pub\',\''+fp.id+'\')">↗ Abrir</a>':'')+'</div>'+(fp.arquivo_url?'<p class="anexo-bloco">📎 <a class="btn mini" href="'+esc(fp.arquivo_url)+'" target="_blank" rel="noopener">↗ Abrir ficha (arquivo)</a>'+(fp.arquivo_nome?' <span class="vis-leg">'+esc(fp.arquivo_nome)+'</span>':'')+'</p>':'')+(fp.capa_url?'<img class="capa" src="'+esc(fp.capa_url)+'" loading="lazy">':'')+'<div class="corpo">'+md(fp.corpo||"")+'</div></div>'; }).join(""); }
+  else { fichaHtml+='<div class="empty">Nenhuma ficha disponibilizada ainda.'+(podeAdd?' Use “+ Disponibilizar ficha” — você define se ela é privada, só da mesa ou pública.':'')+'</div>'; }
+  fichaHtml+='</div>';
+  var rel; if(relPubs.length){ abrirExplorador(relPubs); rel='<h2>Conteúdo relacionado</h2>'+exploradorHTML(); } else { rel='<h2>Conteúdo relacionado</h2><div class="empty">Nenhum conteúdo ligado a este personagem ainda.'+(podeAdd?' Use o botão “+ Adicionar texto”.':'')+'</div>'; }
   var painel=podeEditar?'<h2>Quem pode escrever histórias deste personagem</h2><p class="vis-leg">Autorize outros a adicionar textos na página deste personagem (além de você).</p><div id="contribpers">Carregando…</div><div id="pedidospers"></div>':'';
   layout('<div class="bread"><a onclick="go(\'pers\',\'jog\')">‹ Personagens</a></div>'
     +'<div class="autor-cap">'+av+'<div><h1 style="margin:0">'+esc(c.nome)+'</h1>'
@@ -447,8 +480,8 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
     +'<p class="vis-leg">'+visChip(c.visibilidade)+(c.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+' · por <a onclick="go(\'autor\',\''+c.jogador_id+'\')">'+esc(nomeAutor)+'</a>'+(mesaNome?' · <a onclick="go(\'mesa\',\''+c.mesa_id+'\')">⚔ '+esc(mesaNome)+'</a>':'')+'</p></div></div>'
     +(c.resumo?'<p>'+esc(c.resumo)+'</p>':'')
     +(c.corpo?'<div class="corpo">'+md(c.corpo)+'</div>':'')
-    +acoes+rel+painel);
-  if(pubs.length) renderExpl();
+    +acoes+fichaHtml+rel+painel);
+  if(relPubs.length) renderExpl();
   if(podeEditar){ renderContribPers(id); renderPedidos("personagem",id,"pedidospers"); } }
 function formPersonagem(opts, c){
   var mesaId=c?c.mesa_id:(opts.mesa||null); var emMesa=!!opts.mesa;
@@ -458,17 +491,13 @@ function formPersonagem(opts, c){
   var podeAtribuir=donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin");
   var seletorTipo='<label>Tipo de personagem</label><select id="pc_tipo">'+opt([["jogador","Personagem de jogador"],["npc","NPC do mestre"]],tipoSel)+'</select>';
   var seletorAtrib=(podeAtribuir && S.perfis && S.perfis.length)?'<label>Dono do personagem (atribuir a um jogador)</label><select id="pc_jogador">'+S.perfis.map(function(u){return '<option value="'+u.id+'"'+(((c?c.jogador_id:S.user.id)===u.id)?' selected':'')+'>'+esc(u.nome)+(u.id===S.user.id?' (você)':'')+'</option>';}).join("")+'</select>':'';
-  return '<div class="bread">'+(c?'Editar personagem':'Novo personagem')+'</div><h1>🧝 '+(c?'Editar personagem':'Novo personagem')+'</h1>'
-    +'<div class="form"><label>Nome</label><input id="pc_nome" value="'+esc(c?c.nome:"")+'">'
-    +'<label>Epíteto / título (opcional)</label><input id="pc_epiteto" value="'+esc(c&&c.epiteto?c.epiteto:"")+'" placeholder="ex.: o Errante, a Branca">'
-    +seletorTipo+seletorAtrib
-    +seletorMesa
-    +campoImagem('Foto do personagem (opcional)','pc_img',(c&&c.imagem_url?c.imagem_url:""))
-    +'<label>Resumo curto (opcional)</label><input id="pc_resumo" value="'+esc(c&&c.resumo?c.resumo:"")+'" placeholder="uma linha sobre o personagem">'
-    +'<label>Perfil / história (Markdown) <span class="vis-leg" style="font-weight:400;text-transform:none">— arraste ou cole imagens aqui</span></label><textarea id="pc_corpo" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(c&&c.corpo?c.corpo:"")+'</textarea>'
-    +'<div class="row"><div><label>Estado</label><select id="pc_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],c?c.estado:"publicado")+'</select></div>'
-    +'<div><label>Visibilidade</label><select id="pc_vis">'+opt(visOpts,c?c.visibilidade:(mesaId?"mesa":"publico"))+'</select></div></div>'
-    +'<p style="margin-top:16px"><button class="btn" onclick="salvarPersonagem('+(c?"'"+c.id+"'":"null")+')">'+(c?'Salvar':'Criar personagem')+'</button> <button class="btn sec" onclick="'+(c?"go('personagem','"+c.id+"')":"go('pers','jog')")+'">Cancelar</button></p></div>';
+  var head=fHead('🧝',(c?'Editar personagem':'Novo personagem'), c?'Atualize a identidade do personagem.':'Crie o personagem — depois adicione textos, histórias e a ficha completa na página dele.');
+  var gId=fGrupo('Identidade','<label>Nome</label><input id="pc_nome" value="'+esc(c?c.nome:"")+'">'+'<label>Epíteto / título (opcional)</label><input id="pc_epiteto" value="'+esc(c&&c.epiteto?c.epiteto:"")+'" placeholder="ex.: o Errante, a Branca">'+seletorTipo+seletorAtrib);
+  var gVinc=fGrupo('Vínculo & imagem',(seletorMesa||'<p class="campo-help">Sem mesa para vincular.</p>')+campoImagem('Foto do personagem (opcional)','pc_img',(c&&c.imagem_url?c.imagem_url:"")),'A que mesa pertence (se houver) e a imagem de capa.');
+  var gHist=fGrupo('Apresentação','<label>Resumo curto (opcional)</label><input id="pc_resumo" value="'+esc(c&&c.resumo?c.resumo:"")+'" placeholder="uma linha sobre o personagem">'+'<label>Perfil / história</label>'+mdEditor('pc_corpo',c&&c.corpo?c.corpo:""));
+  var gPub=fGrupo('Publicação','<div class="row"><div><label>Estado</label><select id="pc_estado">'+opt([["publicado","publicado"],["rascunho","rascunho"]],c?c.estado:"publicado")+'</select></div><div><label>Visibilidade</label><select id="pc_vis">'+opt(visOpts,c?c.visibilidade:(mesaId?"mesa":"publico"))+'</select></div></div>','Quem pode ver a página do personagem.');
+  var acoes=fAcoes(c?'Salvar':'Criar personagem','salvarPersonagem('+(c?"'"+c.id+"'":"null")+')',(c?"go('personagem','"+c.id+"')":"go('pers','jog')"));
+  return '<div class="bread">'+(c?'Editar personagem':'Novo personagem')+'</div><div class="form">'+head+gId+gVinc+gHist+gPub+acoes+'</div>';
 }
 async function telaNovoPersonagem(opts){ opts=opts||{}; if(donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin")) await perfis(); layout(formPersonagem(opts,null)); }
 async function telaEditarPersonagem(id){ layout('<p>Carregando…</p>'); var c=await umPersonagem(id); if(!c){layout('<div class="aviso">Sem permissão.</div>');return;} if(donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin")) await perfis(); layout(formPersonagem({},c)); }
@@ -533,12 +562,11 @@ async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJor
   if(podeEditar) renderEscritores(id); }
 function formJornal(j){
   var visOpts=[["publico","público (todos)"],["privado","privado (só eu)"]];
-  return '<div class="bread">'+(j?'Editar jornal':'Novo jornal')+'</div><h1>📰 '+(j?'Editar jornal':'Criar jornal')+'</h1>'
-    +'<div class="form"><label>Nome do jornal</label><input id="j_nome" value="'+esc(j?j.nome:"")+'" placeholder="Ex.: A Trombeta de Dagor">'
-    +'<label>Descrição / lema (opcional)</label><input id="j_desc" value="'+esc(j&&j.descricao?j.descricao:"")+'">'
-    +campoImagem('Logo do jornal (opcional)','j_img',(j&&j.imagem_url?j.imagem_url:""))
-    +'<label>Visibilidade</label><select id="j_vis">'+opt(visOpts,j?j.visibilidade:"publico")+'</select>'
-    +'<p style="margin-top:16px"><button class="btn" onclick="salvarJornal('+(j?"'"+j.id+"'":"null")+')">'+(j?'Salvar':'Criar jornal')+'</button> <button class="btn sec" onclick="'+(j?"go('jornal','"+j.id+"')":"go('jornais')")+'">Cancelar</button></p></div>';
+  return '<div class="bread">'+(j?'Editar jornal':'Novo jornal')+'</div><div class="form">'
+    +fHead('📰',(j?'Editar jornal':'Criar jornal'),'Um periódico do mundo, com notícias publicadas por você e escritores autorizados.')
+    +fGrupo('Identidade','<label>Nome do jornal</label><input id="j_nome" value="'+esc(j?j.nome:"")+'" placeholder="Ex.: A Trombeta de Dagor"><label>Descrição / lema (opcional)</label><input id="j_desc" value="'+esc(j&&j.descricao?j.descricao:"")+'">'+campoImagem('Logo do jornal (opcional)','j_img',(j&&j.imagem_url?j.imagem_url:"")))
+    +fGrupo('Publicação','<label>Visibilidade</label><select id="j_vis">'+opt(visOpts,j?j.visibilidade:"publico")+'</select>')
+    +fAcoes(j?'Salvar':'Criar jornal','salvarJornal('+(j?"'"+j.id+"'":"null")+')',(j?"go('jornal','"+j.id+"')":"go('jornais')"))+'</div>';
 }
 function telaNovoJornal(){ layout(formJornal(null)); }
 async function telaEditarJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formJornal(j)); }
@@ -600,11 +628,10 @@ async function telaSessao(id){ layout('<p>Carregando…</p>'); var se=await umaS
     +'<h1>🎲 '+esc(se.titulo)+'</h1>'+(se.data?'<p class="vis-leg">'+esc(se.data)+'</p>':'')+actsM
     +(ehMestre?'<h2>🔒 Planejamento (só o mestre vê)</h2>'+(plan.length?listar(plan):'<div class="empty">Nenhum planejamento nesta sessão ainda.</div>'):'')
     +'<h2>Resumos & público</h2>'+(publi.length?listar(publi):'<div class="empty">Nenhum resumo publicado nesta sessão ainda.</div>')+secRec); }
-function formSessao(mesaId, se){ return '<div class="bread">'+(se?'Editar sessão':'Nova sessão')+'</div><h1>🎲 '+(se?'Editar sessão':'Nova sessão')+'</h1>'
-  +'<div class="form"><label>Título</label><input id="se_titulo" value="'+esc(se?se.titulo:"")+'" placeholder="Ex.: Sessão 1 — Ecos na Cidade dos Corvos">'
-  +'<div class="row"><div><label>Ordem (número, opcional)</label><input id="se_ordem" type="number" value="'+esc(se&&se.ordem!=null?se.ordem:"")+'"></div>'
-  +'<div><label>Data (opcional)</label><input id="se_data" type="date" value="'+esc(se&&se.data?se.data:"")+'"></div></div>'
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarSessao(\''+mesaId+'\','+(se?"'"+se.id+"'":"null")+')">'+(se?'Salvar':'Criar sessão')+'</button> <button class="btn sec" onclick="'+(se?"go('sessao','"+se.id+"')":"go('areaMestre','"+mesaId+"')")+'">Cancelar</button></p></div>'; }
+function formSessao(mesaId, se){ return '<div class="bread">'+(se?'Editar sessão':'Nova sessão')+'</div><div class="form">'
+  +fHead('🎲',(se?'Editar sessão':'Nova sessão'),'Uma sessão de jogo. Depois você adiciona planejamento, resumos e recompensas.')
+  +fGrupo('Sessão','<label>Título</label><input id="se_titulo" value="'+esc(se?se.titulo:"")+'" placeholder="Ex.: Sessão 1 — Ecos na Cidade dos Corvos"><div class="row"><div><label>Ordem (número, opcional)</label><input id="se_ordem" type="number" value="'+esc(se&&se.ordem!=null?se.ordem:"")+'"></div><div><label>Data (opcional)</label><input id="se_data" type="date" value="'+esc(se&&se.data?se.data:"")+'"></div></div>')
+  +fAcoes(se?'Salvar':'Criar sessão',"salvarSessao('"+mesaId+"',"+(se?"'"+se.id+"'":"null")+")",(se?"go('sessao','"+se.id+"')":"go('areaMestre','"+mesaId+"')"))+'</div>'; }
 function telaNovaSessao(mesaId){ layout(formSessao(mesaId,null)); }
 async function telaEditarSessao(id){ layout('<p>Carregando…</p>'); var se=await umaSessao(id); if(!se){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formSessao(se.mesa_id,se)); }
 async function salvarSessao(mesaId, editId){ try{ var t=val("se_titulo").trim(); if(!t)return erro("Dê um título à sessão."); var ord=val("se_ordem").trim(); var dt=val("se_data").trim();
@@ -678,14 +705,12 @@ async function telaLinhaTempo(mesaId){ if(!S.mundo){go("mundos");return;}
   var fundo= emMesa ? mesa.fundo_url : S.mundo.fundo_url;
   var bread= emMesa ? '<div class="bread"><a onclick="go(\'mesa\',\''+mesaId+'\')">‹ Mesa</a> › Linha do tempo</div>' : '';
   layout(bread+hero(titulo, sub, fundo, criar)+((evs.length||pers.length)?'<div class="tl2">'+blocos+'</div>':'<div class="empty">Nenhum acontecimento ainda.'+(podeEditarTL?' Crie um período e adicione eventos.':'')+'</div>')); }
-function formEvento(e, mesaId){ var pers=S.periodosForm||[]; return '<div class="bread"><a onclick="go(\'linha\',\''+(mesaId||"")+'\')">‹ Linha do tempo</a></div><h1>🕰 '+(e?'Editar evento':'Novo evento')+'</h1>'
-  +'<div class="form"><label>Título do acontecimento</label><input id="ev_titulo" value="'+esc(e?e.titulo:"")+'">'
-  +(pers.length?'<label>Período (ano/era)</label><select id="ev_periodo"><option value="">— sem período —</option>'+pers.map(function(p){return '<option value="'+p.id+'"'+((e&&e.periodo_id===p.id)?' selected':'')+'>'+esc(p.nome)+'</option>';}).join("")+'</select>':'')
-  +'<div class="row"><div><label>Quando (data/ano exato, opcional)</label><input id="ev_quando" value="'+esc(e&&e.quando?e.quando:"")+'" placeholder="ex.: Ano 2068"></div>'
-  +'<div><label>Ordem (dentro do período)</label><input id="ev_ordem" type="number" value="'+esc(e&&e.ordem!=null?e.ordem:"")+'"></div></div>'
-  +'<label>Descrição (Markdown — aceita [[links]] e imagens)</label><textarea id="ev_desc" onpaste="colarImg(event,this)" ondrop="soltarImg(event,this)" ondragover="event.preventDefault()">'+esc(e&&e.descricao?e.descricao:"")+'</textarea>'
-  +'<label>Cor do marcador</label><input id="ev_cor" type="color" value="'+esc(e&&e.cor?e.cor:"#7c1c14")+'" style="width:64px;height:36px;padding:2px">'
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarEvento('+(e?"'"+e.id+"'":"null")+',\''+(mesaId||"")+'\')">'+(e?'Salvar':'Criar evento')+'</button> <button class="btn sec" onclick="go(\'linha\',\''+(mesaId||"")+'\')">Cancelar</button></p></div>'; }
+function formEvento(e, mesaId){ var pers=S.periodosForm||[]; return '<div class="bread"><a onclick="go(\'linha\',\''+(mesaId||"")+'\')">‹ Linha do tempo</a></div><div class="form">'
+  +fHead('🕰',(e?'Editar evento':'Novo evento'),'Um acontecimento na cronologia. Agrupe por período e dê uma cor ao marcador.')
+  +fGrupo('Acontecimento','<label>Título do acontecimento</label><input id="ev_titulo" value="'+esc(e?e.titulo:"")+'">'+(pers.length?'<label>Período (ano/era)</label><select id="ev_periodo"><option value="">— sem período —</option>'+pers.map(function(p){return '<option value="'+p.id+'"'+((e&&e.periodo_id===p.id)?' selected':'')+'>'+esc(p.nome)+'</option>';}).join("")+'</select>':'')+'<div class="row"><div><label>Quando (data/ano exato, opcional)</label><input id="ev_quando" value="'+esc(e&&e.quando?e.quando:"")+'" placeholder="ex.: Ano 2068"></div><div><label>Ordem (dentro do período)</label><input id="ev_ordem" type="number" value="'+esc(e&&e.ordem!=null?e.ordem:"")+'"></div></div>')
+  +fGrupo('Descrição','<label>Texto do acontecimento</label>'+mdEditor('ev_desc',e&&e.descricao?e.descricao:""))
+  +fGrupo('Aparência','<label>Cor do marcador na linha</label><input id="ev_cor" type="color" value="'+esc(e&&e.cor?e.cor:"#7c1c14")+'" style="width:64px;height:36px;padding:2px">')
+  +fAcoes(e?'Salvar':'Criar evento','salvarEvento('+(e?"'"+e.id+"'":"null")+",'"+(mesaId||"")+"')","go('linha','"+(mesaId||"")+"')")+'</div>'; }
 async function telaNovoEvento(mesaId){ S.evPendentes=[]; if(S.mundo){ await carregarLinkOpts(); S.periodosForm=await periodosDe(mesaId); } layout(formEvento(null, mesaId)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Vincule conteúdos agora — serão salvos junto ao criar o evento.</p><div id="evnovo"></div>'); renderEvNovo(); }
 async function telaEditarEvento(id){ layout('<p>Carregando…</p>'); var e=await umEvento(id); if(!e){layout('<div class="aviso">Sem permissão.</div>');return;} S.periodosForm=await periodosDe(e.mesa_id); layout(formEvento(e, e.mesa_id)+'<h2>Conteúdos vinculados</h2><p class="vis-leg">Relacione este acontecimento a conteúdos — eles aparecem ao abrir o evento.</p><div id="evlinks">Carregando…</div>'); renderEventoLinks(id); }
 async function salvarEvento(editId, mesaId){ try{ var t=val("ev_titulo").trim(); if(!t)return erro("Dê um título ao evento."); var ord=val("ev_ordem").trim();
@@ -693,11 +718,10 @@ async function salvarEvento(editId, mesaId){ try{ var t=val("ev_titulo").trim();
   if(editId){ var u=await sb.from("eventos").update(reg).eq("id",editId); if(u.error)throw u.error; go("linha",mesaId||""); }
   else { reg.mundo_id=S.mundo.id; reg.autor_id=S.user.id; reg.mesa_id=mesaId||null; reg.visibilidade="publico"; reg.estado="publicado"; var r=await sb.from("eventos").insert(reg).select().single(); if(r.error)throw r.error; if(S.evPendentes&&S.evPendentes.length){ var rows=S.evPendentes.map(function(l){return {evento_id:r.data.id,tipo:l.tipo,alvo_id:l.alvo_id};}); var ri=await sb.from("evento_links").insert(rows); if(ri.error)throw ri.error; } S.evPendentes=[]; go("linha",mesaId||""); } }catch(e){erro(e);} }
 async function excluirEvento(id, mesaId){ if(!confirm("Excluir este evento da linha do tempo?"))return; try{ var r=await sb.from("eventos").delete().eq("id",id); if(r.error)throw r.error; go("linha",mesaId||""); }catch(e){erro(e);} }
-function formPeriodo(mundoId, mesaId, p){ return '<div class="bread"><a onclick="go(\'linha\',\''+(mesaId||"")+'\')">‹ Linha do tempo</a></div><h1>🕰 '+(p?'Editar período':'Novo período')+'</h1>'
-  +'<div class="form"><label>Nome do período / ano / era</label><input id="pr_nome" value="'+esc(p?p.nome:"")+'" placeholder="ex.: Ano 2068 · Era Primordial">'
-  +'<label>Ordem (número p/ a sequência dos blocos)</label><input id="pr_ordem" type="number" value="'+esc(p&&p.ordem!=null?p.ordem:"")+'">'
-  +campoImagem('Imagem de fundo do período (opcional)','pr_img',(p&&p.imagem_url?p.imagem_url:""))
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarPeriodo(\''+(mesaId||"")+'\','+(p?"'"+p.id+"'":"null")+')">'+(p?'Salvar':'Criar período')+'</button> <button class="btn sec" onclick="go(\'linha\',\''+(mesaId||"")+'\')">Cancelar</button>'+(p?' <button class="btn sec" style="border-color:#c08" onclick="excluirPeriodo(\''+p.id+'\',\''+(mesaId||"")+'\')">🗑 Excluir período</button>':'')+'</p></div>'; }
+function formPeriodo(mundoId, mesaId, p){ return '<div class="bread"><a onclick="go(\'linha\',\''+(mesaId||"")+'\')">‹ Linha do tempo</a></div><div class="form">'
+  +fHead('🕰',(p?'Editar período':'Novo período'),'Um período agrupa eventos (um ano, uma era). Pode ter imagem de fundo.')
+  +fGrupo('Período','<label>Nome do período / ano / era</label><input id="pr_nome" value="'+esc(p?p.nome:"")+'" placeholder="ex.: Ano 2068 · Era Primordial"><label>Ordem (número p/ a sequência dos blocos)</label><input id="pr_ordem" type="number" value="'+esc(p&&p.ordem!=null?p.ordem:"")+'">'+campoImagem('Imagem de fundo do período (opcional)','pr_img',(p&&p.imagem_url?p.imagem_url:"")))
+  +'<div class="form-acoes"><button class="btn" onclick="salvarPeriodo(\''+(mesaId||"")+'\','+(p?"'"+p.id+"'":"null")+')">'+(p?'Salvar':'Criar período')+'</button> <button class="btn sec" onclick="go(\'linha\',\''+(mesaId||"")+'\')">Cancelar</button>'+(p?' <button class="btn sec" style="border-color:#c08" onclick="excluirPeriodo(\''+p.id+'\',\''+(mesaId||"")+'\')">🗑 Excluir período</button>':'')+'</div></div>'; }
 function telaNovoPeriodo(mesaId){ layout(formPeriodo(S.mundo.id, mesaId||null, null)); }
 async function telaEditarPeriodo(id){ layout('<p>Carregando…</p>'); var p=await umPeriodo(id); if(!p){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formPeriodo(p.mundo_id, p.mesa_id, p)); }
 async function salvarPeriodo(mesaId, editId){ try{ var nome=val("pr_nome").trim(); if(!nome)return erro("Dê um nome ao período."); var ord=val("pr_ordem").trim();
@@ -735,6 +759,7 @@ async function recusarPedido(pid, tipo, alvoId){ try{ var u=await sb.from("pedid
 function togModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); render(); }
 function barraModo(){ return '<div class="expbar" style="margin:6px 0"><button class="btn mini sec" onclick="togModo()">'+(S.modo==="lista"?"▦ Ver em cards":"☰ Ver em lista")+'</button></div>'; }
 function gridOuLista(items, cardFn, liFn){ return S.modo==="lista" ? '<ul class="lista2">'+items.map(liFn).join("")+'</ul>' : '<div class="cards">'+items.map(cardFn).join("")+'</div>'; }
+function cardPersonagemRound(c){ var img=c.imagem_url?'<div class="pc-av" style="background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="pc-av pc-av-ph">'+esc(((c.nome||"?")[0]||"?").toUpperCase())+'</div>'; return '<div class="pc-circ" onclick="go(\'personagem\',\''+c.id+'\')" title="'+esc(c.nome)+'">'+img+'<div class="pc-nm">'+esc(c.nome)+'</div>'+(c.epiteto?'<div class="pc-ep">'+esc(c.epiteto)+'</div>':'')+'<div class="pc-chips">'+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="tipo">rascunho</span>':'')+'</div></div>'; }
 function liPersonagem(c){ return '<li class="li-clic" onclick="go(\'personagem\',\''+c.id+'\')"><span class="li-ic">🧝</span><span class="li-tit">'+esc(c.nome)+'</span>'+(c.epiteto?'<span class="tipo">'+esc(c.epiteto)+'</span>':'')+visChip(c.visibilidade)+'</li>'; }
 function liJornal(j){ return '<li class="li-clic" onclick="go(\'jornal\',\''+j.id+'\')"><span class="li-ic">📰</span><span class="li-tit">'+esc(j.nome)+'</span>'+(j.descricao?'<span class="vis-leg" style="flex:1">'+esc(j.descricao)+'</span>':'')+'</li>'; }
 function tagChips(tags){ return (tags&&tags.length)?'<p style="margin:8px 0">'+tags.map(function(t){return '<a class="tagc" onclick="go(\'busca\',\''+esc(t)+'\')">#'+esc(t)+'</a>';}).join("")+'</p>':''; }
@@ -772,13 +797,10 @@ async function umaRecompensa(id){ var r=await sb.from("recompensas").select("*")
 function renderRecsHTML(recs, persMesa, ehMestre, sid){ var nm=function(pid){ if(!pid)return "Todos"; var x=(persMesa||[]).find(function(p){return p.id===pid;}); return x?x.nome:"(personagem)"; };
   var ic=function(t){ return t==="xp"?"⭐":(t==="item"?"⚔":"🏆"); };
   return '<ul class="lista2">'+recs.map(function(r){ return '<li class="li-clic" style="cursor:default"><span class="li-ic">'+ic(r.tipo)+'</span><span class="li-tit">'+esc(r.titulo)+(r.tipo==="xp"&&r.quantidade!=null?' ('+r.quantidade+' XP)':'')+'</span><span class="tipo">'+esc(nm(r.personagem_id))+'</span>'+(r.descricao?'<span class="vis-leg" style="flex:1"> — '+esc(r.descricao)+'</span>':'')+(ehMestre?' <a onclick="go(\'editarRecompensa\',\''+r.id+'\')">✎</a> <a onclick="excluirRecompensa(\''+r.id+'\',\''+sid+'\')">🗑</a>':'')+'</li>'; }).join("")+'</ul>'; }
-function formRecompensa(sid, mid, r, persMesa){ return '<div class="bread"><a onclick="go(\'sessao\',\''+sid+'\')">‹ Sessão</a></div><h1>🏆 '+(r?'Editar recompensa':'Nova recompensa')+'</h1>'
-  +'<div class="form"><label>Tipo</label><select id="rc_tipo">'+opt([["xp","XP"],["item","Item"],["premio","Prêmio"]],r?r.tipo:"xp")+'</select>'
-  +'<label>Para qual personagem? (vazio = todos)</label><select id="rc_pers"><option value="">— todos / geral —</option>'+(persMesa||[]).map(function(p){return '<option value="'+p.id+'"'+(r&&r.personagem_id===p.id?' selected':'')+'>'+esc(p.nome)+'</option>';}).join("")+'</select>'
-  +'<label>Título / nome</label><input id="rc_titulo" value="'+esc(r?r.titulo:"")+'" placeholder="ex.: Derrotar o chefe · Espada Élfica">'
-  +'<label>Quantidade de XP (se for XP; negativo = perda)</label><input id="rc_qtd" type="number" value="'+esc(r&&r.quantidade!=null?r.quantidade:"")+'">'
-  +'<label>Observação (motivo, detalhes do acontecimento)</label><textarea id="rc_desc">'+esc(r&&r.descricao?r.descricao:"")+'</textarea>'
-  +'<p style="margin-top:14px"><button class="btn" onclick="salvarRecompensa(\''+sid+'\',\''+mid+'\','+(r?"'"+r.id+"'":"null")+')">'+(r?'Salvar':'Adicionar')+'</button> <button class="btn sec" onclick="go(\'sessao\',\''+sid+'\')">Cancelar</button></p></div>'; }
+function formRecompensa(sid, mid, r, persMesa){ return '<div class="bread"><a onclick="go(\'sessao\',\''+sid+'\')">‹ Sessão</a></div><div class="form">'
+  +fHead('🏆',(r?'Editar recompensa':'Nova recompensa'),'XP, item ou prêmio desta sessão — geral ou para um personagem.')
+  +fGrupo('Recompensa','<div class="row"><div><label>Tipo</label><select id="rc_tipo">'+opt([["xp","XP"],["item","Item"],["premio","Prêmio"]],r?r.tipo:"xp")+'</select></div><div><label>Para qual personagem?</label><select id="rc_pers"><option value="">— todos / geral —</option>'+(persMesa||[]).map(function(p){return '<option value="'+p.id+'"'+(r&&r.personagem_id===p.id?' selected':'')+'>'+esc(p.nome)+'</option>';}).join("")+'</select></div></div><label>Título / nome</label><input id="rc_titulo" value="'+esc(r?r.titulo:"")+'" placeholder="ex.: Derrotar o chefe · Espada Élfica"><label>Quantidade de XP (se for XP; negativo = perda)</label><input id="rc_qtd" type="number" value="'+esc(r&&r.quantidade!=null?r.quantidade:"")+'"><label>Observação (motivo, detalhes)</label><textarea id="rc_desc">'+esc(r&&r.descricao?r.descricao:"")+'</textarea>')
+  +fAcoes(r?'Salvar':'Adicionar',"salvarRecompensa('"+sid+"','"+mid+"',"+(r?"'"+r.id+"'":"null")+")","go('sessao','"+sid+"')")+'</div>'; }
 async function telaNovaRecompensa(sid){ layout('<p>Carregando…</p>'); var se=await umaSessao(sid); if(!se){layout('<div class="aviso">Sessão não encontrada.</div>');return;} var pm=await personagensDaMesa(se.mesa_id); layout(formRecompensa(sid, se.mesa_id, null, pm)); }
 async function telaEditarRecompensa(id){ layout('<p>Carregando…</p>'); var r=await umaRecompensa(id); if(!r){layout('<div class="aviso">Sem permissão.</div>');return;} var pm=await personagensDaMesa(r.mesa_id); layout(formRecompensa(r.sessao_id, r.mesa_id, r, pm)); }
 async function salvarRecompensa(sid, mid, editId){ try{ var t=val("rc_titulo").trim(); if(!t)return erro("Dê um título à recompensa."); var q=val("rc_qtd").trim();
@@ -804,6 +826,54 @@ async function telaFavoritos(){ if(!S.user){ go("login"); return; } layout('<p>C
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Favoritos</div><h1>★ Favoritos</h1>'+html); }
 function registrarVisita(tipo,id,titulo){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=arr.filter(function(x){return !(x.tipo===tipo&&x.id===id);}); arr.unshift({tipo:tipo,id:id,titulo:String(titulo||""),mundoId:(S.mundo?S.mundo.id:null),mundoNome:(S.mundo?S.mundo.nome:""),t:Date.now()}); arr=arr.slice(0,12); localStorage.setItem("mds_recent",JSON.stringify(arr)); }catch(e){} }
 function visitasRecentes(mundoId){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=mundoId?arr.filter(function(x){return x.mundoId===mundoId;}):arr; return arr.slice(0,6); }catch(e){ return []; } }
+// ===== Cropper de imagem (reposicionar/recortar estilo LinkedIn) =====
+function abrirCropper(fieldId){
+  var inp=document.getElementById(fieldId); if(!inp)return;
+  var url=(inp.value||"").trim(); if(!url){ alert("Escolha ou cole uma imagem primeiro."); return; }
+  var ov=document.createElement("div"); ov.className="crop-ov";
+  ov.innerHTML='<div class="crop-box"><h3>✂ Ajustar enquadramento</h3>'
+    +'<div class="crop-asp"><button type="button" data-a="3" class="on">Largo 3:1</button><button type="button" data-a="1.7778">16:9</button><button type="button" data-a="1">Quadrado</button><button type="button" data-a="0.75">Retrato</button></div>'
+    +'<div class="crop-frame" id="cropFrame"><img id="cropImg" alt=""></div>'
+    +'<label class="crop-zoom">Zoom <input type="range" id="cropZoom" min="1" max="3" step="0.01" value="1"></label>'
+    +'<p class="campo-help">Arraste a imagem para reposicionar, use o zoom e escolha a proporção acima.</p>'
+    +'<div class="crop-acts"><button type="button" class="btn" id="cropOk">Cortar e usar</button> <button type="button" class="btn sec" id="cropCancel">Cancelar</button> <span class="vis-leg" id="cropMsg"></span></div></div>';
+  document.body.appendChild(ov);
+  var img=ov.querySelector("#cropImg"), frame=ov.querySelector("#cropFrame"), msg=ov.querySelector("#cropMsg");
+  var st={aspect:3,scale:1,x:0,y:0,base:1,iw:0,ih:0,drag:false,px:0,py:0};
+  var FW=Math.min(520, Math.round(window.innerWidth*0.8));
+  function setAspect(a){ st.aspect=a; frame.style.width=FW+"px"; frame.style.height=Math.round(FW/a)+"px"; fit(); }
+  function fit(){ if(!st.iw)return; var fw=frame.clientWidth, fh=frame.clientHeight; st.base=Math.max(fw/st.iw, fh/st.ih); st.x=(fw-st.iw*st.base*st.scale)/2; st.y=(fh-st.ih*st.base*st.scale)/2; clamp(); render(); }
+  function clamp(){ var fw=frame.clientWidth, fh=frame.clientHeight, w=st.iw*st.base*st.scale, h=st.ih*st.base*st.scale; var minx=fw-w, miny=fh-h; if(st.x>0)st.x=0; if(st.x<minx)st.x=minx; if(st.y>0)st.y=0; if(st.y<miny)st.y=miny; }
+  function render(){ var w=st.iw*st.base*st.scale, h=st.ih*st.base*st.scale; img.style.width=w+"px"; img.style.height=h+"px"; img.style.left=st.x+"px"; img.style.top=st.y+"px"; }
+  img.crossOrigin="anonymous";
+  img.onload=function(){ st.iw=img.naturalWidth; st.ih=img.naturalHeight; setAspect(3); };
+  img.onerror=function(){ msg.textContent="Não foi possível carregar a imagem."; };
+  img.src=url+(url.indexOf("?")<0?"?cb=":"&cb=")+Date.now();
+  ov.querySelectorAll(".crop-asp button").forEach(function(b){ b.onclick=function(){ ov.querySelectorAll(".crop-asp button").forEach(function(x){x.classList.remove("on");}); b.classList.add("on"); setAspect(parseFloat(b.getAttribute("data-a"))); }; });
+  ov.querySelector("#cropZoom").oninput=function(){ st.scale=parseFloat(this.value); clamp(); render(); };
+  frame.onmousedown=function(e){ st.drag=true; st.px=e.clientX; st.py=e.clientY; e.preventDefault(); };
+  function mover(e){ if(!st.drag)return; st.x+=e.clientX-st.px; st.y+=e.clientY-st.py; st.px=e.clientX; st.py=e.clientY; clamp(); render(); }
+  function solta(){ st.drag=false; }
+  window.addEventListener("mousemove",mover); window.addEventListener("mouseup",solta);
+  function fechar(){ window.removeEventListener("mousemove",mover); window.removeEventListener("mouseup",solta); ov.remove(); }
+  ov.querySelector("#cropCancel").onclick=fechar;
+  ov.onclick=function(e){ if(e.target===ov) fechar(); };
+  ov.querySelector("#cropOk").onclick=function(){
+    msg.textContent="processando…";
+    try{
+      var fw=frame.clientWidth, OW=1200, OH=Math.round(OW/st.aspect), ratio=OW/fw;
+      var cv=document.createElement("canvas"); cv.width=OW; cv.height=OH; var ctx=cv.getContext("2d");
+      ctx.fillStyle="#000"; ctx.fillRect(0,0,OW,OH);
+      ctx.drawImage(img, st.x*ratio, st.y*ratio, st.iw*st.base*st.scale*ratio, st.ih*st.base*st.scale*ratio);
+      cv.toBlob(function(blob){ if(!blob){ msg.textContent="falha ao gerar imagem."; return; }
+        var file=new File([blob],"recorte-"+Date.now()+".jpg",{type:"image/jpeg"});
+        uploadArquivo(file).then(function(u){ inp.value=u; var stt=document.getElementById(fieldId+"_st"); if(stt)stt.textContent="recortada e enviada ✓"; fechar(); })
+          .catch(function(err){ msg.textContent="erro ao enviar: "+(err.message||err); });
+      }, "image/jpeg", 0.9);
+    }catch(e){ msg.textContent="recorte bloqueado (imagem de link externo). Envie o arquivo e recorte."; }
+  };
+}
+
 function render(){
   if(!S.user && (S.view.t==="login"||S.view.t==="signup")){ telaLogin(S.view.t==="signup"); return; }
   var t=S.view.t;
