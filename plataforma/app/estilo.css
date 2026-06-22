@@ -503,3 +503,9 @@ body.modo-lista .cards>.card>.thumb.noimg{width:50px;height:50px;border-radius:5
 .dash-ic .gi{font-size:30px}
 .lateral a .gi{font-size:17px;margin-right:2px}
 .sec-head h2 .gi{font-size:20px}
+
+/* ===== Zona de perigo (admin) ===== */
+.zona-perigo .sec-head{border-bottom-color:#b23b3b}
+.zona-perigo .sec-head h2{color:#b23b3b}
+.btn-perigo{background:#b23b3b !important;border-color:#b23b3b !important;color:#fff !important}
+.btn-perigo:hover{background:#9a2f24 !important}
