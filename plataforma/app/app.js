@@ -893,7 +893,7 @@ var ICN={
  samurai:{inicio:"⌂",mundo:"🏯",buscar:"🔎",enc:"📜",mapas:"🗺️",jornais:"📜",linha:"🌸",persJog:"🥷",persMes:"👺",mesa:"⚔️",mestre:"👺",fav:"🌸"}
 };
 var ICONMAP={horror:{"crossed-swords":"fangs","hooded-figure":"vampire-dracula","person":"vampire-dracula"},lovecraft:{"castle":"octopus","crossed-swords":"tentacle-strike","hooded-figure":"evil-eyes","person":"evil-eyes"},scifi:{"castle":"ringed-planet","treasure-map":"ringed-planet","crossed-swords":"spaceship","hooded-figure":"robot-golem","person":"robot-golem"},anos80:{"crossed-swords":"joystick","scroll-unfurled":"vhs"},samurai:{"castle":"japan","crossed-swords":"katana","hooded-figure":"samurai-helmet","person":"samurai-helmet"}};
-function icon(g){ if(!g)return ""; var t=(S.mundo&&S.mundo.tema)||"medieval"; var m=ICONMAP[t]; if(m&&m[g])g=m[g]; return '<iconify-icon icon="game-icons:'+g+'" class="gi"></iconify-icon>'; }
+function icon(g){ if(!g)return ""; var t=(S&&S.mundo&&S.mundo.tema)||"medieval"; var m=(typeof ICONMAP!=="undefined"&&ICONMAP)?ICONMAP[t]:null; if(m&&m[g])g=m[g]; return '<iconify-icon icon="game-icons:'+g+'" class="gi"></iconify-icon>'; }
 var ICN2={inicio:"house",mundo:"castle",buscar:"magnifying-glass",enc:"book-cover",mapas:"treasure-map",jornais:"scroll-unfurled",linha:"sands-of-time",persJog:"hooded-figure",persMes:"drama-masks",mesa:"crossed-swords",mestre:"drama-masks",fav:"round-star"};
 function ic(n){ return icon(ICN2[n]); }
 function temaIcone(t){ return ({medieval:"⚜",horror:"🦇",lovecraft:"🐙",anos80:"🕹️",scifi:"🛸",samurai:"⛩️"})[t]||"⚜"; }
