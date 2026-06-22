@@ -633,7 +633,7 @@ async function telaSessao(id){ layout('<p>Carregando…</p>'); var se=await umaS
   var secRec='<h2>'+icon("round-star")+' Recompensas (XP, itens, prêmios)</h2>'+(ehMestre?'<p><a class="btn sec" onclick="go(\'novaRecompensa\',\''+id+'\')">+ Adicionar recompensa</a></p>':'')+(recs.length?renderRecsHTML(recs,persMesa,ehMestre,id):'<div class="empty">Nenhuma recompensa registrada nesta sessão ainda.</div>');
   layout('<div class="bread"><a onclick="go(\'mesa\',\''+se.mesa_id+'\')">‹ Mesa</a> › Sessão</div>'
     +'<h1>'+icon("dice-twenty-faces-twenty")+' '+esc(se.titulo)+'</h1>'+(se.data?'<p class="vis-leg">'+esc(se.data)+'</p>':'')+actsM
-    +(ehMestre?'<h2>'+icon("drama-masks")+' Planejamento (só o mestre vê)</h2>'+(plan.length?listar(plan):'<div class="empty">Nenhum planejamento nesta sessão ainda.</div>'):'')
+    +(ehMestre?'<h2>🔒 Planejamento (só o mestre vê)</h2>'+(plan.length?listar(plan):'<div class="empty">Nenhum planejamento nesta sessão ainda.</div>'):'')
     +'<h2>Resumos & público</h2>'+(publi.length?listar(publi):'<div class="empty">Nenhum resumo publicado nesta sessão ainda.</div>')+secRec); }
 function formSessao(mesaId, se){ return '<div class="bread">'+(se?'Editar sessão':'Nova sessão')+'</div><div class="form">'
   +fHead(icon("dice-twenty-faces-twenty"),(se?'Editar sessão':'Nova sessão'),'Uma sessão de jogo. Depois você adiciona planejamento, resumos e recompensas.')
@@ -892,7 +892,8 @@ var ICN={
  scifi:{inicio:"⌂",mundo:"🪐",buscar:"🔎",enc:"🛰️",mapas:"🗺️",jornais:"📡",linha:"⏳",persJog:"🤖",persMes:"👾",mesa:"🚀",mestre:"🛰️",fav:"⭐"},
  samurai:{inicio:"⌂",mundo:"🏯",buscar:"🔎",enc:"📜",mapas:"🗺️",jornais:"📜",linha:"🌸",persJog:"🥷",persMes:"👺",mesa:"⚔️",mestre:"👺",fav:"🌸"}
 };
-function icon(g){ return g?'<iconify-icon icon="game-icons:'+g+'" class="gi"></iconify-icon>':''; }
+var ICONMAP={horror:{"crossed-swords":"fangs","hooded-figure":"vampire-dracula","person":"vampire-dracula"},lovecraft:{"castle":"octopus","crossed-swords":"tentacle-strike","hooded-figure":"evil-eyes","person":"evil-eyes"},scifi:{"castle":"ringed-planet","treasure-map":"ringed-planet","crossed-swords":"spaceship","hooded-figure":"robot-golem","person":"robot-golem"},anos80:{"crossed-swords":"joystick","scroll-unfurled":"vhs"},samurai:{"castle":"japan","crossed-swords":"katana","hooded-figure":"samurai-helmet","person":"samurai-helmet"}};
+function icon(g){ if(!g)return ""; var t=(S.mundo&&S.mundo.tema)||"medieval"; var m=ICONMAP[t]; if(m&&m[g])g=m[g]; return '<iconify-icon icon="game-icons:'+g+'" class="gi"></iconify-icon>'; }
 var ICN2={inicio:"house",mundo:"castle",buscar:"magnifying-glass",enc:"book-cover",mapas:"treasure-map",jornais:"scroll-unfurled",linha:"sands-of-time",persJog:"hooded-figure",persMes:"drama-masks",mesa:"crossed-swords",mestre:"drama-masks",fav:"round-star"};
 function ic(n){ return icon(ICN2[n]); }
 function temaIcone(t){ return ({medieval:"⚜",horror:"🦇",lovecraft:"🐙",anos80:"🕹️",scifi:"🛸",samurai:"⛩️"})[t]||"⚜"; }
