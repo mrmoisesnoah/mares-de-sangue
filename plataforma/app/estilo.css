@@ -27,7 +27,7 @@ h2{font-family:var(--font-head);color:var(--tinta);border-bottom:1px solid var(-
 .card .res{color:var(--tinta2);font-size:14px;margin:.2em 0}
 .thumb{height:130px;border-radius:8px;overflow:hidden;background:var(--perg2);border:1px solid var(--borda);margin:-2px 0 2px}
 .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.thumb.noimg{display:flex;align-items:center;justify-content:center;height:82px;font-size:30px;color:var(--ouro);background:var(--perg2);border-bottom:2px solid var(--ouro)}
+.thumb.noimg{display:flex;align-items:center;justify-content:center;width:70px;height:70px;border-radius:50%;margin:14px auto 4px;font-size:30px;color:var(--ouro);border:2px solid var(--ouro);box-shadow:0 2px 8px var(--sombra)}
 .chip{display:inline-block;border-radius:12px;padding:1px 10px;font-size:12px;color:#fff;margin:2px 4px 2px 0}
 .c-mestre{background:var(--mestre)}.c-mesa{background:var(--mesa)}.c-privado{background:var(--privado)}
 .c-publico{background:var(--publico)}.c-autor_mestre{background:#7a3b1e}
@@ -433,7 +433,10 @@ body.modo-lista .pc-circ .pc-nm{font-size:16px}
 /* Chip rascunho mais visível */
 .chip-rascunho{display:inline-block;background:#caa53f;color:#2b2117;border-radius:12px;padding:1px 10px;font-size:12px;font-weight:600;margin:2px 4px 2px 0}
 /* Placeholder de capa temático */
-.thumb.noimg{background:linear-gradient(135deg,var(--perg2),var(--perg))}
+.thumb.noimg{background:radial-gradient(circle at 50% 36%, var(--perg), var(--perg2))}
+.card:has(>.thumb.noimg){text-align:center}
+.card:has(>.thumb.noimg) .res{text-align:center}
+body.modo-lista .cards>.card>.thumb.noimg{width:50px;height:50px;border-radius:50%;margin:0 14px 0 0}
 
 /* ===== Tela-guia visual ===== */
 .guia{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;margin-top:12px}
