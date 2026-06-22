@@ -609,7 +609,7 @@ function telaCreditos(){ layout('<div class="bread"><a onclick="go(\'home\')">In
 async function sessoesDaMesa(id){ var r=await sb.from("sessoes").select("*").eq("mesa_id",id).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
 async function umaSessao(id){ var r=await sb.from("sessoes").select("*").eq("id",id).maybeSingle(); return r.data; }
 async function pubsDaSessao(id){ var r=await sb.from("publicacoes").select("*").eq("sessao_id",id).order("criado_em"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
-function cardSessao(se){ return '<div class="card clic" onclick="go(\'sessao\',\''+se.id+'\')"><div class="thumb noimg">🎲</div><h3>'+esc(se.titulo)+'</h3>'+(se.data?'<p class="res">'+esc(se.data)+'</p>':'')+'</div>'; }
+function cardSessao(se){ return '<div class="card clic" onclick="go(\'sessao\',\''+se.id+'\')">'+thumb(se.imagem_url,"🎲",se.titulo)+'<h3>'+esc(se.titulo)+'</h3>'+(se.data?'<p class="res">'+esc(se.data)+'</p>':'')+'</div>'; }
 async function telaMestre(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada.</div>'); return; }
   if(!mestreDe(mesa)){ layout('<div class="aviso">Área restrita ao mestre desta mesa.</div>'); return; }
@@ -636,12 +636,12 @@ async function telaSessao(id){ layout('<p>Carregando…</p>'); var se=await umaS
     +'<h2>Resumos & público</h2>'+(publi.length?listar(publi):'<div class="empty">Nenhum resumo publicado nesta sessão ainda.</div>')+secRec); }
 function formSessao(mesaId, se){ return '<div class="bread">'+(se?'Editar sessão':'Nova sessão')+'</div><div class="form">'
   +fHead('🎲',(se?'Editar sessão':'Nova sessão'),'Uma sessão de jogo. Depois você adiciona planejamento, resumos e recompensas.')
-  +fGrupo('Sessão','<label>Título</label><input id="se_titulo" value="'+esc(se?se.titulo:"")+'" placeholder="Ex.: Sessão 1 — Ecos na Cidade dos Corvos"><div class="row"><div><label>Ordem (número, opcional)</label><input id="se_ordem" type="number" value="'+esc(se&&se.ordem!=null?se.ordem:"")+'"></div><div><label>Data (opcional)</label><input id="se_data" type="date" value="'+esc(se&&se.data?se.data:"")+'"></div></div>')
+  +fGrupo('Sessão','<label>Título</label><input id="se_titulo" value="'+esc(se?se.titulo:"")+'" placeholder="Ex.: Sessão 1 — Ecos na Cidade dos Corvos"><div class="row"><div><label>Ordem (número, opcional)</label><input id="se_ordem" type="number" value="'+esc(se&&se.ordem!=null?se.ordem:"")+'"></div><div><label>Data (opcional)</label><input id="se_data" type="date" value="'+esc(se&&se.data?se.data:"")+'"></div></div>'+campoImagem('Imagem da sessão (opcional)','se_img',(se&&se.imagem_url?se.imagem_url:"")))
   +fAcoes(se?'Salvar':'Criar sessão',"salvarSessao('"+mesaId+"',"+(se?"'"+se.id+"'":"null")+")",(se?"go('sessao','"+se.id+"')":"go('areaMestre','"+mesaId+"')"))+'</div>'; }
 function telaNovaSessao(mesaId){ layout(formSessao(mesaId,null)); }
 async function telaEditarSessao(id){ layout('<p>Carregando…</p>'); var se=await umaSessao(id); if(!se){layout('<div class="aviso">Sem permissão.</div>');return;} layout(formSessao(se.mesa_id,se)); }
 async function salvarSessao(mesaId, editId){ try{ var t=val("se_titulo").trim(); if(!t)return erro("Dê um título à sessão."); var ord=val("se_ordem").trim(); var dt=val("se_data").trim();
-  var reg={ titulo:t, ordem:(ord!==""?parseInt(ord,10):null), data:(dt||null) };
+  var reg={ titulo:t, ordem:(ord!==""?parseInt(ord,10):null), data:(dt||null), imagem_url:(val("se_img").trim()||null) };
   if(editId){ var u=await sb.from("sessoes").update(reg).eq("id",editId); if(u.error)throw u.error; go("sessao",editId); }
   else { reg.mesa_id=mesaId; var r=await sb.from("sessoes").insert(reg).select().single(); if(r.error)throw r.error; go("sessao",r.data.id); }
 }catch(e){erro(e);} }
