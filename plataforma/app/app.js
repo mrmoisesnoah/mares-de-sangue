@@ -54,7 +54,7 @@ function thumb(url, icone, alt){ return url ? '<div class="thumb"><img loading="
 function cardPub(p){
   return '<div class="card clic" onclick="go(\'pub\',\''+p.id+'\')">'+thumb(p.capa_url, iconeTipo(p.tipo), p.titulo)
     +'<h3>'+esc(p.titulo)+'</h3>'
-    +'<p style="margin:.2em 0"><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="chip-rascunho">✎ rascunho</span>':'')+'</p>'
+    +'<p style="margin:.2em 0"><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</p>'
     +'<p class="res">'+esc(resumo(p.corpo))+'</p></div>';
 }
 function itemLista(p){
@@ -168,7 +168,7 @@ function telaLogin(novo){
 }
 function sidebar(){
   var on=function(x){return S.view.t===x?' class="on"':'';};
-  if(S.view.t==="home"){ var ng='<a class="nav-home on" onclick="go(\'home\')">⌂ Início</a>'; if(S.mundos.length){ ng+='<h4>Mundos</h4>'+S.mundos.map(function(w){return '<a onclick="selecionarMundo(\''+w.id+'\')">🌍 '+esc(w.nome)+'</a>';}).join(""); } if(S.user){ ng+='<a onclick="go(\'favoritos\')">★ Favoritos</a><h4>Criar</h4><a onclick="go(\'novoMundo\')">+ Criar mundo</a>'; } return ng; }
+  if(S.view.t==="home"){ var ng='<a class="nav-home on" onclick="go(\'home\')">⌂ Início</a>'; if(S.mundos.length){ ng+='<h4>Mundos</h4>'+S.mundos.map(function(w){return '<a onclick="selecionarMundo(\''+w.id+'\')">'+icon("castle")+' '+esc(w.nome)+'</a>';}).join(""); } if(S.user){ ng+='<a onclick="go(\'favoritos\')">★ Favoritos</a><h4>Criar</h4><a onclick="go(\'novoMundo\')">+ Criar mundo</a>'; } return ng; }
   var nav='<a class="nav-home"'+on("home")+' onclick="go(\'home\')">'+ic("inicio")+' Início</a>';
   if(S.mundo){
     nav+='<a'+(S.view.t==="mundoHome"?' class="on"':'')+' onclick="go(\'mundoHome\')">'+ic("mundo")+' Home do mundo</a>';
@@ -195,7 +195,7 @@ function layout(conteudo){
     var nm=esc(S.profile?S.profile.nome:S.user.email);
     var av=(S.profile&&S.profile.avatar_url)?'<span class="avatar" style="background-image:url('+esc(S.profile.avatar_url)+')"></span>':'<span class="avatar">'+esc(((S.profile&&S.profile.nome?S.profile.nome:"?")[0]||"?").toUpperCase())+'</span>';
     ub='<button class="user-btn" onclick="toggleUserMenu(event)">'+av+'<span class="user-nm">'+nm+'</span><span class="ws-ar">▾</span></button>'
-      +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">✎ Editar perfil</a>'
+      +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a>'
       +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
@@ -228,7 +228,7 @@ function botoesCriarMundo(){ if(!S.user) return '<a class="btn" onclick="go(\'lo
 async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>Carregando…</p>');
   var lore=await loreDoMundo(); var recs=await recentes();
   var nMesas=S.mesas.length, nLore=lore.length, nMapas=lore.filter(function(p){return p.tipo==="mapa";}).length;
-  var heroDash=hero(S.mundo.nome, S.mundo.descricao||"Plataforma para Criação de Mundos — uma produção TOGA", S.mundo.fundo_url, botoesCriarMundo()+(donoMundo()?' <a class="btn sec" onclick="go(\'editarMundo\')">✎ Editar mundo</a>':''));
+  var heroDash=hero(S.mundo.nome, S.mundo.descricao||"Plataforma para Criação de Mundos — uma produção TOGA", S.mundo.fundo_url, botoesCriarMundo()+(donoMundo()?' <a class="btn sec" onclick="go(\'editarMundo\')">'+icon("quill-ink")+' Editar mundo</a>':''));
   function dcard(ic,nm,ds,ac){ return '<div class="card clic dash" onclick="'+ac+'"><div class="dash-ic">'+ic+'</div><h3>'+nm+'</h3><p class="res">'+ds+'</p></div>'; }
   var rec=visitasRecentes(S.mundo.id);
   var contHtml=rec.length?'<h2>↩ Continuar de onde parou</h2><div class="cards">'+rec.map(function(v){var rta={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[v.tipo]||"pub"; var ica={publicacao:"📄",personagem:"🧝",jornal:"📰",mesa:"⚔"}[v.tipo]||"📄"; return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div><h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+esc(v.tipo)+'</p></div>';}).join("")+'</div>':'';
@@ -273,7 +273,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
   var ehM=mestreDe(mesa);
   var acts=S.user?('<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> '
     +'<a class="btn sec" onclick="go(\'linha\',\''+id+'\')">'+ic("linha")+' Linha do tempo</a>'
-    +(ehM?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">'+icon("drama-masks")+' Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">✎ Editar mesa</a>':'')+(S.user?' '+botaoFav("mesa",id,mesa.nome):'')):'';
+    +(ehM?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">'+icon("drama-masks")+' Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">'+icon("quill-ink")+' Editar mesa</a>':'')+(S.user?' '+botaoFav("mesa",id,mesa.nome):'')):'';
   var metaHtml=(mesa.epoca||mesa.local)?'<p class="meta-mesa">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'';
   var pedir=(S.user&&!ehM)?'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>':'';
   var secPers='<div class="secao">'+secHead(icon("hooded-figure"),"Personagens da mesa",pers.length,(S.user?'<a class="btn mini sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a>':''))+(pers.length?'<div class="pers-circ-grid">'+pers.map(cardPersonagemRound).join("")+'</div>':'<div class="empty">Nenhum personagem nesta mesa ainda.</div>')+'</div>';
@@ -285,7 +285,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
   var ehEu=(S.user&&uid===S.user.id);
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
-    +'<div class="autor-cap">'+(pf.avatar_url?'<div class="av" style="background-image:url('+esc(pf.avatar_url)+')"></div>':'<div class="av">'+esc((nome||"?")[0].toUpperCase())+'</div>')+'<div><h1 style="margin:0">'+esc(nome)+'</h1>'+(pf.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(pf.epiteto)+'</p>':'')+'<p class="vis-leg">'+pubs.length+' publicações visíveis neste mundo'+(ehEu?" · sua página de trabalho (vê também rascunhos e privados)":" · página pública")+(ehEu?' · <a onclick="go(\'perfil\')">✎ editar perfil</a>':'')+'</p></div></div>'+(pf.bio?'<div class="corpo" style="max-width:760px;margin:6px 0 14px">'+md(pf.bio)+'</div>':'')
+    +'<div class="autor-cap">'+(pf.avatar_url?'<div class="av" style="background-image:url('+esc(pf.avatar_url)+')"></div>':'<div class="av">'+esc((nome||"?")[0].toUpperCase())+'</div>')+'<div><h1 style="margin:0">'+esc(nome)+'</h1>'+(pf.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(pf.epiteto)+'</p>':'')+'<p class="vis-leg">'+pubs.length+' publicações visíveis neste mundo'+(ehEu?" · sua página de trabalho (vê também rascunhos e privados)":" · página pública")+(ehEu?' · <a onclick="go(\'perfil\')">'+icon("quill-ink")+' editar perfil</a>':'')+'</p></div></div>'+(pf.bio?'<div class="corpo" style="max-width:760px;margin:6px 0 14px">'+md(pf.bio)+'</div>':'')
     +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a></p>':'')+exploradorHTML()); renderExpl(); }
 async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p; if(p)registrarVisita("publicacao",p.id,p.titulo);
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
@@ -300,9 +300,9 @@ async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(i
   if(ehPersonagem(p.tipo)){ var outros=(await pubsDoAutor(p.autor_id)).filter(function(x){return x.id!==p.id;});
     if(outros.length){ abrirExplorador(outros); extra='<h2>Mais textos de '+esc(nomeAutor)+'</h2>'+exploradorHTML(); } }
   var acoes='<div class="acoes-pub">'+(podeBaixar?'<button class="btn mini sec" onclick="baixarPdf()">🖨 Imprimir / PDF</button> <button class="btn mini sec" onclick="baixarDoc()">⬇ Word (.doc)</button> ':'')+botaoCompartilhar()+' '+botaoFav("publicacao",p.id,p.titulo)+((S.mesas&&S.mesas.some(mestreDe))?' <button class="btn mini sec" onclick="pinarMural(\''+p.id+'\')">'+icon("position-marker")+' Fixar no Mural</button>':'')
-    +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">✎ Editar</a> <button class="btn mini sec" style="border-color:#b23b3b" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
+    +(meu(p)?' <a class="btn mini sec" onclick="go(\'editar\',\''+p.id+'\')">'+icon("quill-ink")+' Editar</a> <button class="btn mini sec" style="border-color:#b23b3b" onclick="excluirPub(\''+p.id+'\','+(p.mesa_id?"'"+p.mesa_id+"'":"null")+')">🗑 Excluir</button>':'')+'</div>';
   layout('<div class="bread"><a onclick="'+voltar+'">‹ voltar</a></div><h1>'+esc(p.titulo)+'</h1>'
-    +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="chip-rascunho">✎ rascunho</span>':'')
+    +'<p><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')
     +' &nbsp;<span class="vis-leg">por <a onclick="go(\'autor\',\''+p.autor_id+'\')">'+esc(nomeAutor)+'</a>'+pcLink+jorLink+'</span></p>'
     +tagChips(p.tags)
     +(p.capa_url?imagemComAcoes(p.capa_url,p.titulo,podeBaixar):'')
@@ -460,7 +460,7 @@ async function pubsDoPersonagem(id){ var r=await sb.from("publicacoes").select("
 async function personagensDaMesa(id){ var r=await sb.from("personagens").select("*").eq("mesa_id",id).order("nome"); return r.error?[]:(r.data||[]); }
 async function personagensMundo(){ if(!S.mundo)return []; var r=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).order("nome"); return r.error?[]:(r.data||[]); }
 async function meusPersonagens(){ if(!S.user||!S.mundo)return []; var r=await sb.from("personagens").select("id,nome").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
-function cardPersonagem(c){ return '<div class="card clic" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,icon("hooded-figure"),c.nome)+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">✎ rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
+function cardPersonagem(c){ return '<div class="card clic" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,icon("hooded-figure"),c.nome)+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
 async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; } registrarVisita("personagem",id,c.nome);
   var nomeAutor=await nomeDe(c.jogador_id); var pubs=await pubsDoPersonagem(id);
@@ -470,11 +470,11 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var av=c.imagem_url?'<div class="av" style="width:120px;height:120px;background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px">'+esc((c.nome||"?")[0].toUpperCase())+'</div>';
   var mesaNome=c.mesa_id?((S.mesas.find(function(m){return m.id===c.mesa_id;})||{}).nome||null):null;
   var btnAdd=podeAdd?'<a class="btn" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+'})">+ Adicionar texto</a> ':'';
-  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
+  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">'+icon("quill-ink")+' Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
   var acoes='<p>'+btnAdd+btnEdit+(S.user&&!podeEditar&&!souContrib?'<a class="btn sec" onclick="pedirAcesso(\'personagem\',\''+id+'\')">🔑 Pedir p/ escrever</a> ':'')+((btnAdd||btnEdit)?' ':'')+botaoCompartilhar()+' '+botaoFav("personagem",id,c.nome)+'</p>';
   var fichas=pubs.filter(function(x){return x.tipo==="ficha";}); var relPubs=pubs.filter(function(x){return x.tipo!=="ficha";});
   var fichaHtml='<div class="secao"><div class="sec-head"><h2>'+icon("tied-scroll")+' Ficha do personagem</h2>'+(podeAdd&&!fichas.length?'<div class="sec-acts"><a class="btn mini" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+',tipo:\'ficha\'})">+ Disponibilizar ficha</a></div>':'')+'</div>';
-  if(fichas.length){ fichaHtml+=fichas.map(function(fp){ return '<div class="ficha-bloco"><div class="ficha-top">'+visChip(fp.visibilidade)+(fp.estado==="rascunho"?'<span class="chip-rascunho">✎ rascunho</span>':'')+(meu(fp)?' <a class="btn mini sec" onclick="go(\'editar\',\''+fp.id+'\')">✎ Editar</a> <a class="btn mini sec" onclick="go(\'pub\',\''+fp.id+'\')">↗ Abrir</a>':'')+'</div>'+(fp.arquivo_url?'<p class="anexo-bloco">📎 <a class="btn mini" href="'+esc(fp.arquivo_url)+'" target="_blank" rel="noopener">↗ Abrir ficha (arquivo)</a>'+(fp.arquivo_nome?' <span class="vis-leg">'+esc(fp.arquivo_nome)+'</span>':'')+'</p>':'')+(fp.capa_url?'<img class="capa" src="'+esc(fp.capa_url)+'" loading="lazy">':'')+'<div class="corpo">'+md(fp.corpo||"")+'</div></div>'; }).join(""); }
+  if(fichas.length){ fichaHtml+=fichas.map(function(fp){ return '<div class="ficha-bloco"><div class="ficha-top">'+visChip(fp.visibilidade)+(fp.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+(meu(fp)?' <a class="btn mini sec" onclick="go(\'editar\',\''+fp.id+'\')">'+icon("quill-ink")+' Editar</a> <a class="btn mini sec" onclick="go(\'pub\',\''+fp.id+'\')">↗ Abrir</a>':'')+'</div>'+(fp.arquivo_url?'<p class="anexo-bloco">📎 <a class="btn mini" href="'+esc(fp.arquivo_url)+'" target="_blank" rel="noopener">↗ Abrir ficha (arquivo)</a>'+(fp.arquivo_nome?' <span class="vis-leg">'+esc(fp.arquivo_nome)+'</span>':'')+'</p>':'')+(fp.capa_url?'<img class="capa" src="'+esc(fp.capa_url)+'" loading="lazy">':'')+'<div class="corpo">'+md(fp.corpo||"")+'</div></div>'; }).join(""); }
   else { fichaHtml+='<div class="empty">Nenhuma ficha disponibilizada ainda.'+(podeAdd?' Use “+ Disponibilizar ficha” — você define se ela é privada, só da mesa ou pública.':'')+'</div>'; }
   fichaHtml+='</div>';
   var rel; if(relPubs.length){ abrirExplorador(relPubs); rel='<h2>Conteúdo relacionado</h2>'+exploradorHTML(); } else { rel='<h2>Conteúdo relacionado</h2><div class="empty">Nenhum conteúdo ligado a este personagem ainda.'+(podeAdd?' Use o botão “+ Adicionar texto”.':'')+'</div>'; }
@@ -482,7 +482,7 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   layout('<div class="bread"><a onclick="go(\'pers\',\'jog\')">‹ Personagens</a></div>'
     +'<div class="autor-cap">'+av+'<div><h1 style="margin:0">'+esc(c.nome)+'</h1>'
     +(c.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(c.epiteto)+'</p>':'')
-    +'<p class="vis-leg">'+visChip(c.visibilidade)+(c.estado==="rascunho"?'<span class="chip-rascunho">✎ rascunho</span>':'')+' · por <a onclick="go(\'autor\',\''+c.jogador_id+'\')">'+esc(nomeAutor)+'</a>'+(mesaNome?' · <a onclick="go(\'mesa\',\''+c.mesa_id+'\')">⚔ '+esc(mesaNome)+'</a>':'')+'</p></div></div>'
+    +'<p class="vis-leg">'+visChip(c.visibilidade)+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+' · por <a onclick="go(\'autor\',\''+c.jogador_id+'\')">'+esc(nomeAutor)+'</a>'+(mesaNome?' · <a onclick="go(\'mesa\',\''+c.mesa_id+'\')">⚔ '+esc(mesaNome)+'</a>':'')+'</p></div></div>'
     +(c.resumo?'<p>'+esc(c.resumo)+'</p>':'')
     +(c.corpo?'<div class="corpo">'+md(c.corpo)+'</div>':'')
     +acoes+fichaHtml+rel+painel+secaoComentarios("personagem",id,c.jogador_id));
@@ -558,7 +558,7 @@ async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJor
   var podePublicar=podeEditar||souEscr;
   var logo=j.imagem_url?'<div class="av" style="width:120px;height:120px;border-radius:12px;background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px;border-radius:12px">📰</div>';
   var btnPub=podePublicar?'<a class="btn" onclick="go(\'nova\',{jornal:\''+id+'\',tipo:\'jornal\'})">+ Publicar notícia</a> ':'';
-  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarJornal\',\''+id+'\')">✎ Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirJornal(\''+id+'\')">🗑 Excluir</button>':'';
+  var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarJornal\',\''+id+'\')">'+icon("quill-ink")+' Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirJornal(\''+id+'\')">🗑 Excluir</button>':'';
   var acoes='<p>'+btnPub+btnEdit+((btnPub||btnEdit)?' ':'')+botaoCompartilhar()+' '+botaoFav("jornal",id,j.nome)+'</p>';
   var lista=noticias.length?jornalEdicoes(noticias,j.nome):'<div class="empty">Nenhuma notícia publicada ainda.'+(podePublicar?' Use o botão “+ Publicar notícia”.':'')+'</div>';
   var painel=podeEditar?'<h2>Escritores do jornal</h2><p class="vis-leg">Autorize quem pode publicar notícias por este jornal (além de você).</p><div id="escritores">Carregando…</div>':'';
@@ -628,12 +628,12 @@ async function telaSessao(id){ layout('<p>Carregando…</p>'); var se=await umaS
   var pubs=await pubsDaSessao(id);
   var plan=pubs.filter(function(p){return ['mestre','autor_mestre','privado'].indexOf(p.visibilidade)>=0;});
   var publi=pubs.filter(function(p){return ['publico','mesa'].indexOf(p.visibilidade)>=0;});
-  var actsM=ehMestre?'<p><a class="btn" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento</a> <a class="btn sec" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'resumo de sessão\',vis:\'mesa\'})">+ Resumo</a> <a class="btn sec" onclick="go(\'editarSessao\',\''+id+'\')">✎ Editar sessão</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirSessao(\''+id+'\',\''+se.mesa_id+'\')">🗑 Excluir</button></p>':'';
+  var actsM=ehMestre?'<p><a class="btn" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'planejamento do mestre\',vis:\'mestre\'})">+ Planejamento</a> <a class="btn sec" onclick="go(\'nova\',{mesa:\''+se.mesa_id+'\',sessao:\''+id+'\',tipo:\'resumo de sessão\',vis:\'mesa\'})">+ Resumo</a> <a class="btn sec" onclick="go(\'editarSessao\',\''+id+'\')">'+icon("quill-ink")+' Editar sessão</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirSessao(\''+id+'\',\''+se.mesa_id+'\')">🗑 Excluir</button></p>':'';
   var recs=await recompensasDaSessao(id); var persMesa=await personagensDaMesa(se.mesa_id);
   var secRec='<h2>'+icon("round-star")+' Recompensas (XP, itens, prêmios)</h2>'+(ehMestre?'<p><a class="btn sec" onclick="go(\'novaRecompensa\',\''+id+'\')">+ Adicionar recompensa</a></p>':'')+(recs.length?renderRecsHTML(recs,persMesa,ehMestre,id):'<div class="empty">Nenhuma recompensa registrada nesta sessão ainda.</div>');
   layout('<div class="bread"><a onclick="go(\'mesa\',\''+se.mesa_id+'\')">‹ Mesa</a> › Sessão</div>'
-    +'<h1>🎲 '+esc(se.titulo)+'</h1>'+(se.data?'<p class="vis-leg">'+esc(se.data)+'</p>':'')+actsM
-    +(ehMestre?'<h2>🔒 Planejamento (só o mestre vê)</h2>'+(plan.length?listar(plan):'<div class="empty">Nenhum planejamento nesta sessão ainda.</div>'):'')
+    +'<h1>'+icon("dice-twenty-faces-twenty")+' '+esc(se.titulo)+'</h1>'+(se.data?'<p class="vis-leg">'+esc(se.data)+'</p>':'')+actsM
+    +(ehMestre?'<h2>'+icon("drama-masks")+' Planejamento (só o mestre vê)</h2>'+(plan.length?listar(plan):'<div class="empty">Nenhum planejamento nesta sessão ainda.</div>'):'')
     +'<h2>Resumos & público</h2>'+(publi.length?listar(publi):'<div class="empty">Nenhum resumo publicado nesta sessão ainda.</div>')+secRec); }
 function formSessao(mesaId, se){ return '<div class="bread">'+(se?'Editar sessão':'Nova sessão')+'</div><div class="form">'
   +fHead(icon("dice-twenty-faces-twenty"),(se?'Editar sessão':'Nova sessão'),'Uma sessão de jogo. Depois você adiciona planejamento, resumos e recompensas.')
@@ -688,7 +688,7 @@ async function carregarLinkMap(evs){ var linkMap={}; if(!evs.length) return link
   return linkMap; }
 function renderEvento(e, linkMap, podeEditar, mesaId){
   var lks=linkMap[e.id]?'🔗 '+linkMap[e.id].map(function(x){return '<a onclick="go(\''+x.r+'\',\''+x.id+'\')">'+esc(x.t)+'</a>';}).join(" · "):'';
-  return '<details class="tl2-ev"><summary><span class="dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span>'+(e.quando?'<span class="qd">'+esc(e.quando)+'</span> ':'')+'<span class="evt">'+esc(e.titulo)+'</span></summary><div class="tl2-ev-body">'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+(lks?'<p class="vis-leg" style="margin:6px 0 0">'+lks+'</p>':'')+(podeEditar?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">✎ editar</a> · <a onclick="excluirEvento(\''+e.id+'\',\''+(mesaId||"")+'\')">🗑 excluir</a></p>':'')+'</div></details>'; }
+  return '<details class="tl2-ev"><summary><span class="dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span>'+(e.quando?'<span class="qd">'+esc(e.quando)+'</span> ':'')+'<span class="evt">'+esc(e.titulo)+'</span></summary><div class="tl2-ev-body">'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+(lks?'<p class="vis-leg" style="margin:6px 0 0">'+lks+'</p>':'')+(podeEditar?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">'+icon("quill-ink")+' editar</a> · <a onclick="excluirEvento(\''+e.id+'\',\''+(mesaId||"")+'\')">🗑 excluir</a></p>':'')+'</div></details>'; }
 function renderPeriodo(p, eventos, linkMap, podeEditar, mesaId){
   var head='<summary class="tl2-per-head">'+(p.imagem_url?'<span class="bg" style="background-image:url('+esc(p.imagem_url)+')"></span><span class="ov"></span>':'')+'<span class="nm">'+esc(p.nome)+'</span><span class="ct">'+eventos.length+'</span>'+((podeEditar&&p.id)?'<a class="ped" onclick="event.stopPropagation();go(\'editarPeriodo\',\''+p.id+'\')">✎</a>':'')+'</summary>';
   var evHtml=eventos.map(function(e){ return renderEvento(e, linkMap, podeEditar, mesaId); }).join("");
@@ -768,7 +768,7 @@ function modoBtnHTML(){ return '<button class="modo-btn" onclick="alternarModo()
 function togModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); render(); }
 function barraModo(){ return '<div class="expbar" style="margin:6px 0"><button class="btn mini sec" onclick="togModo()">'+(S.modo==="lista"?"▦ Ver em cards":"☰ Ver em lista")+'</button></div>'; }
 function gridOuLista(items, cardFn, liFn){ return S.modo==="lista" ? '<ul class="lista2">'+items.map(liFn).join("")+'</ul>' : '<div class="cards">'+items.map(cardFn).join("")+'</div>'; }
-function cardPersonagemRound(c){ var img=c.imagem_url?'<div class="pc-av" style="background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="pc-av pc-av-ph">'+esc(((c.nome||"?")[0]||"?").toUpperCase())+'</div>'; return '<div class="pc-circ" onclick="go(\'personagem\',\''+c.id+'\')" title="'+esc(c.nome)+'">'+img+'<div class="pc-nm">'+esc(c.nome)+'</div>'+(c.epiteto?'<div class="pc-ep">'+esc(c.epiteto)+'</div>':'')+'<div class="pc-chips">'+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">✎ rascunho</span>':'')+'</div></div>'; }
+function cardPersonagemRound(c){ var img=c.imagem_url?'<div class="pc-av" style="background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="pc-av pc-av-ph">'+esc(((c.nome||"?")[0]||"?").toUpperCase())+'</div>'; return '<div class="pc-circ" onclick="go(\'personagem\',\''+c.id+'\')" title="'+esc(c.nome)+'">'+img+'<div class="pc-nm">'+esc(c.nome)+'</div>'+(c.epiteto?'<div class="pc-ep">'+esc(c.epiteto)+'</div>':'')+'<div class="pc-chips">'+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</div></div>'; }
 function gridPersRound(lista){ return S.modo==="lista" ? '<ul class="lista2">'+lista.map(liPersonagem).join("")+'</ul>' : '<div class="pers-circ-grid">'+lista.map(cardPersonagemRound).join("")+'</div>'; }
 function liPersonagem(c){ return '<li class="li-clic" onclick="go(\'personagem\',\''+c.id+'\')"><span class="li-ic">'+icon("hooded-figure")+'</span><span class="li-tit">'+esc(c.nome)+'</span>'+(c.epiteto?'<span class="tipo">'+esc(c.epiteto)+'</span>':'')+visChip(c.visibilidade)+'</li>'; }
 function liJornal(j){ return '<li class="li-clic" onclick="go(\'jornal\',\''+j.id+'\')"><span class="li-ic">'+icon("scroll-unfurled")+'</span><span class="li-tit">'+esc(j.nome)+'</span>'+(j.descricao?'<span class="vis-leg" style="flex:1">'+esc(j.descricao)+'</span>':'')+'</li>'; }
@@ -920,7 +920,7 @@ function telaGuia(){ layout(
  +'</div></div>'
  +'<div class="secao"><div class="sec-head"><h2>③ Visibilidade — o segredo do mestre</h2></div>'
  +'<div class="guia-vis"><p>Todo conteúdo tem um <b>estado</b> e uma <b>visibilidade</b>. É assim que você prepara segredos e revela na hora certa:</p>'
-   +'<div class="gv-row"><span class="chip-rascunho">✎ rascunho</span><span>só você vê, até publicar</span></div>'
+   +'<div class="gv-row"><span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span><span>só você vê, até publicar</span></div>'
    +'<div class="gv-row">'+visChip("publico")+'<span>todos veem</span></div>'
    +'<div class="gv-row">'+visChip("mesa")+'<span>só quem participa da campanha</span></div>'
    +'<div class="gv-row">'+visChip("privado")+'<span>só você</span></div>'
