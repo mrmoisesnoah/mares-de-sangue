@@ -509,3 +509,16 @@ body.modo-lista .cards>.card>.thumb.noimg{width:50px;height:50px;border-radius:5
 .zona-perigo .sec-head h2{color:#b23b3b}
 .btn-perigo{background:#b23b3b !important;border-color:#b23b3b !important;color:#fff !important}
 .btn-perigo:hover{background:#9a2f24 !important}
+
+/* ===== Foto do grupo TOGA (créditos) ===== */
+.toga-foto{margin:14px 0;max-width:560px}
+.toga-foto img{width:100%;border-radius:10px;border:1px solid var(--ouro);box-shadow:0 3px 12px var(--sombra)}
+.toga-foto figcaption{font-size:13px;color:var(--tinta2);font-style:italic;text-align:center;margin-top:6px}
+
+/* ===== Reordenar eventos ===== */
+.ev-mv{display:inline-block;min-width:20px;text-align:center;padding:0 6px;border:1px solid var(--ouro);border-radius:5px;color:var(--sangue);text-decoration:none;font-size:13px;line-height:1.6}
+.ev-mv:hover{background:var(--sangue);color:#fff;border-color:var(--sangue)}
+
+/* ===== Lightbox (ampliar fotos) ===== */
+.lightbox-ov{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:10001;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px}
+.lightbox-ov img{max-width:94vw;max-height:94vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)}

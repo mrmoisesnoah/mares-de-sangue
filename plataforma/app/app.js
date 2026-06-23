@@ -467,7 +467,7 @@ async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var podeEditar=(S.user&&(c.jogador_id===S.user.id||(S.profile&&S.profile.papel_global==="admin")));
   var contribs=await contribPersonagem(id); var souContrib=!!(S.user&&contribs.some(function(x){return x.user_id===S.user.id;}));
   var podeAdd=podeEditar||souContrib;
-  var av=c.imagem_url?'<div class="av" style="width:120px;height:120px;background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px">'+esc((c.nome||"?")[0].toUpperCase())+'</div>';
+  var av=c.imagem_url?'<div class="av" style="width:152px;height:152px;cursor:zoom-in;background-image:url('+esc(c.imagem_url)+')" title="Ampliar" onclick="lightbox(\''+esc(c.imagem_url)+'\')"></div>':'<div class="av" style="width:152px;height:152px">'+esc((c.nome||"?")[0].toUpperCase())+'</div>';
   var mesaNome=c.mesa_id?((S.mesas.find(function(m){return m.id===c.mesa_id;})||{}).nome||null):null;
   var btnAdd=podeAdd?'<a class="btn" onclick="go(\'nova\',{personagem:\''+id+'\',mesa:'+(c.mesa_id?"'"+c.mesa_id+"'":"null")+'})">+ Adicionar texto</a> ':'';
   var btnEdit=podeEditar?'<a class="btn sec" onclick="go(\'editarPersonagem\',\''+id+'\')">'+icon("quill-ink")+' Editar</a> <button class="btn sec" style="border-color:#b23b3b" onclick="excluirPersonagem(\''+id+'\')">🗑 Excluir</button>':'';
@@ -599,6 +599,8 @@ function telaCreditos(){ layout('<div class="bread"><a onclick="go(\'home\')">In
   +'<p><b>Mares de Sangue</b> — plataforma idealizada, projetada e desenvolvida por <b>Moisés Noah</b>.</p>'
   +'<h2>O cenário</h2>'
   +'<p>O mundo de <b>Skard</b> e o cenário <b>Mar de Sangue</b> foram criados coletivamente por <b>TOGA — The Older Gods Adventures</b>, o grupo original de RPG de mesa que construiu junto, ao longo dos anos, toda a história original deste universo.</p>'
+  +'<p><b>O TOGA nasceu em 17 de julho de 2012.</b></p>'
+  +'<figure class="toga-foto"><img src="toga.jpg" alt="O grupo TOGA — desde 17/07/2012" loading="lazy" onerror="var f=this.closest(&#39;figure&#39;); if(f)f.style.display=&#39;none&#39;"><figcaption>O grupo TOGA — desde 17 de julho de 2012</figcaption></figure>'
   +'<p><b>Membros fundadores do TOGA:</b> Thompson Moutinho (<b><i>O Primeiro Mestre</i></b>), Moisés Noah, Arnom Abner, Amós Gonzaga, Asafe Lucas, Cleudon Paulo e Matheus “Tharen”.</p>'
   +'<h2>Material original</h2>'
   +'<p>A história original permanece disponível no blog <a href="https://maresdesangue.blogspot.com/" target="_blank" rel="noopener">Mares de Sangue</a>.</p>'
@@ -688,7 +690,7 @@ async function carregarLinkMap(evs){ var linkMap={}; if(!evs.length) return link
   return linkMap; }
 function renderEvento(e, linkMap, podeEditar, mesaId){
   var lks=linkMap[e.id]?'🔗 '+linkMap[e.id].map(function(x){return '<a onclick="go(\''+x.r+'\',\''+x.id+'\')">'+esc(x.t)+'</a>';}).join(" · "):'';
-  return '<details class="tl2-ev"><summary><span class="dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span>'+(e.quando?'<span class="qd">'+esc(e.quando)+'</span> ':'')+'<span class="evt">'+esc(e.titulo)+'</span></summary><div class="tl2-ev-body">'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+(lks?'<p class="vis-leg" style="margin:6px 0 0">'+lks+'</p>':'')+(podeEditar?'<p class="vis-leg" style="margin:6px 0 0"><a onclick="go(\'editarEvento\',\''+e.id+'\')">'+icon("quill-ink")+' editar</a> · <a onclick="excluirEvento(\''+e.id+'\',\''+(mesaId||"")+'\')">🗑 excluir</a></p>':'')+'</div></details>'; }
+  return '<details class="tl2-ev"><summary><span class="dot" style="background:'+esc(e.cor||"#7c1c14")+'"></span>'+(e.quando?'<span class="qd">'+esc(e.quando)+'</span> ':'')+'<span class="evt">'+esc(e.titulo)+'</span></summary><div class="tl2-ev-body">'+(e.descricao?'<div class="corpo" style="font-size:16px;max-width:none">'+md(e.descricao)+'</div>':'')+(lks?'<p class="vis-leg" style="margin:6px 0 0">'+lks+'</p>':'')+(podeEditar?'<p class="vis-leg" style="margin:6px 0 0"><a class="ev-mv" title="Subir" onclick="moverEvento(\''+e.id+'\',-1,\''+(mesaId||"")+'\')">↑</a> <a class="ev-mv" title="Descer" onclick="moverEvento(\''+e.id+'\',1,\''+(mesaId||"")+'\')">↓</a> · <a onclick="go(\'editarEvento\',\''+e.id+'\')">'+icon("quill-ink")+' editar</a> · <a onclick="excluirEvento(\''+e.id+'\',\''+(mesaId||"")+'\')">🗑 excluir</a></p>':'')+'</div></details>'; }
 function renderPeriodo(p, eventos, linkMap, podeEditar, mesaId){
   var head='<summary class="tl2-per-head">'+(p.imagem_url?'<span class="bg" style="background-image:url('+esc(p.imagem_url)+')"></span><span class="ov"></span>':'')+'<span class="nm">'+esc(p.nome)+'</span><span class="ct">'+eventos.length+'</span>'+((podeEditar&&p.id)?'<a class="ped" onclick="event.stopPropagation();go(\'editarPeriodo\',\''+p.id+'\')">✎</a>':'')+'</summary>';
   var evHtml=eventos.map(function(e){ return renderEvento(e, linkMap, podeEditar, mesaId); }).join("");
@@ -954,6 +956,22 @@ function ehAdmin(){ return !!(S.profile&&S.profile.papel_global==="admin"); }
 async function excluirMundo(id){ if(!ehAdmin()){ toast("Apenas admin pode excluir mundos.","erro"); return; } var w=S.mundos.find(function(x){return x.id===id;})||{}; if(!confirm('EXCLUIR o mundo "'+(w.nome||"")+'" e TODO o conteúdo dentro dele (mesas, personagens, artigos, jornais, linha do tempo)?\n\nIsso é PERMANENTE e irreversível.')) return; if(!confirm('Última confirmação: excluir "'+(w.nome||"")+'" para sempre?')) return; try{ var r=await sb.rpc("excluir_mundo",{p_id:id}); if(r.error)throw r.error; S.mundos=S.mundos.filter(function(x){return x.id!==id;}); try{ if(localStorage.getItem("mds_mundo")===id) localStorage.removeItem("mds_mundo"); }catch(e){} S.mundo=mundoSalvo()||S.mundos[0]||null; if(S.mundo) await carregarMesas(); toast("Mundo excluído.","ok"); go("home"); }catch(e){ toast(e.message||(""+e),"erro"); } }
 async function excluirMesa(id){ if(!ehAdmin()){ toast("Apenas admin pode excluir mesas.","erro"); return; } var m=(S.mesas||[]).find(function(x){return x.id===id;})||{}; if(!confirm('EXCLUIR a mesa "'+(m.nome||"")+'" e seu conteúdo (sessões, mapas, personagens da mesa, fixados)?\n\nIsso é PERMANENTE.')) return; try{ var r=await sb.rpc("excluir_mesa",{p_id:id}); if(r.error)throw r.error; if(S.mundo) await carregarMesas(); toast("Mesa excluída.","ok"); go("mundoHome"); }catch(e){ toast(e.message||(""+e),"erro"); } }
 
+async function moverEvento(id, dir, mesaId){
+  try{
+    var e=await umEvento(id); if(!e)return;
+    var q=sb.from("eventos").select("id,ordem,criado_em");
+    if(mesaId){ q=q.eq("mesa_id",mesaId); } else { q=q.eq("mundo_id",S.mundo.id).is("mesa_id",null); }
+    if(e.periodo_id){ q=q.eq("periodo_id",e.periodo_id); } else { q=q.is("periodo_id",null); }
+    var r=await q.order("ordem",{nullsFirst:false}).order("criado_em");
+    var list=(r.data||[]); var idx=-1; for(var i=0;i<list.length;i++){ if(list[i].id===id){idx=i;break;} }
+    var j=idx+dir; if(idx<0||j<0||j>=list.length) return;
+    var tmp=list[idx]; list[idx]=list[j]; list[j]=tmp;
+    for(var k=0;k<list.length;k++){ var u=await sb.from("eventos").update({ordem:k+1}).eq("id",list[k].id); if(u.error)throw u.error; }
+    go("linha", mesaId||"");
+  }catch(err){ toast(err.message||(""+err),"erro"); }
+}
+
+function lightbox(url){ if(!url)return; var ov=document.createElement("div"); ov.className="lightbox-ov"; ov.innerHTML='<img src="'+esc(url)+'" alt="">'; ov.onclick=function(){ ov.remove(); }; document.body.appendChild(ov); }
 function render(){
   aplicarTema(S.mundo&&S.mundo.tema?S.mundo.tema:"medieval");
   document.body.classList.toggle("modo-lista", S.modo==="lista");
