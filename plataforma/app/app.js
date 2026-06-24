@@ -61,6 +61,11 @@ function catDe(t){ t=(t||"").toLowerCase();
   return "outros";
 }
 function catCls(t){ return "cat-"+catDe(t); }
+var GLOBO_SVG='<svg viewBox="0 0 100 100" width="86" height="86" fill="none" stroke="currentColor" stroke-width="3"><circle cx="50" cy="50" r="34"/><ellipse cx="50" cy="50" rx="14" ry="34"/><line x1="16" y1="50" x2="84" y2="50"/><path d="M24 34 H76 M24 66 H76" stroke-width="2" opacity=".7"/></svg>';
+var D20_SVG='<svg viewBox="0 0 100 100" width="78" height="78" fill="none" stroke="currentColor" stroke-width="2.4"><polygon points="50,4 90,26 90,74 50,96 10,74 10,26"/><polygon points="50,12 72,46 28,46"/><path d="M28 46 L10 26 M72 46 L90 26 M28 46 L50 96 M72 46 L50 96"/><text x="50" y="68" font-size="22" fill="currentColor" stroke="none" text-anchor="middle" font-family="serif">20</text></svg>';
+var D20_FACETS='<svg class="md-facets" viewBox="0 0 100 100" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="1.5"><polygon points="50,12 72,46 28,46"/><path d="M28 46 L10 26 M72 46 L90 26 M28 46 L50 96 M72 46 L50 96"/></svg>';
+function cardMundo(w){ var img=w.capa_url||w.fundo_url; var ball=img?'<div class="mw-ball" style="background-image:url('+esc(img)+')"></div>':'<div class="mw-ball mw-ball-ph">'+GLOBO_SVG+'</div>'; var sel=(S.mundo&&w.id===S.mundo.id)?' sel':''; return '<div class="mundo-orb clic'+sel+'" onclick="selecionarMundo(\''+w.id+'\')" title="'+esc(w.nome)+'"><div class="mw-planet">'+ball+'<span class="mw-ring"></span></div><div class="mw-kick">MUNDO</div><h3 class="mw-t">'+esc(w.nome)+'</h3>'+(w.descricao?'<p class="mw-d">'+esc(w.descricao)+'</p>':'')+'</div>'; }
+function cardMesa(m){ var img=m.capa_url||m.fundo_url; var face=img?'<div class="md-face" style="background-image:url('+esc(img)+')"></div>'+D20_FACETS:'<div class="md-face md-face-ph">'+D20_SVG+'</div>'; return '<div class="mesa-d20 clic" onclick="go(\'mesa\',\''+m.id+'\')" title="'+esc(m.nome)+'"><div class="md-hex">'+face+'</div><div class="md-kick">CAMPANHA</div><h3 class="md-t">'+esc(m.nome)+'</h3>'+(m.descricao?'<p class="md-d">'+esc(m.descricao)+'</p>':'')+'</div>'; }
 function thumb(url, icone, alt){ return url ? '<div class="thumb"><img loading="lazy" decoding="async" src="'+esc(url)+'" alt="'+esc(alt||"")+'"></div>' : '<div class="thumb noimg" role="img" aria-label="'+esc(alt||"sem imagem")+'">'+(icone||"📜")+'</div>'; }
 function cardPub(p){
   return '<div class="card clic '+catCls(p.tipo)+'" onclick="go(\'pub\',\''+p.id+'\')">'+thumb(p.capa_url, iconeTipo(p.tipo), p.titulo)
@@ -225,7 +230,7 @@ function botoesCriar(){
 async function telaHome(){
   layout('<p>Carregando…</p>');
   var topo=hero("Mares de Sangue","Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", "https://niepiaiwusptmwepgmlq.supabase.co/storage/v1/object/public/midias/c3ed4547-f032-47f6-8650-360684451acc/1781893414276-gemini-25-flash-image-agora-faca-uma-ultima-versao-no-estilo-alan-lee-e-nao-deixe-um-brazao-no-bar-0jpg.jpg", (S.user?botoesCriar():'<a class="btn" onclick="go(\'login\')">Entrar</a>'));
-  var mundoCards=S.mundos.map(function(w){return '<div class="card clic cat-lugares" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,icon("castle"),w.nome)+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
+  var mundoCards=S.mundos.map(cardMundo).join("");
   var mundosHtml='<h2>'+icon("castle")+' Escolha um mundo</h2><p class="vis-leg" style="margin-top:-6px">Clique em um mundo para entrar nele.</p>'+(mundoCards?'<div class="cards">'+mundoCards+'</div>':'<div class="empty">'+(S.user?'Nenhum mundo ainda — crie o primeiro acima.':'Nenhum mundo público disponível.')+'</div>');
   var rec=visitasRecentes();
   var contHtml=(S.user&&rec.length)?'<h2>↩ Continuar de onde parou</h2><div class="cards">'+rec.map(function(v){var rta={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[v.tipo]||"pub"; var ica={publicacao:"📄",personagem:"🧝",jornal:"📰",mesa:"⚔"}[v.tipo]||"📄"; return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div><h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+(v.mundoNome?esc(v.mundoNome)+' · ':'')+esc(v.tipo)+'</p></div>';}).join("")+'</div>':'';
@@ -254,11 +259,11 @@ async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>C
       +dcard(ic("buscar"),"Buscar","Procurar em tudo","go(\'busca\',\'\')")
       +(S.user?dcard(ic("fav"),"Favoritos","Seus conteúdos marcados","go(\'favoritos\')"):'')
     +'</div>'
-    +(S.mesas.length?'<h2>'+(S.user?'Suas mesas':'Mesas e Campanhas')+'</h2><div class="cards">'+S.mesas.map(function(m){return '<div class="card clic cat-cronicas" onclick="go(\'mesa\',\''+m.id+'\')">'+thumb(m.capa_url||m.fundo_url,icon("crossed-swords"),m.nome)+'<h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("")+'</div>':'')
+    +(S.mesas.length?'<h2>'+(S.user?'Suas mesas':'Mesas e Campanhas')+'</h2><div class="cards">'+S.mesas.map(cardMesa).join("")+'</div>':'')
     +(recs.length?'<h2>Novidades — adições recentes</h2>'+listar(recs):''));
 }
 async function telaMundos(){
-  var cards=S.mundos.map(function(w){return '<div class="card clic cat-lugares'+(S.mundo&&w.id===S.mundo.id?' sel':'')+'" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,icon("castle"),w.nome)+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
+  var cards=S.mundos.map(cardMundo).join("");
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mundos</div><h1>'+icon("castle")+' Mundos</h1>'
     +(S.user?'<p><a class="btn" onclick="go(\'novoMundo\')">+ Criar Mundo</a></p>':'')
     +'<div class="cards">'+(cards||'<div class="empty">Nenhum mundo.</div>')+'</div>');

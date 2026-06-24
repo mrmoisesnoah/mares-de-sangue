@@ -544,3 +544,28 @@ body.modo-lista .cards>.card>.thumb.noimg{width:50px;height:50px;border-radius:5
 /* em modo lista a moldura vira acento lateral discreto */
 body.modo-lista .cards>.card[class*="cat-"]{border-top-width:1px;border-left:3px solid var(--cat)}
 body.modo-lista .cards>.card[class*="cat-"]::before,body.modo-lista .cards>.card[class*="cat-"]::after{display:none}
+
+/* ===== Card de MUNDO (orbe planetário) e MESA (d20) ===================== */
+.mundo-orb,.mesa-d20{text-align:center;cursor:pointer;padding:8px 6px 14px;transition:transform .15s}
+.mundo-orb:hover,.mesa-d20:hover{transform:translateY(-3px)}
+.mw-kick,.md-kick{font-size:11px;font-weight:700;letter-spacing:.16em;margin-top:9px}
+.mw-t,.md-t{font-family:var(--font-head);font-size:18px;color:var(--sangue);margin:2px 0 1px}
+.mw-d,.md-d{font-size:13px;color:var(--tinta2);margin:1px 8px 0;line-height:1.45}
+.mw-planet{position:relative;width:150px;height:150px;margin:4px auto 0}
+.mw-ball{width:128px;height:128px;margin:11px auto 0;border-radius:50%;background-size:cover;background-position:center;border:3px solid var(--ouro);box-shadow:0 4px 14px var(--sombra)}
+.mw-ball-ph{display:flex;align-items:center;justify-content:center;color:var(--ouro);background:radial-gradient(circle at 38% 32%,var(--perg),var(--perg2))}
+.mundo-orb:hover .mw-ball{border-color:var(--sangue)}
+.mundo-orb.sel .mw-ball{border-color:var(--sangue);box-shadow:0 0 0 3px color-mix(in srgb,var(--sangue) 30%,transparent),0 4px 14px var(--sombra)}
+.mw-ring{position:absolute;top:50px;left:-1px;width:152px;height:48px;border:3px solid var(--ouro);border-radius:50%;transform:rotate(-20deg);opacity:.5;clip-path:polygon(0 50%,100% 0,100% 100%,0 100%);pointer-events:none}
+.mw-kick{color:var(--ouro)}
+.md-hex{position:relative;width:140px;height:140px;margin:6px auto 0;background:var(--sangue);clip-path:polygon(50% 1%,93% 25%,93% 75%,50% 99%,7% 75%,7% 25%);display:flex;align-items:center;justify-content:center;filter:drop-shadow(0 4px 10px var(--sombra))}
+.md-face{width:130px;height:130px;background-size:cover;background-position:center;clip-path:polygon(50% 1%,93% 25%,93% 75%,50% 99%,7% 75%,7% 25%)}
+.md-face-ph{display:flex;align-items:center;justify-content:center;color:var(--sangue);background:radial-gradient(circle at 50% 40%,var(--perg),var(--perg2))}
+.md-facets{position:absolute;inset:5px;pointer-events:none}
+.md-kick{color:var(--sangue)}
+body.modo-lista .mundo-orb,body.modo-lista .mesa-d20{text-align:left;overflow:hidden;padding:8px 2px;border-bottom:1px solid var(--borda)}
+body.modo-lista .mw-planet,body.modo-lista .md-hex{width:64px;height:64px;margin:0 12px 0 0;float:left}
+body.modo-lista .mw-ball{width:56px;height:56px;margin:4px auto 0}
+body.modo-lista .mw-ring{display:none}
+body.modo-lista .md-face{width:56px;height:56px}
+body.modo-lista .mw-kick,body.modo-lista .md-kick{margin-top:2px}
