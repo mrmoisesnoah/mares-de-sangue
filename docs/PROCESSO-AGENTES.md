@@ -4,6 +4,17 @@ Pipeline de papéis que o assistente (Claude) **incorpora em sequência** para t
 
 > Como é "salvo": este documento é o contrato do processo (versionado no repo). O assistente o segue a cada demanda. Em Cowork, etapas pesadas e isoladas podem ser delegadas a subagentes (`general-purpose`), mas o padrão é o assistente incorporar os papéis para economizar recursos.
 
+## Quando aplicar (gatilho) — método intrínseco
+
+Este processo é **o modo padrão de operar** o projeto, vinculado no `CLAUDE.md` (carregado em toda sessão). Dispare-o sempre que a demanda for:
+
+- **Levantamento técnico** — investigar como algo funciona, viabilidade, trade-offs.
+- **Correção de funcionalidade** — bug, regressão, comportamento errado.
+- **Criação de feature** — nova tela, card, fluxo, campo.
+- **Manutenção e suporte** — refactor, performance, acessibilidade, migrations, dúvidas do autor.
+
+Para tarefas triviais (1 arquivo, mudança óbvia, sem risco), o **Agente de Qualidade** pode condensar os papéis numa passada única — mas os critérios de aceite transversais continuam valendo. Quanto maior o risco/escopo, mais explícita deve ser a passagem por cada nível.
+
 ## Fluxo
 
 ```

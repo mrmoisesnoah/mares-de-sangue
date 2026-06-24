@@ -30,3 +30,6 @@ Banco da plataforma (Postgres + RLS). Para montar do zero, rode **nesta ordem**.
 - **`notificacoes` (insert):** qualquer usuário autenticado pode criar notificação para outro `user_id` — é proposital (o comentarista precisa avisar o dono do conteúdo). Aceitável numa comunidade pequena/confiável; dá para endurecer depois com uma função `SECURITY DEFINER`.
 - **`comentarios` (select):** leitura pública. OK para uma wiki; pode-se restringir à visibilidade do alvo no futuro.
 - Funções `SECURITY DEFINER` no Postgres usam `set search_path = public` (senão "relation does not exist").
+
+## Subtítulo do mundo
+18. `migracao-mundo-subtitulo.sql` — coluna `subtitulo` em `mundos` (linha curta sob o card; descrição completa fica no hero).
