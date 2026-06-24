@@ -531,19 +531,11 @@ body.modo-lista .cards>.card>.thumb.noimg{width:50px;height:50px;border-radius:5
 .card.cat-itens      {--cat:#3a9aa6}
 .card.cat-saberes    {--cat:#a8854a}
 .card.cat-cronicas   {--cat:#5577bb}
-.card[class*="cat-"]{position:relative;border-top:3px solid var(--cat)}
-.card[class*="cat-"]::before,.card[class*="cat-"]::after{content:"";position:absolute;width:13px;height:13px;pointer-events:none;opacity:.6}
-.card[class*="cat-"]::before{top:5px;left:5px;border-top:2px solid var(--cat);border-left:2px solid var(--cat);border-radius:3px 0 0 0}
-.card[class*="cat-"]::after{bottom:5px;right:5px;border-bottom:2px solid var(--cat);border-right:2px solid var(--cat);border-radius:0 0 3px 0}
-.card[class*="cat-"].clic:hover{border-color:var(--cat)}
 .card[class*="cat-"] .thumb.noimg{border-color:var(--cat);color:var(--cat);box-shadow:0 0 0 3px color-mix(in srgb,var(--cat) 16%,transparent),0 2px 8px var(--sombra)}
 .card[class*="cat-"] .tipo{border-color:color-mix(in srgb,var(--cat) 55%,var(--borda))}
 /* anel de categoria no retrato redondo de personagem */
 .pc-circ.cat-personagens .pc-av{border-color:#b83a3d}
 .pc-circ.cat-personagens:hover .pc-av{border-color:#9c2b2e}
-/* em modo lista a moldura vira acento lateral discreto */
-body.modo-lista .cards>.card[class*="cat-"]{border-top-width:1px;border-left:3px solid var(--cat)}
-body.modo-lista .cards>.card[class*="cat-"]::before,body.modo-lista .cards>.card[class*="cat-"]::after{display:none}
 
 /* ===== Card de MUNDO (orbe planetário) e MESA (d20) ===================== */
 .mundo-orb,.mesa-d20{text-align:center;cursor:pointer;padding:8px 6px 14px;transition:transform .15s}
