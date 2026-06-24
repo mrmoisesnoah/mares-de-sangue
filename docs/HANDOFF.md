@@ -61,3 +61,6 @@ Tarefas abertas: ver a lista **Pendente** na seção 4. Decisões técnicas rece
 - **SECURITY DEFINER** precisa `set search_path = public`.
 - **Preferência do autor:** respostas concisas; validação ao vivo no Chrome ao fim de cada bloco (não a cada mudança); ele sobe (git push) e roda migrations e avisa "subiu/rodou".
 - **Não excluir, arquivar** (quando ele pede p/ tirar coisas — mover, não apagar; exceto conteúdo de teste que ele autorizou excluir).
+
+---
+_Última rodada (2026-06-24): **subtítulo** curto em mundo/mesa/publicação/sessão (cards exibem o subtítulo se preenchido; senão resumo/tags). Emojis temáticos (logo, seletor de temas, cards recentes, favoritos, pill de mundo) trocados por **ícones game-icons**. SQL a rodar: `migracao-subtitulo-geral.sql` (+ exclusão e `migracao-mundo-subtitulo.sql`). Personagem (`epiteto`/`resumo`) e jornal (`descricao`/lema) já têm linha curta — não receberam `subtitulo`. Comando `HANDOFF` definido no CLAUDE.md._

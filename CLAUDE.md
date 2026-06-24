@@ -11,6 +11,8 @@ Para continuar **exatamente de onde paramos** sem re-escanear o código (economi
 3. **`docs/PROCESSO-AGENTES.md`** — o método de trabalho obrigatório (ver abaixo).
 4. **`docs/MIGRACOES.md`** — ordem de execução das migrations do banco.
 
+**Comando `HANDOFF`:** se a mensagem do usuário for apenas `HANDOFF` (ou `handoff`), trate como gatilho de retomada — leia `docs/HANDOFF.md` + `docs/PROCESSO-AGENTES.md` e responda com um resumo curto de **onde paramos + tarefas abertas**, pronto para continuar. Não re-escaneie o código.
+
 **Regra de ouro:** ao terminar qualquer rodada de trabalho, **atualize `docs/HANDOFF.md`** (estado + tarefas abertas + decisões) antes de encerrar. É o que mantém o projeto sempre pronto para handoff.
 
 ## 🧭 Método de trabalho OBRIGATÓRIO — PROCESSO-AGENTES

@@ -33,3 +33,6 @@ Banco da plataforma (Postgres + RLS). Para montar do zero, rode **nesta ordem**.
 
 ## Subtítulo do mundo
 18. `migracao-mundo-subtitulo.sql` — coluna `subtitulo` em `mundos` (linha curta sob o card; descrição completa fica no hero).
+
+## Subtítulo geral (mesa/publicação/sessão)
+19. `migracao-subtitulo-geral.sql` — coluna `subtitulo` em `mesas`, `publicacoes` e `sessoes` (linha curta exibida no card).
