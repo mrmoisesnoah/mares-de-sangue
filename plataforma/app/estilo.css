@@ -569,3 +569,27 @@ body.modo-lista .mw-arch{height:64px;border-radius:32px 32px 5px 5px}
 body.modo-lista .mw-key{width:26px;height:26px;top:-4px}
 body.modo-lista .md-face{width:56px;height:56px}
 body.modo-lista .mw-kick,body.modo-lista .md-kick{margin-top:2px}
+
+/* ===== Card de MAPA (pergaminho com rolos) ============================== */
+.mapa-scroll{text-align:center;cursor:pointer;padding:8px 6px 14px;transition:transform .15s}
+.mapa-scroll:hover{transform:translateY(-3px)}
+.ms-roll{position:relative;width:200px;max-width:100%;margin:0 auto;padding:0 14px}
+.ms-roll::before,.ms-roll::after{content:"";position:absolute;top:6px;bottom:6px;width:14px;border-radius:7px;background:linear-gradient(90deg,#4a3219,#8a6438 45%,#5a3f24);box-shadow:0 2px 5px rgba(40,25,10,.45)}
+.ms-roll::before{left:0}.ms-roll::after{right:0}
+.ms-body{position:relative;height:128px;background-size:cover;background-position:center;border-top:3px solid var(--ouro);border-bottom:3px solid var(--ouro);box-shadow:inset 0 0 0 1px var(--borda),inset 0 0 22px rgba(70,46,18,.25)}
+.ms-noimg{background:radial-gradient(circle at 50% 42%,var(--perg),var(--perg2))}
+.ms-rose{position:absolute;right:8px;bottom:7px;width:30px;height:30px;color:#6b4a26;background:rgba(247,241,224,.82);border:1px solid var(--ouro);border-radius:50%;display:flex;align-items:center;justify-content:center}
+.mp-kick{font-size:11px;font-weight:700;letter-spacing:.16em;color:var(--ouro);margin-top:10px}
+.mp-t{font-family:var(--font-head);font-size:17px;color:var(--sangue);margin:2px 0 0}
+.mp-sub{font-size:12.5px;color:var(--tinta2);margin:1px 0 0;font-style:italic}
+body.modo-lista .ms-roll{width:84px;float:left;margin:0 12px 0 0;padding:0 8px}
+body.modo-lista .ms-body{height:54px}
+body.modo-lista .ms-rose{width:20px;height:20px}
+body.modo-lista .mapa-scroll{text-align:left;overflow:hidden;padding:8px 2px;border-bottom:1px solid var(--borda)}
+
+/* ===== Jornal e Edição: papel velho, sujo e amassado =================== */
+.jn-capa,.jn-ed{background-color:#e9dab4;background-image:radial-gradient(circle at 15% 18%,rgba(120,86,40,.22),transparent 22%),radial-gradient(circle at 86% 70%,rgba(108,76,32,.18),transparent 24%),radial-gradient(circle at 60% 90%,rgba(90,60,24,.16),transparent 18%),radial-gradient(circle at 38% 48%,rgba(150,120,68,.10),transparent 42%),linear-gradient(112deg,transparent 47%,rgba(80,54,24,.13) 49%,transparent 51%),linear-gradient(202deg,transparent 27%,rgba(80,54,24,.09) 30%,transparent 33%),linear-gradient(70deg,transparent 60%,rgba(80,54,24,.08) 63%,transparent 66%);box-shadow:inset 0 0 30px rgba(72,46,16,.4);filter:drop-shadow(0 3px 8px rgba(40,28,12,.34));border-color:#ad9663}
+.jn-capa:hover,.jn-ed:hover{filter:drop-shadow(0 9px 17px rgba(40,28,12,.42))}
+.jn-capa{clip-path:polygon(0 1.6%,9% .3%,21% 1.3%,36% 0,54% 1.1%,72% .2%,88% 1.2%,100% .5%,99.3% 14%,100% 33%,99% 58%,100% 80%,99.4% 100%,78% 99%,57% 100%,36% 99.2%,17% 100%,.6% 99%,1% 74%,0 50%,.9% 28%,0 13%)}
+.jn-ed{position:relative;transform:rotate(-1.2deg);margin-top:12px;clip-path:polygon(0 5px,7% 0,22% 6px,42% 0,62% 6px,82% 0,95% 6px,100% 5px,100% 100%,0 100%)}
+.jn-pin{position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#e06a63,#9c2b2e);box-shadow:0 2px 4px rgba(0,0,0,.45);z-index:2}
