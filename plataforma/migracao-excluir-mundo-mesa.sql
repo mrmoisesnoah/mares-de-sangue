@@ -42,3 +42,6 @@ end $$;
 
 grant execute on function excluir_mundo(uuid) to authenticated;
 grant execute on function excluir_mesa(uuid)  to authenticated;
+
+-- Recarrega o cache de schema do PostgREST (senão rpc() retorna PGRST202: função não encontrada no cache).
+notify pgrst, 'reload schema';
