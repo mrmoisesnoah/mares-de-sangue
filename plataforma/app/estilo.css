@@ -523,19 +523,6 @@ body.modo-lista .cards>.card>.thumb.noimg{width:50px;height:50px;border-radius:5
 .lightbox-ov{position:fixed;inset:0;background:rgba(0,0,0,.86);z-index:10001;display:flex;align-items:center;justify-content:center;cursor:zoom-out;padding:20px}
 .lightbox-ov img{max-width:94vw;max-height:94vh;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,.6)}
 
-/* === Cards temáticos por categoria (moldura) ============================= */
-.card.cat-lugares    {--cat:#bd8a3c}
-.card.cat-personagens{--cat:#b83a3d}
-.card.cat-faccoes    {--cat:#8366b3}
-.card.cat-criaturas  {--cat:#5d8f45}
-.card.cat-itens      {--cat:#3a9aa6}
-.card.cat-saberes    {--cat:#a8854a}
-.card.cat-cronicas   {--cat:#5577bb}
-.card[class*="cat-"] .thumb.noimg{border-color:var(--cat);color:var(--cat);box-shadow:0 0 0 3px color-mix(in srgb,var(--cat) 16%,transparent),0 2px 8px var(--sombra)}
-.card[class*="cat-"] .tipo{border-color:color-mix(in srgb,var(--cat) 55%,var(--borda))}
-/* anel de categoria no retrato redondo de personagem */
-.pc-circ.cat-personagens .pc-av{border-color:#b83a3d}
-.pc-circ.cat-personagens:hover .pc-av{border-color:#9c2b2e}
 
 /* ===== Card de MUNDO (orbe planetário) e MESA (d20) ===================== */
 .mundo-orb,.mesa-d20{text-align:center;cursor:pointer;padding:8px 6px 14px;transition:transform .15s}
