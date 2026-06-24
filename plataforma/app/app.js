@@ -50,9 +50,20 @@ var ICON_SEC={"Cânone do Mundo":icon("scroll-unfurled"),"Textos Históricos & L
 function iconeTipo(t){ t=(t||"").toLowerCase();
   if(t==="mapa")return icon("treasure-map"); if(t==="jornal")return icon("scroll-unfurled"); if(ehPersonagem(t))return icon("hooded-figure");
   if(t==="conto")return icon("open-book"); if(t==="cidade"||t==="local"||t==="reino"||t==="região")return icon("castle"); if(t==="criatura")return icon("hooded-figure"); if(t==="item")return icon("crossed-swords"); if(t==="evento histórico"||t==="facção")return icon("crossed-swords"); if(t==="história do mundo")return icon("book-cover"); return icon("scroll-unfurled"); }
+function catDe(t){ t=(t||"").toLowerCase();
+  if(["mapa","cidade","região","regiao","reino","local","continente","mundo"].indexOf(t)>=0) return "lugares";
+  if(ehPersonagem(t)||t==="npc"||t==="jogador"||t==="ficha") return "personagens";
+  if(["facção","faccao","organização","organizacao","família","familia","clã","cla","religião","religiao","ordem","grupo"].indexOf(t)>=0) return "faccoes";
+  if(["criatura","besta","monstro","raça","raca"].indexOf(t)>=0) return "criaturas";
+  if(["item","artefato","relíquia","reliquia","equipamento"].indexOf(t)>=0) return "itens";
+  if(["lore","história do mundo","historia do mundo","canone","cânone","conto","narrativa","evento histórico","evento historico","era"].indexOf(t)>=0) return "saberes";
+  if(["jornal","sessao","sessão","resumo de sessão","resumo de sessao","resumo","crônica","cronica","planejamento do mestre","diário","diario","anotação privada","anotacao privada"].indexOf(t)>=0) return "cronicas";
+  return "outros";
+}
+function catCls(t){ return "cat-"+catDe(t); }
 function thumb(url, icone, alt){ return url ? '<div class="thumb"><img loading="lazy" decoding="async" src="'+esc(url)+'" alt="'+esc(alt||"")+'"></div>' : '<div class="thumb noimg" role="img" aria-label="'+esc(alt||"sem imagem")+'">'+(icone||"📜")+'</div>'; }
 function cardPub(p){
-  return '<div class="card clic" onclick="go(\'pub\',\''+p.id+'\')">'+thumb(p.capa_url, iconeTipo(p.tipo), p.titulo)
+  return '<div class="card clic '+catCls(p.tipo)+'" onclick="go(\'pub\',\''+p.id+'\')">'+thumb(p.capa_url, iconeTipo(p.tipo), p.titulo)
     +'<h3>'+esc(p.titulo)+'</h3>'
     +'<p style="margin:.2em 0"><span class="tipo">'+esc(p.tipo)+'</span>'+visChip(p.visibilidade)+(p.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</p>'
     +'<p class="res">'+esc(resumo(p.corpo))+'</p></div>';
@@ -214,7 +225,7 @@ function botoesCriar(){
 async function telaHome(){
   layout('<p>Carregando…</p>');
   var topo=hero("Mares de Sangue","Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", "https://niepiaiwusptmwepgmlq.supabase.co/storage/v1/object/public/midias/c3ed4547-f032-47f6-8650-360684451acc/1781893414276-gemini-25-flash-image-agora-faca-uma-ultima-versao-no-estilo-alan-lee-e-nao-deixe-um-brazao-no-bar-0jpg.jpg", (S.user?botoesCriar():'<a class="btn" onclick="go(\'login\')">Entrar</a>'));
-  var mundoCards=S.mundos.map(function(w){return '<div class="card clic" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,icon("castle"),w.nome)+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
+  var mundoCards=S.mundos.map(function(w){return '<div class="card clic cat-lugares" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,icon("castle"),w.nome)+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
   var mundosHtml='<h2>'+icon("castle")+' Escolha um mundo</h2><p class="vis-leg" style="margin-top:-6px">Clique em um mundo para entrar nele.</p>'+(mundoCards?'<div class="cards">'+mundoCards+'</div>':'<div class="empty">'+(S.user?'Nenhum mundo ainda — crie o primeiro acima.':'Nenhum mundo público disponível.')+'</div>');
   var rec=visitasRecentes();
   var contHtml=(S.user&&rec.length)?'<h2>↩ Continuar de onde parou</h2><div class="cards">'+rec.map(function(v){var rta={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[v.tipo]||"pub"; var ica={publicacao:"📄",personagem:"🧝",jornal:"📰",mesa:"⚔"}[v.tipo]||"📄"; return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div><h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+(v.mundoNome?esc(v.mundoNome)+' · ':'')+esc(v.tipo)+'</p></div>';}).join("")+'</div>':'';
@@ -243,11 +254,11 @@ async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>C
       +dcard(ic("buscar"),"Buscar","Procurar em tudo","go(\'busca\',\'\')")
       +(S.user?dcard(ic("fav"),"Favoritos","Seus conteúdos marcados","go(\'favoritos\')"):'')
     +'</div>'
-    +(S.mesas.length?'<h2>'+(S.user?'Suas mesas':'Mesas e Campanhas')+'</h2><div class="cards">'+S.mesas.map(function(m){return '<div class="card clic" onclick="go(\'mesa\',\''+m.id+'\')">'+thumb(m.capa_url||m.fundo_url,icon("crossed-swords"),m.nome)+'<h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("")+'</div>':'')
+    +(S.mesas.length?'<h2>'+(S.user?'Suas mesas':'Mesas e Campanhas')+'</h2><div class="cards">'+S.mesas.map(function(m){return '<div class="card clic cat-cronicas" onclick="go(\'mesa\',\''+m.id+'\')">'+thumb(m.capa_url||m.fundo_url,icon("crossed-swords"),m.nome)+'<h3>'+esc(m.nome)+'</h3><p class="res">'+esc(m.descricao||"")+'</p></div>';}).join("")+'</div>':'')
     +(recs.length?'<h2>Novidades — adições recentes</h2>'+listar(recs):''));
 }
 async function telaMundos(){
-  var cards=S.mundos.map(function(w){return '<div class="card clic'+(S.mundo&&w.id===S.mundo.id?' sel':'')+'" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,icon("castle"),w.nome)+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
+  var cards=S.mundos.map(function(w){return '<div class="card clic cat-lugares'+(S.mundo&&w.id===S.mundo.id?' sel':'')+'" onclick="selecionarMundo(\''+w.id+'\')">'+thumb(w.capa_url||w.fundo_url,icon("castle"),w.nome)+'<h3>'+esc(w.nome)+'</h3><p class="res">'+esc(w.descricao||"")+'</p></div>';}).join("");
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mundos</div><h1>'+icon("castle")+' Mundos</h1>'
     +(S.user?'<p><a class="btn" onclick="go(\'novoMundo\')">+ Criar Mundo</a></p>':'')
     +'<div class="cards">'+(cards||'<div class="empty">Nenhum mundo.</div>')+'</div>');
@@ -460,7 +471,7 @@ async function pubsDoPersonagem(id){ var r=await sb.from("publicacoes").select("
 async function personagensDaMesa(id){ var r=await sb.from("personagens").select("*").eq("mesa_id",id).order("nome"); return r.error?[]:(r.data||[]); }
 async function personagensMundo(){ if(!S.mundo)return []; var r=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).order("nome"); return r.error?[]:(r.data||[]); }
 async function meusPersonagens(){ if(!S.user||!S.mundo)return []; var r=await sb.from("personagens").select("id,nome").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
-function cardPersonagem(c){ return '<div class="card clic" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,icon("hooded-figure"),c.nome)+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
+function cardPersonagem(c){ return '<div class="card clic cat-personagens" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,icon("hooded-figure"),c.nome)+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
 async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; } registrarVisita("personagem",id,c.nome);
   var nomeAutor=await nomeDe(c.jogador_id); var pubs=await pubsDoPersonagem(id);
@@ -545,7 +556,7 @@ async function jornaisMundo(){ if(!S.mundo)return []; var r=await sb.from("jorna
 async function umJornal(id){ var r=await sb.from("jornais").select("*").eq("id",id).maybeSingle(); return r.data; }
 async function pubsDoJornal(id){ var r=await sb.from("publicacoes").select("*").eq("jornal_id",id).order("criado_em",{ascending:false}); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function meusJornais(){ if(!S.user||!S.mundo)return []; var r=await sb.from("jornais").select("id,nome").eq("mundo_id",S.mundo.id).eq("dono_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
-function cardJornal(j){ return '<div class="card clic" onclick="go(\'jornal\',\''+j.id+'\')">'+thumb(j.imagem_url,icon("scroll-unfurled"))+'<h3>'+esc(j.nome)+'</h3>'+(j.descricao?'<p class="res">'+esc(j.descricao)+'</p>':'')+'</div>'; }
+function cardJornal(j){ return '<div class="card clic cat-cronicas" onclick="go(\'jornal\',\''+j.id+'\')">'+thumb(j.imagem_url,icon("scroll-unfurled"))+'<h3>'+esc(j.nome)+'</h3>'+(j.descricao?'<p class="res">'+esc(j.descricao)+'</p>':'')+'</div>'; }
 function jornalCapa(j){ var img=j.imagem_url?'<div class="jc-img" style="background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="jc-img jc-noimg">'+icon("scroll-unfurled")+'</div>'; return '<a class="jn-capa" onclick="go(\'jornal\',\''+j.id+'\')">'+img+'<div class="jc-mast">'+esc(j.nome)+'</div><div class="jn-rule"></div>'+(j.descricao?'<div class="jc-lema">'+esc(j.descricao)+'</div>':'')+'<div class="jc-foot">Abrir o jornal →</div></a>'; }
 async function telaJornais(){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var js=await jornaisMundo();
   var criar=S.user?'<a class="btn" onclick="go(\'novoJornal\')">+ Criar jornal</a>':'';
@@ -612,7 +623,7 @@ function telaCreditos(){ layout('<div class="bread"><a onclick="go(\'home\')">In
 async function sessoesDaMesa(id){ var r=await sb.from("sessoes").select("*").eq("mesa_id",id).order("ordem",{nullsFirst:false}).order("criado_em"); return r.error?[]:(r.data||[]); }
 async function umaSessao(id){ var r=await sb.from("sessoes").select("*").eq("id",id).maybeSingle(); return r.data; }
 async function pubsDaSessao(id){ var r=await sb.from("publicacoes").select("*").eq("sessao_id",id).order("criado_em"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
-function cardSessao(se){ return '<div class="card clic" onclick="go(\'sessao\',\''+se.id+'\')">'+thumb(se.imagem_url,icon("dice-twenty-faces-twenty"),se.titulo)+'<h3>'+esc(se.titulo)+'</h3>'+(se.data?'<p class="res">'+esc(se.data)+'</p>':'')+'</div>'; }
+function cardSessao(se){ return '<div class="card clic cat-cronicas" onclick="go(\'sessao\',\''+se.id+'\')">'+thumb(se.imagem_url,icon("dice-twenty-faces-twenty"),se.titulo)+'<h3>'+esc(se.titulo)+'</h3>'+(se.data?'<p class="res">'+esc(se.data)+'</p>':'')+'</div>'; }
 async function telaMestre(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada.</div>'); return; }
   if(!mestreDe(mesa)){ layout('<div class="aviso">Área restrita ao mestre desta mesa.</div>'); return; }
@@ -770,7 +781,7 @@ function modoBtnHTML(){ return '<button class="modo-btn" onclick="alternarModo()
 function togModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); render(); }
 function barraModo(){ return '<div class="expbar" style="margin:6px 0"><button class="btn mini sec" onclick="togModo()">'+(S.modo==="lista"?"▦ Ver em cards":"☰ Ver em lista")+'</button></div>'; }
 function gridOuLista(items, cardFn, liFn){ return S.modo==="lista" ? '<ul class="lista2">'+items.map(liFn).join("")+'</ul>' : '<div class="cards">'+items.map(cardFn).join("")+'</div>'; }
-function cardPersonagemRound(c){ var img=c.imagem_url?'<div class="pc-av" style="background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="pc-av pc-av-ph">'+esc(((c.nome||"?")[0]||"?").toUpperCase())+'</div>'; return '<div class="pc-circ" onclick="go(\'personagem\',\''+c.id+'\')" title="'+esc(c.nome)+'">'+img+'<div class="pc-nm">'+esc(c.nome)+'</div>'+(c.epiteto?'<div class="pc-ep">'+esc(c.epiteto)+'</div>':'')+'<div class="pc-chips">'+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</div></div>'; }
+function cardPersonagemRound(c){ var img=c.imagem_url?'<div class="pc-av" style="background-image:url('+esc(c.imagem_url)+')"></div>':'<div class="pc-av pc-av-ph">'+esc(((c.nome||"?")[0]||"?").toUpperCase())+'</div>'; return '<div class="pc-circ cat-personagens" onclick="go(\'personagem\',\''+c.id+'\')" title="'+esc(c.nome)+'">'+img+'<div class="pc-nm">'+esc(c.nome)+'</div>'+(c.epiteto?'<div class="pc-ep">'+esc(c.epiteto)+'</div>':'')+'<div class="pc-chips">'+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</div></div>'; }
 function gridPersRound(lista){ return S.modo==="lista" ? '<ul class="lista2">'+lista.map(liPersonagem).join("")+'</ul>' : '<div class="pers-circ-grid">'+lista.map(cardPersonagemRound).join("")+'</div>'; }
 function liPersonagem(c){ return '<li class="li-clic" onclick="go(\'personagem\',\''+c.id+'\')"><span class="li-ic">'+icon("hooded-figure")+'</span><span class="li-tit">'+esc(c.nome)+'</span>'+(c.epiteto?'<span class="tipo">'+esc(c.epiteto)+'</span>':'')+visChip(c.visibilidade)+'</li>'; }
 function liJornal(j){ return '<li class="li-clic" onclick="go(\'jornal\',\''+j.id+'\')"><span class="li-ic">'+icon("scroll-unfurled")+'</span><span class="li-tit">'+esc(j.nome)+'</span>'+(j.descricao?'<span class="vis-leg" style="flex:1">'+esc(j.descricao)+'</span>':'')+'</li>'; }
