@@ -665,3 +665,11 @@ body.foco-lock{ overflow:hidden; }
 .corpo .ql-image-align-left{ margin:var(--blot-align-left-margin); float:left; }
 .corpo .ql-image-align-center{ margin:var(--blot-align-center-margin); }
 .corpo .ql-image-align-right{ margin:var(--blot-align-right-margin); float:right; }
+
+
+/* ---- Modal de corte de imagem (reusa .crop-ov/.crop-box/.crop-acts) ---- */
+.crop-head{ font-family:var(--font-head); color:var(--tinta); margin-bottom:8px; text-align:left; }
+.crop-hint{ color:var(--tinta2); font-size:13px; font-family:var(--font-body); }
+.crop-stage{ position:relative; display:inline-block; max-width:80vw; max-height:66vh; cursor:crosshair; user-select:none; line-height:0; }
+.crop-stage img{ display:block; max-width:80vw; max-height:66vh; border-radius:4px; }
+.crop-sel{ position:absolute; border:2px dashed #fff; box-shadow:0 0 0 9999px rgba(0,0,0,.5); }
