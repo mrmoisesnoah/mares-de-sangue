@@ -618,3 +618,7 @@ body.foco-lock{ overflow:hidden; }
 .corpo .ql-align-justify{ text-align:justify; }
 .ql-editor .ql-align-center{ text-align:center; }
 .ql-editor .ql-align-right{ text-align:right; }
+
+
+/* ---- Alca de redimensionar imagem ---- */
+.img-handle{ position:fixed; display:none; z-index:9600; width:14px; height:14px; background:var(--sangue); border:2px solid #fff; border-radius:50%; cursor:nwse-resize; box-shadow:0 1px 5px rgba(0,0,0,.45); }
