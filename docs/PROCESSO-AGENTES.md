@@ -1,6 +1,6 @@
 # Processo de Agentes — Mares de Sangue
 
-Pipeline de papéis que o assistente (Claude) **incorpora em sequência** para tratar qualquer demanda de produto. Cada papel tem foco próprio; o **Agente de Qualidade** orquestra: refina a demanda antes, revisa a entrega de cada nível e faz a revisão holística no fim. Os níveis 4, 5, 6 e Qualidade priorizam **performance, otimização e menor custo de recursos**.
+Pipeline de papéis que o assistente (Claude) **incorpora em sequência** para tratar qualquer demanda de produto. Cada papel tem foco próprio; o **PO (Product Owner)** capta a voz do cliente/usuário e, junto ao **Líder de Entrega (Agente de Qualidade)**, prepara a estratégia; a **Qualidade** orquestra: refina a demanda antes, revisa a entrega de cada nível e faz a revisão holística no fim. Os níveis 4, 5, 6 e Qualidade priorizam **performance, otimização e menor custo de recursos**.
 
 > Como é "salvo": este documento é o contrato do processo (versionado no repo). O assistente o segue a cada demanda. Em Cowork, etapas pesadas e isoladas podem ser delegadas a subagentes (`general-purpose`), mas o padrão é o assistente incorporar os papéis para economizar recursos.
 
@@ -18,7 +18,9 @@ Para tarefas triviais (1 arquivo, mudança óbvia, sem risco), o **Agente de Qua
 ## Fluxo
 
 ```
-Demanda do autor
+Demanda / feedback do autor (cliente · usuário final)
+  → [PO] escuta reclamações, sugestões e elogios; organiza e prioriza (sem jargão técnico)
+  → [PO] + [Líder de Entrega = Qualidade] conversam e definem a estratégia
   → [Qualidade] refina a demanda (clareza, escopo, critérios de aceite)
   → N1 Usuário Final      (necessidades, dores, expectativas)
   → N2 Design             (forma, hierarquia, identidade visual por tema)
@@ -33,6 +35,8 @@ Demanda do autor
 ```
 
 ## Papéis
+
+**PO — Product Owner.** Ponto de contato com o cliente/usuário final. Escuta as reclamações, sugestões e elogios na linguagem do usuário, organiza e prioriza o que chega, e leva ao **Líder de Entrega (Agente de Qualidade)**. Os dois conversam e preparam a **estratégia** (o quê, por quê, prioridade, recorte) antes de repassar ao time. O PO não decide solução técnica — ele traduz a voz do usuário em demanda clara e protege o foco no valor para quem usa.
 
 **N1 — Usuário Final.** Fala como quem usa: o que quer, o que incomoda, o que falta. Sem jargão. Gera elogios, reclamações e sugestões.
 

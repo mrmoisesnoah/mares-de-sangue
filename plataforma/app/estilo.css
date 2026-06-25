@@ -595,8 +595,8 @@ body.modo-lista .mapa-scroll{text-align:left;overflow:hidden;padding:8px 2px;bor
 
 /* ---- Modo foco / tela cheia do editor ---- */
 .qled-bar2{ display:flex; justify-content:flex-end; margin-bottom:4px; }
-.qled-foco-btn{ background:var(--perg2); color:var(--tinta); border:1px solid var(--borda); border-radius:6px; padding:4px 11px; font-family:var(--font-body); font-size:13px; cursor:pointer; }
-.qled-foco-btn:hover{ border-color:var(--sangue); color:var(--sangue); }
+.qled-foco-btn{ background:var(--ouro); color:var(--papel); border:1.5px solid var(--ouro); border-radius:7px; padding:7px 16px; font-family:var(--font-head); font-size:14px; font-weight:700; letter-spacing:.02em; cursor:pointer; box-shadow:0 1px 4px var(--sombra); }
+.qled-foco-btn:hover{ background:var(--sangue); border-color:var(--sangue); color:#fff; }
 body.foco-lock{ overflow:hidden; }
 .qled-wrap.foco{ position:fixed; inset:0; z-index:9000; background:var(--papel); padding:14px 16px 22px; display:flex; flex-direction:column; }
 .qled-wrap.foco .qled-bar2{ max-width:min(1150px,94vw); width:100%; margin:0 auto 8px; }
@@ -631,3 +631,12 @@ body.foco-lock{ overflow:hidden; }
 /* ---- Contorno de imagem (float) ---- */
 .corpo::after, .ql-editor::after{ content:""; display:block; clear:both; }
 .corpo img[style*="float"]{ border-radius:8px; }
+
+
+/* ---- Arrastar imagem (mouse) ---- */
+.img-ghost{ position:fixed; max-width:130px; max-height:130px; opacity:.55; pointer-events:none; z-index:9700; border:1px solid var(--sangue); border-radius:4px; }
+.img-drop-mark{ position:fixed; display:none; width:3px; background:var(--sangue); border-radius:2px; pointer-events:none; z-index:9700; box-shadow:0 0 4px var(--sangue); }
+
+
+/* ---- Imagem sendo arrastada (reflui ao vivo) ---- */
+.ql-editor img.img-arrastando{ outline:2px dashed var(--sangue); outline-offset:2px; opacity:.7; }
