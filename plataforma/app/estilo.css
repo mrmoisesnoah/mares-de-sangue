@@ -654,3 +654,5 @@ body.foco-lock{ overflow:hidden; }
 .img-pop .ipb-del:hover{ background:var(--sangue); color:#fff; }
 .img-drop-line{ position:fixed; display:none; width:3px; background:var(--sangue); border-radius:2px; pointer-events:none; z-index:9700; box-shadow:0 0 8px 1px var(--sangue); }
 .ql-editor img.img-arrastando{ opacity:.32; outline:2px dashed var(--ouro); }
+
+.mw-tema{ color:var(--sangue); }
