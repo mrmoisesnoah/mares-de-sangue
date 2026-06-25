@@ -656,3 +656,12 @@ body.foco-lock{ overflow:hidden; }
 .ql-editor img.img-arrastando{ opacity:.32; outline:2px dashed var(--ouro); }
 
 .mw-tema{ color:var(--sangue); }
+
+
+/* ---- Imagens do editor (blot-formatter2) na publicacao ---- */
+.corpo{ --blot-align-left-margin:.4em 1.1em .6em 0; --blot-align-center-margin:1em auto; --blot-align-right-margin:.4em 0 .6em 1.1em; }
+.corpo [class^="ql-image-align-"]{ display:flex; flex-wrap:wrap; width:var(--resize-width); max-width:100%; }
+.corpo [class^="ql-image-align-"]>img{ flex:1 1 auto; height:auto; }
+.corpo .ql-image-align-left{ margin:var(--blot-align-left-margin); float:left; }
+.corpo .ql-image-align-center{ margin:var(--blot-align-center-margin); }
+.corpo .ql-image-align-right{ margin:var(--blot-align-right-margin); float:right; }
