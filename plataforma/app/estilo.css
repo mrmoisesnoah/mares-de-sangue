@@ -640,3 +640,17 @@ body.foco-lock{ overflow:hidden; }
 
 /* ---- Imagem sendo arrastada (reflui ao vivo) ---- */
 .ql-editor img.img-arrastando{ outline:2px dashed var(--sangue); outline-offset:2px; opacity:.7; }
+
+
+/* ---- Toolbar de imagem (redesign) + arraste fluido ---- */
+.img-pop{ padding:0; overflow:hidden; min-width:212px; }
+.img-pop-head{ font-family:var(--font-head); font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--papel); background:var(--ouro); padding:6px 11px; font-weight:700; }
+.img-pop-row{ display:flex; align-items:center; gap:5px; margin:0; padding:7px 10px; }
+.img-pop-row+.img-pop-row{ border-top:1px solid var(--borda); }
+.img-pop .ipb{ background:var(--campo); color:var(--tinta); border:1px solid var(--borda); border-radius:6px; padding:5px 10px; font-size:13px; line-height:1.15; cursor:pointer; min-width:32px; transition:background .12s,border-color .12s,color .12s; }
+.img-pop .ipb:hover{ border-color:var(--sangue); color:var(--sangue); background:var(--perg2); }
+.img-pop-acts{ background:var(--perg2); }
+.img-pop .ipb-del{ display:flex; align-items:center; justify-content:center; gap:6px; width:100%; color:var(--sangue); border-color:var(--sangue); font-weight:600; }
+.img-pop .ipb-del:hover{ background:var(--sangue); color:#fff; }
+.img-drop-line{ position:fixed; display:none; width:3px; background:var(--sangue); border-radius:2px; pointer-events:none; z-index:9700; box-shadow:0 0 8px 1px var(--sangue); }
+.ql-editor img.img-arrastando{ opacity:.32; outline:2px dashed var(--ouro); }
