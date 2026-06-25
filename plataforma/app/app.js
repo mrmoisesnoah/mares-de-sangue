@@ -190,7 +190,7 @@ function telaLogin(novo){
 }
 function sidebar(){
   var on=function(x){return S.view.t===x?' class="on"':'';};
-  if(S.view.t==="home"){ var ng='<a class="nav-home on" onclick="go(\'home\')">⌂ Início</a>'; if(S.mundos.length){ ng+='<h4>Mundos</h4>'+S.mundos.map(function(w){return '<a onclick="selecionarMundo(\''+w.id+'\')">'+icon("castle")+' '+esc(w.nome)+'</a>';}).join(""); } if(S.user){ ng+='<a onclick="go(\'favoritos\')">★ Favoritos</a><a onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a><h4>Criar</h4><a onclick="go(\'novoMundo\')">+ Criar mundo</a>'; } return ng; }
+  if(S.view.t==="home"){ var ng='<a class="nav-home on" onclick="go(\'home\')">⌂ Início</a>'; if(S.mundos.length){ ng+='<h4>Mundos</h4>'+S.mundos.map(function(w){return '<a onclick="selecionarMundo(\''+w.id+'\')">'+icon("castle")+' '+esc(w.nome)+'</a>';}).join(""); } if(S.user){ ng+='<a onclick="go(\'favoritos\')">★ Favoritos</a><h4>Criar</h4><a onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a><a onclick="go(\'novoMundo\')">+ Criar mundo</a>'; } return ng; }
   var nav='<a class="nav-home"'+on("home")+' onclick="go(\'home\')">'+ic("inicio")+' Início</a>';
   if(S.mundo){
     nav+='<a'+(S.view.t==="mundoHome"?' class="on"':'')+' onclick="go(\'mundoHome\')">'+ic("mundo")+' Home do mundo</a>';
@@ -205,7 +205,7 @@ function sidebar(){
     var mestreMesas=S.mesas.filter(mestreDe);
     if(mestreMesas.length){ nav+='<h4>'+ic("mestre")+' Área do Mestre</h4>'+mestreMesas.map(function(m){return '<a'+(S.view.t==="areaMestre"&&S.view.arg===m.id?' class="on"':'')+' onclick="go(\'areaMestre\',\''+m.id+'\')">'+ic("mestre")+' '+esc(m.nome)+'</a>';}).join(""); }
     if(S.user){
-      nav+='<a'+(S.view.t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a><a'+(S.view.t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a><h4>Criar</h4><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a><a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a><a onclick="go(\'novoJornal\')">+ Jornal</a><a onclick="go(\'novaMesa\')">+ Mesa</a>';
+      nav+='<a'+(S.view.t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a><h4>Criar</h4><a'+(S.view.t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a><a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a><a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a><a onclick="go(\'novoJornal\')">+ Jornal</a><a onclick="go(\'novaMesa\')">+ Mesa</a>';
     } else { nav+='<a onclick="go(\'login\')">🔑 Entrar para participar</a>'; }
   }
   return nav;
