@@ -438,27 +438,38 @@ function criarBfSpec(BF){
 function abrirCorteImagem(img,q){
   var src=img&&img.getAttribute("src"); if(!src){ return; }
   var ov=document.createElement("div"); ov.className="crop-ov";
-  ov.innerHTML='<div class="crop-box"><div class="crop-head">Cortar imagem <span class="crop-hint">— arraste sobre a imagem para marcar a área</span></div><div class="crop-stage" id="cropstage"><img id="cropimg" crossorigin="anonymous" alt=""><div class="crop-sel" id="cropsel" style="display:none"></div></div><div class="crop-acts"><button class="btn" id="cropok">Cortar</button> <button class="btn sec" id="cropcancel">Cancelar</button></div></div>';
+  ov.innerHTML='<div class="crop-box"><div class="crop-head">Cortar imagem <span class="crop-hint">\u2014 arraste sobre a imagem para marcar a \u00e1rea</span></div><div class="crop-stage" id="cropstage"><div class="crop-load" id="croploadtxt">Carregando imagem\u2026</div><img id="cropimg" alt="" style="display:none"><div class="crop-sel" id="cropsel" style="display:none"></div></div><div class="crop-acts"><button class="btn" id="cropok" disabled>Cortar</button> <button class="btn sec" id="cropcancel">Cancelar</button></div></div>';
   document.body.appendChild(ov);
-  var im=ov.querySelector("#cropimg"), stage=ov.querySelector("#cropstage"), sel=ov.querySelector("#cropsel");
-  im.src=src+(src.indexOf("?")<0?"?cb=":"&cb=")+Date.now();
+  var im=ov.querySelector("#cropimg"), stage=ov.querySelector("#cropstage"), sel=ov.querySelector("#cropsel"), loadTxt=ov.querySelector("#croploadtxt"), okBtn=ov.querySelector("#cropok");
+  var ehData=/^(data:|blob:)/i.test(src);
+  function proxiar(u){ return "https://images.weserv.nl/?url="+(/^https:\/\//i.test(u)?"ssl:":"")+encodeURIComponent(u.replace(/^https?:\/\//i,"")); }
+  function carregar(url,comCO){ if(comCO){ im.crossOrigin="anonymous"; } else { im.removeAttribute("crossorigin"); } im.src=url; }
+  im.onload=function(){ loadTxt.style.display="none"; im.style.display="block"; okBtn.disabled=false; };
+  im.onerror=function(){
+    if(im.getAttribute("data-fase")==="direto" && !ehData){ im.setAttribute("data-fase","proxy"); carregar(proxiar(src),true); }
+    else { loadTxt.textContent="N\u00e3o foi poss\u00edvel carregar esta imagem para corte."; loadTxt.classList.add("crop-erro"); }
+  };
+  im.setAttribute("data-fase","direto");
+  if(ehData){ carregar(src,true); }
+  else { carregar(src+(src.indexOf("?")<0?"?cb=":"&cb=")+Date.now(),true); }
   var rect=null, dragging=false, sxp=0, syp=0;
   function upd(x,y,w,h){ rect={x:x,y:y,w:w,h:h}; sel.style.display="block"; sel.style.left=x+"px"; sel.style.top=y+"px"; sel.style.width=w+"px"; sel.style.height=h+"px"; }
-  function down(e){ if(e.button!==0||e.target.closest(".crop-acts")) return; var r=stage.getBoundingClientRect(); sxp=e.clientX-r.left; syp=e.clientY-r.top; dragging=true; upd(sxp,syp,0,0); e.preventDefault(); }
+  function down(e){ if(e.button!==0||e.target.closest(".crop-acts")||im.style.display==="none") return; var r=stage.getBoundingClientRect(); sxp=e.clientX-r.left; syp=e.clientY-r.top; dragging=true; upd(sxp,syp,0,0); e.preventDefault(); }
   function move(e){ if(!dragging) return; var r=stage.getBoundingClientRect(); var cx=Math.max(0,Math.min(e.clientX-r.left,r.width)), cy=Math.max(0,Math.min(e.clientY-r.top,r.height)); upd(Math.min(sxp,cx),Math.min(syp,cy),Math.abs(cx-sxp),Math.abs(cy-syp)); }
   function upm(){ dragging=false; }
   stage.addEventListener("mousedown",down); document.addEventListener("mousemove",move,true); document.addEventListener("mouseup",upm,true);
   function fechar(){ document.removeEventListener("mousemove",move,true); document.removeEventListener("mouseup",upm,true); ov.remove(); }
   ov.querySelector("#cropcancel").onclick=fechar;
-  ov.querySelector("#cropok").onclick=async function(){
-    if(!rect||rect.w<6||rect.h<6){ toast("Arraste sobre a imagem para marcar a área a cortar.","erro"); return; }
+  okBtn.onclick=async function(){
+    if(im.style.display==="none"){ return; }
+    if(!rect||rect.w<6||rect.h<6){ toast("Arraste sobre a imagem para marcar a \u00e1rea a cortar.","erro"); return; }
     try{
       var sX=im.naturalWidth/im.clientWidth, sY=im.naturalHeight/im.clientHeight;
       var rx=Math.max(0,rect.x*sX), ry=Math.max(0,rect.y*sY), rw=Math.min(rect.w*sX,im.naturalWidth), rh=Math.min(rect.h*sY,im.naturalHeight);
       var c=document.createElement("canvas"); c.width=Math.max(1,Math.round(rw)); c.height=Math.max(1,Math.round(rh));
       c.getContext("2d").drawImage(im, rx,ry,rw,rh, 0,0,c.width,c.height);
       var blob=await new Promise(function(rr){ c.toBlob(rr,"image/jpeg",0.92); });
-      if(!blob){ toast("Não foi possível processar a imagem.","erro"); return; }
+      if(!blob){ toast("N\u00e3o foi poss\u00edvel processar a imagem.","erro"); return; }
       var file=new File([blob],"corte-"+Date.now()+".jpg",{type:"image/jpeg"});
       var url=await uploadArquivo(file);
       var b=Quill.find(img); if(b){ var i=q.getIndex(b); var Delta=Quill.import("delta"); var ops=q.getContents(i,1); var attrs=(ops.ops[0]&&ops.ops[0].attributes)||{}; q.deleteText(i,1,"user"); q.updateContents(new Delta().retain(i).insert({image:url},attrs),"user"); }

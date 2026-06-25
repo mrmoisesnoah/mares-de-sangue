@@ -673,3 +673,5 @@ body.foco-lock{ overflow:hidden; }
 .crop-stage{ position:relative; display:inline-block; max-width:80vw; max-height:66vh; cursor:crosshair; user-select:none; line-height:0; }
 .crop-stage img{ display:block; max-width:80vw; max-height:66vh; border-radius:4px; }
 .crop-sel{ position:absolute; border:2px dashed #fff; box-shadow:0 0 0 9999px rgba(0,0,0,.5); }
+.crop-load{ padding:46px 34px; min-width:260px; text-align:center; color:var(--tinta2); font-family:var(--font-body); line-height:1.45; }
+.crop-erro{ color:var(--sangue); font-weight:600; }
