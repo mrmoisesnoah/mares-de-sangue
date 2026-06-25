@@ -622,3 +622,12 @@ body.foco-lock{ overflow:hidden; }
 
 /* ---- Alca de redimensionar imagem ---- */
 .img-handle{ position:fixed; display:none; z-index:9600; width:14px; height:14px; background:var(--sangue); border:2px solid #fff; border-radius:50%; cursor:nwse-resize; box-shadow:0 1px 5px rgba(0,0,0,.45); }
+
+
+/* ---- Barra de recuperacao de rascunho ---- */
+.rasc-bar{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; background:var(--perg2); border:1px solid var(--ouro); border-radius:8px; padding:8px 12px; margin:6px 0; font-size:14px; color:var(--tinta); }
+
+
+/* ---- Contorno de imagem (float) ---- */
+.corpo::after, .ql-editor::after{ content:""; display:block; clear:both; }
+.corpo img[style*="float"]{ border-radius:8px; }
