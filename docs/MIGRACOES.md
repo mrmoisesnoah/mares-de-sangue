@@ -36,3 +36,6 @@ Banco da plataforma (Postgres + RLS). Para montar do zero, rode **nesta ordem**.
 
 ## Subtítulo geral (mesa/publicação/sessão)
 19. `migracao-subtitulo-geral.sql` — coluna `subtitulo` em `mesas`, `publicacoes` e `sessoes` (linha curta exibida no card).
+
+## Editor visual (Quill) no corpo da publicação
+20. `migracao-publicacoes-formato.sql` — coluna `formato` em `publicacoes` (`md` = Markdown antigo; `html` = HTML do editor Quill). Default `md`, então conteúdo existente segue renderizando como antes. O front decide a renderização por esse campo (`renderCorpo`).

@@ -572,3 +572,22 @@ body.modo-lista .mapa-scroll{text-align:left;overflow:hidden;padding:8px 2px;bor
 .jn-capa{clip-path:polygon(0 1.6%,9% .3%,21% 1.3%,36% 0,54% 1.1%,72% .2%,88% 1.2%,100% .5%,99.3% 14%,100% 33%,99% 58%,100% 80%,99.4% 100%,78% 99%,57% 100%,36% 99.2%,17% 100%,.6% 99%,1% 74%,0 50%,.9% 28%,0 13%)}
 .jn-ed{position:relative;transform:rotate(-1.2deg);margin-top:12px;clip-path:polygon(0 5px,7% 0,22% 6px,42% 0,62% 6px,82% 0,95% 6px,100% 5px,100% 100%,0 100%)}
 .jn-pin{position:absolute;top:-7px;left:50%;transform:translateX(-50%);width:15px;height:15px;border-radius:50%;background:radial-gradient(circle at 38% 32%,#e06a63,#9c2b2e);box-shadow:0 2px 4px rgba(0,0,0,.45);z-index:2}
+
+
+/* ---- Editor Quill (corpo de publicacoes) ---- */
+.qled-wrap{ margin:4px 0 2px; }
+.ql-toolbar.ql-snow, .ql-container.ql-snow{ border-color:var(--borda); }
+.ql-toolbar.ql-snow{ background:var(--perg2); border-top-left-radius:8px; border-top-right-radius:8px; }
+.ql-container.ql-snow{ background:var(--campo); border-bottom-left-radius:8px; border-bottom-right-radius:8px; font-family:var(--font-body); font-size:17px; color:var(--tinta); }
+.ql-editor{ min-height:240px; line-height:1.7; }
+.ql-editor.ql-blank::before{ color:var(--tinta2); font-style:italic; left:15px; right:15px; }
+.ql-snow .ql-stroke{ stroke:var(--tinta); }
+.ql-snow .ql-fill, .ql-snow .ql-stroke.ql-fill{ fill:var(--tinta); }
+.ql-snow .ql-picker{ color:var(--tinta); }
+.ql-snow.ql-toolbar button:hover .ql-stroke, .ql-snow.ql-toolbar button.ql-active .ql-stroke, .ql-snow .ql-toolbar button:hover .ql-stroke{ stroke:var(--sangue); }
+.ql-snow.ql-toolbar button.ql-active .ql-fill{ fill:var(--sangue); }
+.ql-editor a{ color:var(--sangue); }
+.ql-editor img{ max-width:100%; height:auto; border-radius:6px; }
+.ql-snow .ql-picker-options{ background:var(--campo); border-color:var(--borda)!important; }
+.ql-snow .ql-tooltip{ background:var(--perg2); border-color:var(--borda); color:var(--tinta); box-shadow:0 2px 10px var(--sombra); }
+.ql-snow .ql-tooltip input[type=text]{ background:var(--campo); border-color:var(--borda); color:var(--tinta); }
