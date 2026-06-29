@@ -116,7 +116,8 @@ details.bloco .cards{padding:12px}
 /* ===== UI v3: lista/cards, multi-mundo ===== */
 .expbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:6px 0}
 .lista2{list-style:none;padding:0;margin:8px 0}
-.li-clic{display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px dotted var(--borda);cursor:pointer;border-radius:8px}
+.li-clic{display:flex;align-items:center;flex-wrap:wrap;gap:10px;padding:9px 12px;border-bottom:1px dotted var(--borda);cursor:pointer;border-radius:8px}
+.rec-obs{flex:1 1 100%;font-size:.9em;color:var(--tinta2);padding:.2em 0 .1em 2.2em;line-height:1.5}
 .li-clic:hover{background:var(--perg2)}
 .li-ic{font-size:18px;width:24px;text-align:center}
 .li-tit{flex:1;font-family:var(--font-head);font-size:15px;color:var(--sangue)}

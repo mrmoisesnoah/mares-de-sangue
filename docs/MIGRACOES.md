@@ -39,3 +39,6 @@ Banco da plataforma (Postgres + RLS). Para montar do zero, rode **nesta ordem**.
 
 ## Editor visual (Quill) no corpo da publicação
 20. `migracao-publicacoes-formato.sql` — coluna `formato` em `publicacoes` (`md` = Markdown antigo; `html` = HTML do editor Quill). Default `md`, então conteúdo existente segue renderizando como antes. O front decide a renderização por esse campo (`renderCorpo`).
+
+## Imagem da sessão
+21. `migracao-sessoes-imagem.sql` — coluna `imagem_url` em `sessoes` (capa opcional da sessão).
