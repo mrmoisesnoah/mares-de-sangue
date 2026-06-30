@@ -681,7 +681,11 @@ body.foco-lock{ overflow:hidden; }
 /* ---- Modal de corte de imagem (reusa .crop-ov/.crop-box/.crop-acts) ---- */
 .crop-head{ font-family:var(--font-head); color:var(--tinta); margin-bottom:8px; text-align:left; }
 .crop-hint{ color:var(--tinta2); font-size:13px; font-family:var(--font-body); }
-.crop-stage{ position:relative; display:inline-block; max-width:80vw; max-height:66vh;
+.crop-stage{ position:relative; display:inline-block; max-width:80vw; max-height:66vh; overflow:hidden; }
+.crop-stage img{ display:block; max-width:80vw; max-height:66vh; user-select:none; }
+.crop-load,.crop-erro{ padding:40px 30px; color:var(--tinta2); font-family:var(--font-body); font-size:14px; text-align:center; }
+.crop-erro{ color:var(--sangue); }
+.crop-sel{ position:absolute; border:2px dashed #fff; box-shadow:0 0 0 9999px rgba(0,0,0,.45); cursor:move; box-sizing:border-box; }
 
 
 /* ===== Recompensas: card clicavel + detalhe ===== */
