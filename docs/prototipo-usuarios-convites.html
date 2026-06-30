@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Protótipo — Usuários & Convites · Mares de Sangue</title>
+<style>
+  :root{
+    --papel:#f4ecd8; --perg:#efe4c9; --perg2:#e7d8b5; --campo:#fffdf6;
+    --tinta:#2e2620; --tinta2:#5b4a36; --sangue:#7c2b22; --ouro:#9a7b3f;
+    --borda:#c9b182; --sombra:rgba(60,40,20,.18);
+    --font-head:"Georgia","Times New Roman",serif; --font-body:"Georgia",serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#cdbb98 url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect width='40' height='40' fill='%23cdbb98'/><circle cx='8' cy='8' r='1' fill='%23bda87f'/><circle cx='28' cy='22' r='1' fill='%23bda87f'/></svg>");
+       color:var(--tinta); font-family:var(--font-body); padding:28px 16px; line-height:1.5}
+  .wrap{max-width:1060px;margin:0 auto}
+  h1.top{font-family:var(--font-head);color:var(--sangue);text-align:center;margin:0 0 4px;font-size:26px}
+  .sub{text-align:center;color:var(--tinta2);margin:0 0 24px;font-style:italic}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;align-items:start}
+  .panel{background:var(--perg);border:1px solid var(--borda);border-radius:12px;box-shadow:0 4px 14px var(--sombra);overflow:hidden}
+  .panel .head{background:linear-gradient(var(--perg2),var(--perg));border-bottom:2px solid var(--ouro);padding:12px 16px;font-family:var(--font-head);font-weight:700;color:var(--tinta);display:flex;align-items:center;gap:8px}
+  .panel .head .em{font-size:18px}
+  .panel .body{padding:16px}
+  .tag{display:inline-block;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#fff;background:var(--ouro);padding:2px 8px;border-radius:20px;margin-left:auto}
+  label{display:block;font-size:13px;color:var(--tinta2);margin:10px 0 4px;font-weight:700}
+  input,.fakeinput{width:100%;padding:9px 11px;border:1px solid var(--ouro);border-radius:8px;background:var(--campo);font-family:var(--font-body);font-size:14px;color:var(--tinta)}
+  .hint{font-size:12px;color:var(--tinta2);font-style:italic;margin:6px 0 0}
+  .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ouro);background:var(--sangue);color:#fff;border-radius:8px;padding:8px 14px;font-family:var(--font-head);font-size:14px;cursor:pointer;text-decoration:none}
+  .btn.sec{background:transparent;color:var(--sangue)}
+  .btn.mini{padding:5px 10px;font-size:13px}
+  .codebox{display:flex;gap:8px;align-items:center;margin-top:6px}
+  .code{font-family:"Courier New",monospace;font-weight:700;letter-spacing:1px;background:var(--campo);border:1px dashed var(--ouro);border-radius:8px;padding:9px 12px;color:var(--sangue);flex:1}
+  .res{display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--borda);border-radius:10px;background:var(--campo);margin-top:8px}
+  .ava{width:38px;height:38px;border-radius:50%;background:#dfcaa0;border:2px solid var(--ouro);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+  .res .nm{font-weight:700}
+  .res .cd{font-family:"Courier New",monospace;font-size:12px;color:var(--tinta2)}
+  .res .sp{flex:1}
+  .notif{border:1px solid var(--borda);border-left:4px solid var(--sangue);border-radius:10px;background:var(--campo);padding:12px;margin-top:10px}
+  .notif .ttl{font-weight:700}
+  .notif .acts{display:flex;gap:8px;margin-top:10px}
+  .notif.lida{opacity:.6;border-left-color:var(--ouro)}
+  .pend{font-size:12px;color:var(--tinta2);font-style:italic}
+  .legend{margin-top:26px;background:var(--perg);border:1px solid var(--borda);border-radius:12px;padding:16px 20px;box-shadow:0 4px 14px var(--sombra)}
+  .legend h2{font-family:var(--font-head);color:var(--sangue);margin:0 0 8px;font-size:18px}
+  .legend ol{margin:0;padding-left:20px}
+  .legend li{margin:4px 0}
+  .flowtag{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--tinta2)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1 class="top">⚜ Conectar mestres e jogadores</h1>
+  <p class="sub">Protótipo de discussão — apelido, busca por código e convites. Sem chat, no tom do site.</p>
+
+  <div class="grid">
+
+    <!-- 1. PERFIL DO JOGADOR -->
+    <div class="panel">
+      <div class="head"><span class="em">🪪</span> Seu perfil <span class="tag">jogador</span></div>
+      <div class="body">
+        <label>Como quer ser chamado (apelido)</label>
+        <input value="Moisés, o Cronista" >
+        <p class="hint">Vira seu nome exibido no site (mesas, comentários, autoria).</p>
+
+        <label>Seu código de usuário</label>
+        <div class="codebox">
+          <span class="code">U-7F3A9C</span>
+          <button class="btn sec mini">⧉ Copiar</button>
+        </div>
+        <p class="hint">Passe seu <b>apelido</b> ou <b>código</b> ao mestre para ser convidado à mesa dele. Seu e-mail nunca é exposto.</p>
+      </div>
+    </div>
+
+    <!-- 2. MESTRE BUSCA E CONVIDA -->
+    <div class="panel">
+      <div class="head"><span class="em">🎲</span> Jogadores da mesa <span class="tag">mestre</span></div>
+      <div class="body">
+        <label>Buscar jogador (apelido ou código)</label>
+        <input value="moisés" >
+        <p class="hint">Substitui a lista gigante de todos os usuários.</p>
+
+        <div class="res">
+          <div class="ava">🧙</div>
+          <div>
+            <div class="nm">Moisés, o Cronista</div>
+            <div class="cd">U-7F3A9C</div>
+          </div>
+          <div class="sp"></div>
+          <button class="btn mini">＋ Convidar</button>
+        </div>
+        <div class="res">
+          <div class="ava">🛡️</div>
+          <div>
+            <div class="nm">Moisés Andrade</div>
+            <div class="cd">U-2B81E0</div>
+          </div>
+          <div class="sp"></div>
+          <button class="btn mini">＋ Convidar</button>
+        </div>
+        <p class="hint" style="margin-top:12px">Convites pendentes:</p>
+        <div class="pend">• Moisés, o Cronista — aguardando resposta</div>
+      </div>
+    </div>
+
+    <!-- 3. CONVITES DO JOGADOR (SINO) -->
+    <div class="panel">
+      <div class="head"><span class="em">🔔</span> Seus convites <span class="tag">jogador</span></div>
+      <div class="body">
+        <div class="notif">
+          <div class="ttl">Você foi convidado para a mesa <b>Ecos na Cidade dos Corvos</b></div>
+          <div class="flowtag">por Mestre Khael · há 2 min</div>
+          <div class="acts">
+            <button class="btn mini">✓ Aceitar</button>
+            <button class="btn sec mini">recusar</button>
+          </div>
+        </div>
+        <div class="notif lida">
+          <div class="ttl">Seu pedido para <b>A Marca do Dragão</b> foi aprovado</div>
+          <div class="flowtag">há 1 dia</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="legend">
+    <h2>Os dois caminhos (terminam em “virar membro da mesa”)</h2>
+    <ol>
+      <li><b>Convite (mestre → jogador)</b> — principal. O jogador dá apelido/código; o mestre busca e clica <i>Convidar</i>; o jogador aceita no sino. Não precisa enxergar a mesa.</li>
+      <li><b>Solicitação (jogador → mestre)</b> — quando o jogador vê a mesa (pública) ou tem um link/código dela: clica <i>Pedir acesso</i>; o mestre aprova (a notificação já leva direto à área de aprovação).</li>
+    </ol>
+    <p class="hint">Tudo reusa o que já existe: notificações + uma linha de tabela. Sem mensageria em tempo real.</p>
+  </div>
+</div>
+</body>
+</html>

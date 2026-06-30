@@ -42,3 +42,6 @@ Banco da plataforma (Postgres + RLS). Para montar do zero, rode **nesta ordem**.
 
 ## Imagem da sessão
 21. `migracao-sessoes-imagem.sql` — coluna `imagem_url` em `sessoes` (capa opcional da sessão).
+
+## Permissão de personagem por mesa
+22. `migracao-personagem-membro.sql` — endurece `pers_insert`: personagem ligado a uma **mesa** exige `is_membro(mesa_id)` (antes qualquer autenticado criava personagem em qualquer mesa). Personagem livre no mundo (`mesa_id IS NULL`) mantém o comportamento. Idempotente.

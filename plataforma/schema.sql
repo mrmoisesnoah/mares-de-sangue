@@ -223,7 +223,14 @@ create policy pers_select on personagens for select using (
   jogador_id = auth.uid() or (mesa_id is not null and is_membro(mesa_id)) or is_admin()
 );
 drop policy if exists pers_insert on personagens;
-create policy pers_insert on personagens for insert with check (jogador_id = auth.uid());
+create policy pers_insert on personagens for insert with check (
+  jogador_id = auth.uid() and (
+    mesa_id is null            -- personagem livre no mundo
+    or is_membro(mesa_id)      -- ligado a uma mesa: precisa ser membro
+    or is_dono_mundo(mundo_id) -- dono do mundo
+    or is_admin()
+  )
+);
 drop policy if exists pers_update on personagens;
 create policy pers_update on personagens for update using (jogador_id = auth.uid() or (mesa_id is not null and is_mestre(mesa_id)) or is_admin());
 
