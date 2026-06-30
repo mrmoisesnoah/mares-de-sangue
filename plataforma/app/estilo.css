@@ -725,3 +725,5 @@ body.foco-lock{ overflow:hidden; }
 .rec-det-acts{display:flex;flex-wrap:wrap;gap:8px;margin:.2em 0 1.1em}
 .rec-det-acts .btn.on{background:var(--sangue);color:var(--papel);border-color:var(--sangue)}
 .rec-det-acts .btn.on iconify-icon{color:var(--papel)}
+
+.secao-ped:not(:empty){margin:14px 0;padding:12px 14px;background:var(--perg);border:1px solid var(--ouro);border-left:4px solid var(--sangue);border-radius:10px}
