@@ -891,7 +891,7 @@ async function aprovarPedido(pid, tipo, alvoId, uid){ try{
   else if(tipo==="mesa") ins=await sb.from("mesa_membros").insert({mesa_id:alvoId,user_id:uid,papel:"jogador"});
   else ins=await sb.from("personagem_contribuidores").insert({personagem_id:alvoId,user_id:uid});
   if(ins.error && ins.error.code!=="23505") throw ins.error;
-  var u=await sb.from("pedidos_acesso").update({estado:"aprovado"}).eq("id",pid); if(u.error)throw u.error;
+  var u=await sb.from("pedidos_acesso").update({estado:"aprovado"}).eq("id",pid); if(u.error)throw u.error; notificar(uid,"aprovado","Seu pedido de acesso foi aprovado! Você já pode acessar.",(tipo==="mundo"?null:tipo),(tipo==="mundo"?null:alvoId));
   if(tipo==="mundo"){ renderColabMundo(alvoId); renderPedidos("mundo",alvoId,"pedidosmundo"); }
   else if(tipo==="mesa"){ renderMembros(alvoId); renderPedidos("mesa",alvoId,"pedidosmesa"); }
   else { renderContribPers(alvoId); renderPedidos("personagem",alvoId,"pedidospers"); }
