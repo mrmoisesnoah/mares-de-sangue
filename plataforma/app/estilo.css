@@ -217,8 +217,10 @@ details.bloco .cards{padding:12px}
   .topo{gap:6px;padding:8px 10px}
   .world-switch{max-width:118px;padding:5px 9px;margin-left:2px}
   .world-switch .ws-ic{display:none}
-  .modo-btn{padding:4px 8px;font-size:12px}
-  .jn-grid,.mural,.cards{grid-template-columns:1fr}
+  .modo-btn{padding:5px 8px;font-size:12px}
+  .modo-btn .modo-tx{display:none}
+  .modo-btn .modo-ic{font-size:17px}
+  .jn-grid,.mural,.cards,.rec-cards{grid-template-columns:1fr}
   .jc-mast{font-size:17px}
   h1{font-size:23px}
   .conteudo{padding:14px}
@@ -411,7 +413,8 @@ input.topo-busca::placeholder{color:#cbb892}
 .com-corpo p{margin:.3em 0}
 
 /* ===== Toggle global Cards/Lista ===== */
-.modo-btn{background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;font-family:var(--font-head)}
+.modo-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(0,0,0,.22);border:1px solid rgba(255,255,255,.4);color:#fff;border-radius:8px;padding:4px 10px;cursor:pointer;font-size:13px;font-family:var(--font-head)}
+.modo-btn .modo-ic{font-size:14px;line-height:1}
 .modo-btn:hover{background:rgba(0,0,0,.4)}
 body.modo-lista .cards{display:block}
 body.modo-lista .cards>.card{text-align:left;overflow:hidden;margin:0 0 8px}
@@ -690,6 +693,25 @@ body.foco-lock{ overflow:hidden; }
 .rec-pin:hover{background:var(--perg2)}
 .rec-pin.on{background:var(--sangue);color:var(--papel);border-color:var(--sangue)}
 .rec-pin.on iconify-icon{color:var(--papel)}
+/* Recompensas — cards (mural + área da sessão) */
+.rec-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:10px 0}
+.rec-card{display:flex;align-items:flex-start;gap:12px;background:var(--papel);border:1px solid var(--borda);border-left:4px solid var(--ouro);border-radius:10px;padding:13px 14px;cursor:pointer;box-shadow:0 1px 4px var(--sombra);transition:.15s}
+.rec-card:hover{transform:translateY(-2px);border-color:var(--ouro);box-shadow:0 6px 16px var(--sombra)}
+.rec-card-ic{font-size:26px;line-height:1;flex:none;margin-top:1px}
+.rec-card-main{flex:1;min-width:0}
+.rec-card-resumo{font-family:var(--font-head);font-size:15.5px;color:var(--tinta);line-height:1.3;word-wrap:break-word;overflow-wrap:anywhere}
+.rec-card-sub{font-family:var(--font-body);font-size:12.5px;color:var(--tinta2);margin-top:2px;line-height:1.35}
+.rec-card-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+.rec-chip{font-family:var(--font-body);font-size:11px;color:var(--tinta2);background:var(--perg2);border:1px solid var(--borda);border-radius:20px;padding:2px 9px;line-height:1.5}
+.rec-chip-tipo{color:var(--sangue);border-color:var(--ouro);font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.rec-card .rec-acts{flex:none;margin:0;flex-direction:column;gap:5px}
+.rec-mini{background:transparent;border:1px solid var(--borda);border-radius:7px;padding:2px 7px;font-size:13px;line-height:1.3;cursor:pointer;color:var(--tinta2);transition:.15s}
+.rec-mini:hover{background:var(--perg2);border-color:var(--ouro)}
+.rec-det-ses{margin:.2em 0 0;font-size:13px}
+.rec-det-ses a{color:var(--sangue);cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:5px}
+.rec-det-ses a:hover{text-decoration:underline}
+.mural-rec-ses{font-family:var(--font-body);font-size:11.5px;color:var(--tinta2);display:inline-flex;align-items:center;gap:4px;margin-top:2px}
+.rec-chip-ses{display:inline-flex;align-items:center;gap:4px}
 .rec-det{max-width:760px}
 .rec-det-head{display:flex;align-items:center;gap:14px;margin:.2em 0 .4em}
 .rec-det-ic{font-size:34px;line-height:1}
