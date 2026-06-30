@@ -86,9 +86,10 @@ function itemLista(p){
 }
 function listar(pubs){ return S.modo==="lista" ? '<ul class="lista2">'+pubs.map(itemLista).join("")+'</ul>' : '<div class="cards">'+pubs.map(cardPub).join("")+'</div>'; }
 function hero(titulo, sub, fundo, acts, ico){
-  return '<div class="hero2">'+(fundo?'<div class="bg" style="background-image:url('+esc(fundo)+')"></div>':'')+'<div class="ov"></div>'
-    +'<div class="in"><h1>'+(ico?ico+' ':'')+esc(titulo)+'</h1>'+(sub?'<p>'+esc(sub)+'</p>':'')+(acts?'<div class="acts">'+acts+'</div>':'')+'</div></div>';
+  var desc="";if(sub){desc='<div class="desc'+(sub.length>100?'':' aberto')+'" id="hero-desc"><p>'+esc(sub)+'</p></div>';if(sub.length>100)desc+='<button class="btn-ler-mais" onclick="toggleHeroDesc()">... Leia mais</button>';}
+  return '<div class="hero2">'+(fundo?'<div class="bg" style="background-image:url('+esc(fundo)+')"></div>':'')+'<div class="ov"></div>'+'<div class="in"><h1>'+(ico?ico+' ':'')+esc(titulo)+'</h1>'+desc+(acts?'<div class="acts">'+acts+'</div>':'')+'</div></div>';
 }
+function toggleHeroDesc(){ var el=document.getElementById("hero-desc"); if(el){ el.classList.toggle("aberto"); var btn=el.nextElementSibling; if(btn){btn.textContent=el.classList.contains("aberto")?"^ Recolher":"... Leia mais";} } }
 function secHead(ic, titulo, n, acao){ return '<div class="sec-head"><h2>'+ic+' '+esc(titulo)+(n!=null?' <span class="sec-ct">'+n+'</span>':'')+'</h2>'+(acao?'<div class="sec-acts">'+acao+'</div>':'')+'</div>'; }
 function toggleModo(){ S.modo=(S.modo==="cards"?"lista":"cards"); localStorage.setItem("mds_modo",S.modo); renderExpl(); }
 function toggleMenu(){ var l=document.querySelector(".lateral"); if(l) l.classList.toggle("aberta"); }
