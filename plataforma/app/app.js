@@ -303,7 +303,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
   var podeCriar=ehM||souMembro;
   var acts=S.user?((podeCriar?'<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> ':'')
     +'<a class="btn sec" onclick="go(\'linha\',\''+id+'\')">'+ic("linha")+' Linha do tempo</a>'
-    +(ehM?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">'+icon("drama-masks")+' Área do Mestre</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">'+icon("quill-ink")+' Editar mesa</a>':'')+(S.user?' '+botaoFav("mesa",id,mesa.nome):'')):'';
+    +(ehM?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">'+icon("drama-masks")+' Área do Mestre</a> <a class="btn sec" onclick="go(\'jogadores\',\''+id+'\')">'+icon("hooded-figure")+' Jogadores da Mesa</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">'+icon("quill-ink")+' Editar mesa</a>':'')+(S.user?' '+botaoFav("mesa",id,mesa.nome):'')):'';
   var metaHtml=(mesa.epoca||mesa.local)?'<p class="meta-mesa">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'';
   var pedir=""; if(S.user&&!ehM&&!souMembro){ pedir=(meuPedido==="pendente")?'<p><span class="btn sec" style="opacity:.65;cursor:default">⏳ Acesso solicitado — aguardando o mestre aprovar</span></p>':'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>'; }
   var secPers='<div class="secao">'+secHead(icon("hooded-figure"),"Personagens da mesa",pers.length,(podeCriar?'<a class="btn mini sec" onclick="go(\'novoPersonagem\',{mesa:\''+id+'\'})">+ Personagem</a>':''))+(pers.length?'<div class="pers-circ-grid">'+pers.map(cardPersonagemRound).join("")+'</div>':'<div class="empty">Nenhum personagem nesta mesa ainda.</div>')+'</div>';
@@ -531,7 +531,23 @@ async function telaEditarMesa(id){ var m=S.mesas.find(function(x){return x.id===
   +fGrupo('Identidade','<label>Nome</label><input id="me_nome" value="'+esc(m.nome)+'"><label>Subtítulo (linha curta no card, opcional)</label><input id="me_sub" maxlength="120" value="'+esc(m.subtitulo||"")+'"><label>Descrição</label>'+mdEditor('me_desc',m.descricao||""))
   +fGrupo('Contexto no mundo','<div class="row"><div><label>Época (opcional)</label><input id="me_epoca" value="'+esc(m.epoca||"")+'" placeholder="ex.: Ano 2068"></div><div><label>Local / região (opcional)</label><input id="me_local" value="'+esc(m.local||"")+'" placeholder="ex.: Cidade dos Corvos"></div></div>')
   +fGrupo('Aparência',campoImagem('Imagem de fundo (opcional)','me_fundo',(m.fundo_url||"")))
-  +fAcoes('Salvar',"salvarMesaEdit('"+id+"')","go('mesa','"+id+"')")+'</div>'+(ehAdmin()?'<div class="secao zona-perigo"><div class="sec-head"><h2>⚠ Zona de perigo</h2></div><p class="vis-leg" style="margin-top:-6px">Exclusão permanente da mesa e seu conteúdo. Só admin.</p><button class="btn btn-perigo" onclick="excluirMesa(\''+id+'\')">🗑 Excluir esta mesa</button></div>':'')+'<h2>Jogadores da mesa</h2><p class="vis-leg">Adicione jogadores para que vejam o conteúdo de visibilidade “mesa” e possam contribuir com suas histórias.</p><div id="membros">Carregando…</div><div id="pedidosmesa"></div>'); await renderMembros(id); renderPedidos("mesa",id,"pedidosmesa"); }
+  +fAcoes('Salvar',"salvarMesaEdit('"+id+"')","go('mesa','"+id+"')")+'</div>'+(ehAdmin()?'<div class="secao zona-perigo"><div class="sec-head"><h2>⚠ Zona de perigo</h2></div><p class="vis-leg" style="margin-top:-6px">Exclusão permanente da mesa e seu conteúdo. Só admin.</p><button class="btn btn-perigo" onclick="excluirMesa(\''+id+'\')">🗑 Excluir esta mesa</button></div>':'')+'<div class="secao"><div class="sec-head"><h2>'+icon("hooded-figure")+' Jogadores da Mesa</h2></div><p class="vis-leg" style="margin-top:-6px">Convites, pedidos de acesso e membros agora ficam numa área dedicada.</p><a class="btn" onclick="go(\'jogadores\',\''+id+'\')">'+icon("hooded-figure")+' Abrir Jogadores da Mesa</a></div>'); }
+async function telaJogadores(id){
+  if(!S.mundo){ go("mundos"); return; }
+  layout('<p>Carregando…</p>');
+  var mesa=(S.mesas||[]).find(function(m){return m.id===id;});
+  if(!mesa){ var _mf=await sb.from("mesas").select("*").eq("id",id).maybeSingle(); mesa=(_mf&&_mf.data)?_mf.data:null; }
+  if(!mesa){ layout('<div class="aviso">Mesa não encontrada.</div>'); return; }
+  if(!mestreDe(mesa)&&!ehAdmin()){ layout('<div class="aviso">Área restrita ao mestre desta mesa.</div>'); return; }
+  var acts='<a class="btn sec" onclick="go(\'mesa\',\''+id+'\')">‹ Voltar à mesa</a>';
+  layout('<div class="bread"><a onclick="go(\'mesa\',\''+id+'\')">‹ '+esc(mesa.nome)+'</a> › Jogadores da Mesa</div>'
+    +hero("Jogadores da Mesa — "+mesa.nome,"Convide jogadores, aprove pedidos de acesso e gerencie quem participa desta campanha.", mesa.fundo_url, acts, icon("hooded-figure"))
+    +'<div class="secao">'+secHead(icon("hooded-figure"),"Membros e convites",null,'')+'<p class="vis-leg" style="margin-top:-6px">Membros veem o conteúdo de visibilidade “mesa” e podem contribuir. Convide por e-mail ou apelido.</p><div id="membros">Carregando…</div></div>'
+    +'<div class="secao">'+secHead(icon("ringing-bell"),"Pedidos de acesso",null,'')+'<p class="vis-leg" style="margin-top:-6px">Jogadores que pediram para entrar nesta mesa.</p><div id="pedidosmesa"></div><div id="pedidosmesa-vazio" class="empty">Nenhum pedido pendente.</div></div>');
+  await renderMembros(id);
+  await renderPedidos("mesa",id,"pedidosmesa");
+  var pb=document.getElementById("pedidosmesa"); var pv=document.getElementById("pedidosmesa-vazio"); if(pv)pv.style.display=(pb&&pb.innerHTML.trim())?"none":"";
+}
 async function renderMembros(id){
   var c=document.getElementById("membros"); if(!c)return;
   var ms=await membrosMesa(id); var perf=await perfis();
@@ -1244,6 +1260,7 @@ function render(){ window.__editDirty=false;
   else if(t==="favoritos") telaFavoritos();
   else if(t==="rascunhos") telaRascunhos();
   else if(t==="convites") telaConvites();
+  else if(t==="jogadores") telaJogadores(S.view.arg);
   else telaHome();
 }
 // ===== Notificações =====
