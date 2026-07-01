@@ -163,6 +163,7 @@ async function selecionarMundo(id){ S.mundo=S.mundos.find(function(w){return w.i
 async function carregarMesas(){ var r=await sb.from("mesas").select("*").eq("mundo_id",S.mundo.id).order("criado_em"); S.mesas=r.error?[]:(r.data||[]); }
 async function carregarMinhasMesas(){ S.papelMesa={}; if(!S.user)return; try{ var r=await sb.from("mesa_membros").select("mesa_id,papel").eq("user_id",S.user.id); (r.data||[]).forEach(function(x){ S.papelMesa[x.mesa_id]=x.papel; }); }catch(e){} }
 function souMembroMesa(id){ return !!(S.papelMesa&&S.papelMesa[id]); }
+async function focarMundoDeConteudo(mundoId){ if(!mundoId)return false; if(S.mundo&&S.mundo.id===mundoId)return false; var w=(S.mundos||[]).find(function(x){return x.id===mundoId;}); if(!w)return false; S.mundo=w; try{localStorage.setItem("mds_mundo",mundoId);}catch(e){} aplicarTema(w.tema||"medieval"); await carregarMesas(); await carregarFavs(); return true; }
 async function pubsDaMesa(id){ var r=await sb.from("publicacoes").select("*").eq("mesa_id",id).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function loreDoMundo(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).or("mesa_id.is.null,visibilidade.eq.publico").order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function persDoMundo(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).order("titulo"); var d=r.error?[]:(r.data||[]); return d.filter(function(p){return ehPersonagem(p.tipo);}); }
@@ -195,13 +196,26 @@ function telaLogin(novo){
 }
 function grp(key,titulo,corpo){ var col=false; try{ col=localStorage.getItem("mds_grp:"+key)==="1"; }catch(e){} return '<div class="nav-grp'+(col?' col':'')+'" data-grp="'+key+'"><h4 class="nav-h4" onclick="toggleGrp(\''+key+'\')">'+titulo+'<span class="grp-ar">▾</span></h4><div class="nav-grp-body">'+corpo+'</div></div>'; }
 function toggleGrp(key){ var el=document.querySelector('.nav-grp[data-grp="'+key+'"]'); if(!el)return; var col=el.classList.toggle("col"); try{ localStorage.setItem("mds_grp:"+key, col?"1":"0"); }catch(e){} }
-function linkPessoal(){ var t=S.view.t; var tm='<a'+(t==="tudoMeu"?' class="on"':'')+' onclick="go(\'tudoMeu\')">'+ic("mestre")+' TUDO MEU!</a>'; var fv='<a'+(t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a>'; return tm+fv; }
+function linkPessoal(){
+  var t=S.view.t;
+  var out='<a'+(t==="tudoMeu"?' class="on"':'')+' onclick="go(\'tudoMeu\')">'+ic("mestre")+' TUDO MEU!</a>';
+  out+='<a'+(t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a>';
+  out+='<a'+(t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a>';
+  if(S.mundo){
+    out+='<a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a>';
+    out+='<a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a>';
+    out+='<a onclick="go(\'novoJornal\')">+ Jornal</a>';
+    out+='<a onclick="go(\'novaMesa\')">+ Mesa</a>';
+  }
+  out+='<a onclick="go(\'novoMundo\')">+ Criar mundo</a>';
+  return out;
+}
 function sidebar(){
   var on=function(x){return S.view.t===x?' class="on"':'';};
   if(S.view.t==="home"){
     var ng='<a class="nav-home on" onclick="go(\'home\')">⌂ Início</a>';
     if(S.mundos.length){ ng+=grp("mundos", icon("castle")+' Mundos', S.mundos.map(function(w){return '<a onclick="selecionarMundo(\''+w.id+'\')">'+icon("castle")+' '+esc(w.nome)+'</a>';}).join("")); }
-    if(S.user){ ng+=grp("pessoal", ic("mestre")+' Pessoal', linkPessoal()+'<a onclick="go(\'novoMundo\')">+ Criar mundo</a>'); }
+    if(S.user){ ng+=grp("pessoal", ic("mestre")+' Meu Espaço', linkPessoal()); }
     return ng;
   }
   var nav='<a class="nav-home"'+on("home")+' onclick="go(\'home\')">'+ic("inicio")+' Início</a>';
@@ -217,7 +231,7 @@ function sidebar(){
       +'<a onclick="go(\'pers\',\'mes\')">'+ic("persMes")+' Personagens do Mestre</a>';
     nav+=grp("explorar", ic("enc")+' Explorar', expl);
     if(S.mesas.length){ nav+=grp("mesas", ic("mesa")+' Mesas do Mundo', S.mesas.map(function(m){return '<a'+(S.view.arg===m.id&&(S.view.t==="mesa"||S.view.t==="linha")?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">'+ic("mesa")+' '+esc(m.nome)+'</a>';}).join("")); }
-    if(S.user){ nav+=grp("pessoal", ic("mestre")+' Pessoal', linkPessoal()); }
+    if(S.user){ nav+=grp("pessoal", ic("mestre")+' Meu Espaço', linkPessoal()); }
     else { nav+='<a onclick="go(\'login\')">🔑 Entrar para participar</a>'; }
   }
   return nav;
@@ -337,7 +351,7 @@ async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Car
     +'<p class="vis-leg">Clique num personagem para ver o perfil e todo o conteúdo ligado a ele.</p>'+criar+cards); }
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ var _mf=await sb.from("mesas").select("*").eq("id",id).maybeSingle(); mesa=(_mf&&_mf.data)?_mf.data:null; }
-  if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; } registrarVisita("mesa",id,mesa.nome);
+  if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; } await focarMundoDeConteudo(mesa.mundo_id); registrarVisita("mesa",id,mesa.nome,mesa.mundo_id);
   var pubs=await pubsDaMesa(id); var sess=await sessoesDaMesa(id); var pers=await personagensDaMesa(id);
   var mapas=pubs.filter(function(p){return p.tipo==="mapa";}); var semMapa=pubs.filter(function(p){return p.tipo!=="mapa";}); var autoMural=semMapa.filter(function(p){return !p.sessao_id && (p.visibilidade==="publico"||p.visibilidade==="mesa");}); var outros=semMapa.filter(function(p){return !p.sessao_id && !(p.visibilidade==="publico"||p.visibilidade==="mesa");}); abrirExplorador(outros); var _pins=await sb.from("mural_pins").select("alvo_id").eq("mesa_id",id).eq("tipo","publicacao"); var pinIds=(_pins.data||[]).map(function(x){return x.alvo_id;}); var pinnedPubs=[]; if(pinIds.length){ var _pp=await sb.from("publicacoes").select("*").in("id",pinIds); pinnedPubs=_pp.error?[]:(_pp.data||[]); } var _mm={}; autoMural.concat(pinnedPubs).forEach(function(p){_mm[p.id]=p;}); var mural=Object.keys(_mm).map(function(k){return _mm[k];}); var _rpins=await sb.from("mural_pins").select("alvo_id").eq("mesa_id",id).eq("tipo","recompensa"); var rpinIds=(_rpins.data||[]).map(function(x){return x.alvo_id;}); var pinnedRecs=[]; if(rpinIds.length){ var _pr=await sb.from("recompensas").select("*").in("id",rpinIds); pinnedRecs=_pr.error?[]:(_pr.data||[]); }
   var ehM=mestreDe(mesa);
@@ -362,7 +376,7 @@ async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Car
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
     +'<div class="autor-cap">'+(pf.avatar_url?'<div class="av" style="background-image:url('+esc(pf.avatar_url)+')"></div>':'<div class="av">'+esc((nome||"?")[0].toUpperCase())+'</div>')+'<div><h1 style="margin:0">'+esc(nome)+'</h1>'+(pf.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(pf.epiteto)+'</p>':'')+'<p class="vis-leg">'+pubs.length+' publicações visíveis neste mundo'+(ehEu?" · sua página de trabalho (vê também rascunhos e privados)":" · página pública")+(ehEu?' · <a onclick="go(\'perfil\')">'+icon("quill-ink")+' editar perfil</a>':'')+'</p></div></div>'+(pf.bio?'<div class="corpo" style="max-width:760px;margin:6px 0 14px">'+md(pf.bio)+'</div>':'')
     +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a></p>':'')+exploradorHTML()); renderExpl(); }
-async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p; if(p)registrarVisita("publicacao",p.id,p.titulo);
+async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p; if(p){ await focarMundoDeConteudo(p.mundo_id); registrarVisita("publicacao",p.id,p.titulo,p.mundo_id); }
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
   var nomeAutor=await nomeDe(p.autor_id); var podeBaixar=meu(p)||donoMundo(); var anexo=p.arquivo_url?'<p class="anexo-bloco">📎 Arquivo anexado: <a class="btn mini" href="'+esc(p.arquivo_url)+'" target="_blank" rel="noopener">↗ Abrir / baixar</a>'+(p.arquivo_nome?' <span class="vis-leg">('+esc(p.arquivo_nome)+')</span>':'')+'</p>':'';
   var pcLink=""; if(p.personagem_id){ var pcx=await umPersonagem(p.personagem_id); if(pcx) pcLink=' · <a onclick="go(\'personagem\',\''+p.personagem_id+'\')">🧝 '+esc(pcx.nome)+'</a>'; }
@@ -728,7 +742,7 @@ async function personagensMundo(){ if(!S.mundo)return []; var r=await sb.from("p
 async function meusPersonagens(){ if(!S.user||!S.mundo)return []; var r=await sb.from("personagens").select("id,nome").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
 function cardPersonagem(c){ return '<div class="card clic cat-personagens" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,icon("hooded-figure"),c.nome)+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
 async function telaPersonagem(id){ layout('<p>Carregando…</p>');
-  var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; } registrarVisita("personagem",id,c.nome);
+  var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; } await focarMundoDeConteudo(c.mundo_id); registrarVisita("personagem",id,c.nome,c.mundo_id);
   var nomeAutor=await nomeDe(c.jogador_id); var pubs=await pubsDoPersonagem(id);
   var podeEditar=(S.user&&(c.jogador_id===S.user.id||(S.profile&&S.profile.papel_global==="admin")));
   var contribs=await contribPersonagem(id); var souContrib=!!(S.user&&contribs.some(function(x){return x.user_id===S.user.id;}));
@@ -817,7 +831,7 @@ async function telaJornais(){ if(!S.mundo){go("mundos");return;} layout('<p>Carr
   var criar=S.user?'<a class="btn" onclick="go(\'novoJornal\')">+ Criar jornal</a>':'';
   var cards=js.length?'<div class="jn-grid">'+js.map(jornalCapa).join("")+'</div>':'<div class="empty">Nenhum jornal ainda neste mundo.</div>';
   layout(hero("Jornais de "+S.mundo.nome,"Periódicos do mundo — notícias, crônicas e boatos publicados pelos jornais", S.mundo.fundo_url, criar, icon("scroll-unfurled"))+cards); }
-async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){ layout('<div class="aviso">Jornal não encontrado ou sem permissão.</div>'); return; } registrarVisita("jornal",id,j.nome);
+async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){ layout('<div class="aviso">Jornal não encontrado ou sem permissão.</div>'); return; } await focarMundoDeConteudo(j.mundo_id); registrarVisita("jornal",id,j.nome,j.mundo_id);
   var nomeDono=await nomeDe(j.dono_id); var noticias=await pubsDoJornal(id);
   var podeEditar=(S.user&&(j.dono_id===S.user.id||(S.profile&&S.profile.papel_global==="admin")));
   var escr=await escritoresJornal(id); var souEscr=!!(S.user&&escr.some(function(x){return x.user_id===S.user.id;}));
@@ -1122,7 +1136,8 @@ async function telaFavoritos(){ if(!S.user){ go("login"); return; } layout('<p>C
   var rt={mesa:"mesa",publicacao:"pub",personagem:"personagem",jornal:"jornal"}; var ic={mesa:icon("crossed-swords"),publicacao:icon("book-cover"),personagem:icon("hooded-figure"),jornal:icon("scroll-unfurled"),mundo:icon("castle")};
   var html=favs.length?'<ul class="lista2">'+favs.map(function(f){ var alvo=rt[f.tipo]; var acao=alvo?"go('"+alvo+"','"+f.alvo_id+"')":"selecionarMundo('"+f.alvo_id+"')"; return '<li class="li-clic" onclick="'+acao+'"><span class="li-tit">'+(ic[f.tipo]||icon("round-star"))+' '+esc(f.titulo||"(sem título)")+'</span><span class="chip">'+esc(f.tipo)+'</span> <button class="btn mini sec" style="border-color:#b23b3b" onclick="event.stopPropagation();desfav(\''+f.tipo+'\',\''+f.alvo_id+'\')">remover</button></li>'; }).join("")+'</ul>':'<div class="empty">Nenhum favorito ainda. Use o botão ☆ Favoritar nos conteúdos.</div>';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Favoritos</div><h1>★ Favoritos</h1>'+html); }
-function registrarVisita(tipo,id,titulo){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=arr.filter(function(x){return !(x.tipo===tipo&&x.id===id);}); arr.unshift({tipo:tipo,id:id,titulo:String(titulo||""),mundoId:(S.mundo?S.mundo.id:null),mundoNome:(S.mundo?S.mundo.nome:""),t:Date.now()}); arr=arr.slice(0,12); localStorage.setItem("mds_recent",JSON.stringify(arr)); }catch(e){} }
+function nomeMundo(mundoId){ var w=mundoId?(S.mundos||[]).find(function(x){return x.id===mundoId;}):null; return w?w.nome:""; }
+function registrarVisita(tipo,id,titulo,mundoId){ try{ var wid=mundoId||(S.mundo?S.mundo.id:null); var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=arr.filter(function(x){return !(x.tipo===tipo&&x.id===id);}); arr.unshift({tipo:tipo,id:id,titulo:String(titulo||""),mundoId:wid,mundoNome:(nomeMundo(wid)||(S.mundo?S.mundo.nome:"")),t:Date.now()}); arr=arr.slice(0,12); localStorage.setItem("mds_recent",JSON.stringify(arr)); }catch(e){} }
 function visitasRecentes(mundoId){ try{ var arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); arr=mundoId?arr.filter(function(x){return x.mundoId===mundoId;}):arr; return arr.slice(0,6); }catch(e){ return []; } }
 // Cartão de item recente (opcionalmente com selo do mundo a que pertence)
 function cardVisita(v, mostrarMundo){
@@ -1140,10 +1155,10 @@ async function visitasValidas(mundoId){
   var val={publicacao:{},personagem:{},jornal:{},mesa:{}};
   async function checa(tabela,tipo,campos){ var ids=porTipo[tipo]; if(!ids.length)return; try{ var r=await sb.from(tabela).select(campos).in("id",ids); (r.data||[]).forEach(function(row){ val[tipo][row.id]=row; }); }catch(e){} }
   await Promise.all([
-    checa("publicacoes","publicacao","id,titulo,estado"),
-    checa("personagens","personagem","id,nome"),
-    checa("jornais","jornal","id,nome"),
-    checa("mesas","mesa","id,nome")
+    checa("publicacoes","publicacao","id,titulo,estado,mundo_id"),
+    checa("personagens","personagem","id,nome,mundo_id"),
+    checa("jornais","jornal","id,nome,mundo_id"),
+    checa("mesas","mesa","id,nome,mundo_id")
   ]);
   var vivos=[];
   arr.forEach(function(x){
@@ -1151,7 +1166,9 @@ async function visitasValidas(mundoId){
     if(!row) return;                                   // apagado ou sem permissão
     if(x.tipo==="publicacao"&&row.estado==="rascunho") return; // rascunho não entra
     var tit=row.titulo||row.nome||x.titulo;
-    vivos.push({tipo:x.tipo,id:x.id,titulo:tit,mundoId:x.mundoId,mundoNome:x.mundoNome,t:x.t});
+    var wid=row.mundo_id||x.mundoId;
+    var wnm=nomeMundo(wid)||x.mundoNome||"";
+    vivos.push({tipo:x.tipo,id:x.id,titulo:tit,mundoId:wid,mundoNome:wnm,t:x.t});
   });
   // auto-cura: regrava só os válidos
   try{ localStorage.setItem("mds_recent",JSON.stringify(vivos.slice(0,12))); }catch(e){}
