@@ -544,7 +544,7 @@ async function renderMembros(id){
   S._membrosMesa=ja;
   var add='<div class="conv-box" style="margin-top:12px"><label style="font-weight:600">Convidar jogador para a mesa</label>'
     +'<p class="vis-leg" style="margin:.2em 0 .5em">Digite o <b>e-mail exato</b> ou o <b>apelido</b> do jogador. Ele recebe um convite para aceitar.</p>'
-    +'<div class="expbar"><input id="me_busca" placeholder="e-mail ou apelido" style="flex:1;min-width:180px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6" onkeydown="if(event.key===\'Enter\'){event.preventDefault();buscarJogadores(\''+id+'\');}"> <button class="btn mini" onclick="buscarJogadores(\''+id+'\')">Buscar</button></div>'
+    +'<div class="expbar"><input id="me_busca" placeholder="e-mail ou apelido" style="flex:1;min-width:180px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6" onkeydown="if(event.key===\'Enter\'){event.preventDefault();buscarJogadores(\''+id+'\');}" oninput="buscaDebounce(\''+id+'\')"> <button class="btn mini" onclick="buscarJogadores(\''+id+'\')">Buscar</button></div>'
     +'<div id="me_resultados"></div></div>';
   c.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Sem jogadores ainda — só o mestre.</li>')+'</ul>'+add+'<div id="me_convites"></div>';
   renderConvitesPendentes(id);
@@ -555,6 +555,7 @@ async function addJogador(id){ var uid=val("me_addjog"); if(!uid)return; try{ va
 async function removerMembro(id,uid){ if(!confirm("Remover este jogador da mesa?"))return; try{ var r=await sb.from("mesa_membros").delete().eq("mesa_id",id).eq("user_id",uid); if(r.error)throw r.error; await renderMembros(id); }catch(e){erro(e);} }
 
 // ===== Área de usuários: busca + convites (mestre -> jogador) =====
+function buscaDebounce(mesaId){ if(window.__buscaTmr)clearTimeout(window.__buscaTmr); var termo=(val("me_busca")||"").trim(); var box=document.getElementById("me_resultados"); if(termo.length<1){ if(box)box.innerHTML=""; return; } window.__buscaTmr=setTimeout(function(){ buscarJogadores(mesaId); }, 280); }
 async function buscarJogadores(mesaId, offset){
   var box=document.getElementById("me_resultados"); if(!box)return;
   var novo=(offset===undefined||offset===null);
