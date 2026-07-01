@@ -727,3 +727,29 @@ body.foco-lock{ overflow:hidden; }
 .rec-det-acts .btn.on iconify-icon{color:var(--papel)}
 
 .secao-ped:not(:empty){margin:14px 0;padding:12px 14px;background:var(--perg);border:1px solid var(--ouro);border-left:4px solid var(--sangue);border-radius:10px}
+
+/* ===== Barra lateral colapsável ===== */
+.nav-grp{margin-top:6px}
+.nav-h4{font-family:var(--font-head);font-size:13px;color:var(--ouro);text-transform:uppercase;letter-spacing:.5px;margin:16px 0 6px;cursor:pointer;display:flex;align-items:center;gap:6px;user-select:none}
+.nav-h4:hover{color:var(--sangue)}
+.nav-h4 .grp-ar{margin-left:auto;font-size:11px;transition:transform .18s ease;opacity:.75}
+.nav-grp.col .nav-h4 .grp-ar{transform:rotate(-90deg)}
+.nav-grp.col .nav-grp-body{display:none}
+.nav-grp-body{display:block}
+
+/* Selo do mundo no card de "continuar de onde parou" */
+.card .rec-mundo{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--sangue);background:var(--papel);border:1px solid var(--ouro);border-radius:999px;padding:1px 8px;margin-bottom:4px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .rec-mundo iconify-icon{font-size:12px}
+
+/* ===== TUDO MEU! (dashboard pessoal) ===== */
+.tm-head{display:flex;align-items:center;gap:16px;margin:6px 0 14px}
+.tm-av{width:66px;height:66px;border-radius:50%;flex:0 0 auto;background:var(--sangue) center/cover no-repeat;color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-head);font-size:28px;border:3px solid var(--ouro);box-shadow:var(--sombra)}
+.tm-id h1{font-family:var(--font-head)}
+.tm-nome{margin:.15em 0;font-size:17px;color:var(--tinta)}
+.tm-ep{font-style:italic;color:var(--tinta2)}
+.tm-acts{margin-top:6px;display:flex;flex-wrap:wrap;gap:6px}
+.btn.mini{font-size:13px;padding:4px 10px}
+.tm-worldsel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:10px 0 4px;padding:10px 12px;background:var(--perg);border:1px solid var(--borda);border-radius:10px}
+.tm-worldsel label{font-family:var(--font-head);font-size:13px;color:var(--ouro);text-transform:uppercase;letter-spacing:.5px}
+.tm-worldsel select{padding:6px 10px;border:1px solid var(--borda);border-radius:8px;background:var(--campo);color:var(--tinta);font-size:15px;max-width:100%}
+.tm-criar{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
