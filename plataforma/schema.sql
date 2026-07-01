@@ -17,6 +17,8 @@ create table if not exists profiles (
 alter table profiles add column if not exists avatar_url text;
 alter table profiles add column if not exists bio text;
 alter table profiles add column if not exists epiteto text;
+alter table profiles add column if not exists apelido text;  -- nome de exibição (vira o nome no site)
+create index if not exists idx_profiles_apelido on profiles (lower(apelido));
 
 -- Cria o perfil automaticamente quando um usuário se registra
 create or replace function handle_new_user()
@@ -278,6 +280,76 @@ drop policy if exists rel_insert on publicacao_relacoes;
 create policy rel_insert on publicacao_relacoes for insert with check (
   exists (select 1 from publicacoes p where p.id = origem_id and (p.autor_id = auth.uid() or is_admin()))
 );
+
+-- ============================================================
+-- Convites (mestre -> jogador) + busca de usuários
+-- (ver migracao-usuarios-convites.sql — replicado aqui para o schema de referência)
+-- ============================================================
+create table if not exists convites (
+  id            uuid primary key default gen_random_uuid(),
+  mesa_id       uuid not null references mesas(id) on delete cascade,
+  convidado_id  uuid not null references profiles(id) on delete cascade,
+  criado_por    uuid not null references profiles(id),
+  estado        text not null default 'pendente' check (estado in ('pendente','aceito','recusado')),
+  criado_em     timestamptz not null default now(),
+  unique (mesa_id, convidado_id)
+);
+create index if not exists idx_convites_convidado on convites(convidado_id);
+create index if not exists idx_convites_mesa on convites(mesa_id);
+alter table convites enable row level security;
+drop policy if exists conv_select on convites;
+create policy conv_select on convites for select using (
+  convidado_id = auth.uid() or is_mestre(mesa_id) or is_admin());
+drop policy if exists conv_insert on convites;
+create policy conv_insert on convites for insert with check (
+  criado_por = auth.uid() and (is_mestre(mesa_id) or is_admin()));
+drop policy if exists conv_update on convites;
+create policy conv_update on convites for update using (
+  convidado_id = auth.uid() or is_mestre(mesa_id) or is_admin());
+drop policy if exists conv_delete on convites;
+create policy conv_delete on convites for delete using (
+  is_mestre(mesa_id) or is_admin());
+
+-- Busca (e-mail exato NUNCA retornado; apelido/nome por prefixo)
+create or replace function buscar_usuarios(termo text)
+returns table(id uuid, nome text, apelido text, avatar_url text)
+language sql security definer stable set search_path = public as $$
+  select p.id, p.nome, p.apelido, p.avatar_url
+  from profiles p join auth.users u on u.id = p.id
+  where auth.uid() is not null and (
+    case when position('@' in termo) > 0
+      then lower(u.email) = lower(trim(termo))
+      else (p.apelido ilike trim(termo)||'%' or p.nome ilike trim(termo)||'%')
+    end)
+  order by p.apelido nulls last, p.nome limit 20
+$$;
+
+create or replace function aceitar_convite(p_convite uuid)
+returns void language plpgsql security definer set search_path = public as $$
+declare v_mesa uuid; v_user uuid;
+begin
+  select mesa_id, convidado_id into v_mesa, v_user
+    from convites where id = p_convite and estado = 'pendente';
+  if v_mesa is null then raise exception 'Convite inválido ou já respondido.'; end if;
+  if v_user <> auth.uid() then raise exception 'Este convite não é seu.'; end if;
+  insert into mesa_membros (mesa_id, user_id, papel) values (v_mesa, v_user, 'jogador')
+    on conflict (mesa_id, user_id) do nothing;
+  update convites set estado = 'aceito' where id = p_convite;
+end $$;
+
+create or replace function meus_convites()
+returns table(id uuid, mesa_id uuid, mesa_nome text, mundo_nome text,
+              criado_por uuid, convidado_por text, criado_em timestamptz)
+language sql security definer stable set search_path = public as $$
+  select c.id, c.mesa_id, me.nome, mu.nome, c.criado_por,
+         coalesce(nullif(trim(pr.apelido),''), pr.nome), c.criado_em
+  from convites c
+  join mesas me on me.id = c.mesa_id
+  join mundos mu on mu.id = me.mundo_id
+  join profiles pr on pr.id = c.criado_por
+  where c.convidado_id = auth.uid() and c.estado = 'pendente'
+  order by c.criado_em desc
+$$;
 
 -- ============================================================
 -- SEED — rodar DEPOIS de criar sua conta (1º login) e descobrir seu user id

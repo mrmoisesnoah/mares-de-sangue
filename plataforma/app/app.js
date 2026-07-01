@@ -144,7 +144,7 @@ async function sair(){ await sb.auth.signOut(); S.user=null; S.profile=null; awa
 // ---------- dados ----------
 async function carregar(){
   try{
-    var p=await sb.from("profiles").select("*").eq("id",S.user.id).maybeSingle(); S.profile=p.data; if(p.data)S.nomes[S.user.id]=p.data.nome;
+    var p=await sb.from("profiles").select("*").eq("id",S.user.id).maybeSingle(); S.profile=p.data; if(p.data)S.nomes[S.user.id]=exib(p.data);
     var m=await sb.from("mundos").select("*").order("criado_em"); if(m.error)throw m.error;
     S.mundos=m.data||[]; S.mundo=mundoSalvo()||S.mundos[0]||null;
     if(S.mundo) await carregarMesas();
@@ -167,8 +167,9 @@ async function persDoMundo(){ var r=await sb.from("publicacoes").select("*").eq(
 async function recentes(){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).order("criado_em",{ascending:false}).limit(6); return r.error?[]:(r.data||[]); }
 async function pubsDoAutor(uid){ var r=await sb.from("publicacoes").select("*").eq("mundo_id",S.mundo.id).eq("autor_id",uid).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function umaPub(id){ var r=await sb.from("publicacoes").select("*").eq("id",id).maybeSingle(); return r.data; }
-async function nomeDe(uid){ if(S.nomes[uid])return S.nomes[uid]; var r=await sb.from("profiles").select("nome").eq("id",uid).maybeSingle(); var n=r.data?r.data.nome:"Autor"; S.nomes[uid]=n; return n; }
-async function perfilDe(uid){ S.perfilCache=S.perfilCache||{}; if(S.perfilCache[uid])return S.perfilCache[uid]; var r=await sb.from("profiles").select("id,nome,avatar_url,bio,epiteto").eq("id",uid).maybeSingle(); var p=r.data||{nome:"Autor"}; S.perfilCache[uid]=p; if(p&&p.nome)S.nomes[uid]=p.nome; return p; }
+function exib(p){ if(!p)return "Aventureiro"; var a=(p.apelido||"").trim(); return a||p.nome||"Aventureiro"; }
+async function nomeDe(uid){ if(S.nomes[uid])return S.nomes[uid]; var r=await sb.from("profiles").select("nome,apelido").eq("id",uid).maybeSingle(); var n=r.data?exib(r.data):"Autor"; S.nomes[uid]=n; return n; }
+async function perfilDe(uid){ S.perfilCache=S.perfilCache||{}; if(S.perfilCache[uid])return S.perfilCache[uid]; var r=await sb.from("profiles").select("id,nome,apelido,avatar_url,bio,epiteto").eq("id",uid).maybeSingle(); var p=r.data||{nome:"Autor"}; if(p&&(p.apelido||"").trim())p.nome=p.apelido.trim(); S.perfilCache[uid]=p; if(p&&p.nome)S.nomes[uid]=p.nome; return p; }
 
 // ---------- storage ----------
 async function uploadArquivo(f){ var path=(S.user?S.user.id:"anon")+"/"+Date.now()+"-"+slug(f.name)+"."+(f.name.split(".").pop()||"img");
@@ -216,10 +217,10 @@ function layout(conteudo){
   var pill = S.mundo ? '<div class="ws-wrap"><div class="world-switch" onclick="toggleWorldMenu(event)" title="Trocar de mundo"><span class="ws-ic">'+icon("castle")+'</span><span class="ws-nm">'+esc(S.mundo.nome)+'</span><span class="ws-ar">▾</span></div><div class="world-menu" id="worldmenu">'+S.mundos.map(function(w){return '<a onclick="selecionarMundo(\''+w.id+'\')"'+(w.id===S.mundo.id?' class="atual"':'')+'>'+icon("castle")+' '+esc(w.nome)+'</a>';}).join("")+(S.user?'<div class="sep"></div><a onclick="go(\'novoMundo\')">+ Criar mundo</a>':'')+'</div></div>' : '';
   var ub;
   if(S.user){
-    var nm=esc(S.profile?S.profile.nome:S.user.email);
-    var av=(S.profile&&S.profile.avatar_url)?'<span class="avatar" style="background-image:url('+esc(S.profile.avatar_url)+')"></span>':'<span class="avatar">'+esc(((S.profile&&S.profile.nome?S.profile.nome:"?")[0]||"?").toUpperCase())+'</span>';
+    var nm=esc(S.profile?exib(S.profile):S.user.email);
+    var av=(S.profile&&S.profile.avatar_url)?'<span class="avatar" style="background-image:url('+esc(S.profile.avatar_url)+')"></span>':'<span class="avatar">'+esc(((S.profile?exib(S.profile):"?")[0]||"?").toUpperCase())+'</span>';
     ub='<button class="user-btn" onclick="toggleUserMenu(event)">'+av+'<span class="user-nm">'+nm+'</span><span class="ws-ar">▾</span></button>'
-      +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a>'
+      +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a><a onclick="go(\'convites\')">✉ Meus convites</a>'
       +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
@@ -540,14 +541,69 @@ async function renderMembros(id){
     var rem=(x.papel==="mestre")?"":' <button class="btn mini sec" style="border-color:#b23b3b" onclick="removerMembro(\''+id+'\',\''+x.user_id+'\')">remover</button>';
     return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nome(x.user_id))+'</span><span class="chip c-'+(x.papel==="mestre"?"mestre":"mesa")+'">'+esc(x.papel)+'</span>'+rem+'</li>';
   }).join("");
-  var opc=perf.filter(function(p){return !ja[p.id];}).map(function(p){return '<option value="'+esc(p.id)+'">'+esc(p.nome)+'</option>';}).join("");
-  var add=opc?'<div class="expbar" style="margin-top:10px"><select id="me_addjog" style="max-width:260px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6">'+opc+'</select> <button class="btn mini" onclick="addJogador(\''+id+'\')">+ Adicionar jogador</button></div>':'<p class="vis-leg">Todos os usuários registrados já estão nesta mesa.</p>';
-  c.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Sem jogadores ainda — só o mestre.</li>')+'</ul>'+add;
+  S._membrosMesa=ja;
+  var add='<div class="conv-box" style="margin-top:12px"><label style="font-weight:600">Convidar jogador para a mesa</label>'
+    +'<p class="vis-leg" style="margin:.2em 0 .5em">Digite o <b>e-mail exato</b> ou o <b>apelido</b> do jogador. Ele recebe um convite para aceitar.</p>'
+    +'<div class="expbar"><input id="me_busca" placeholder="e-mail ou apelido" style="flex:1;min-width:180px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6" onkeydown="if(event.key===\'Enter\'){event.preventDefault();buscarJogadores(\''+id+'\');}"> <button class="btn mini" onclick="buscarJogadores(\''+id+'\')">Buscar</button></div>'
+    +'<div id="me_resultados"></div></div>';
+  c.innerHTML='<ul class="lista2">'+(linhas||'<li class="vis-leg" style="list-style:none">Sem jogadores ainda — só o mestre.</li>')+'</ul>'+add+'<div id="me_convites"></div>';
+  renderConvitesPendentes(id);
 }
 async function membrosMesa(id){ var r=await sb.from("mesa_membros").select("user_id,papel").eq("mesa_id",id); return r.error?[]:(r.data||[]); }
-async function perfis(){ if(S.perfis)return S.perfis; var r=await sb.from("profiles").select("id,nome,avatar_url").order("nome"); S.perfis=r.error?[]:(r.data||[]); return S.perfis; }
+async function perfis(){ if(S.perfis)return S.perfis; var r=await sb.from("profiles").select("id,nome,apelido,avatar_url").order("nome"); S.perfis=r.error?[]:((r.data||[]).map(function(p){ if((p.apelido||"").trim())p.nome=p.apelido.trim(); return p; })); return S.perfis; }
 async function addJogador(id){ var uid=val("me_addjog"); if(!uid)return; try{ var r=await sb.from("mesa_membros").insert({mesa_id:id,user_id:uid,papel:"jogador"}); if(r.error)throw r.error; var _me=S.mesas.find(function(x){return x.id===id;}); notificar(uid,"aprovado","Você foi adicionado à mesa "+((_me&&_me.nome)?_me.nome:"")+".","mesa",id); await renderMembros(id); toast("Jogador adicionado.","ok"); }catch(e){erro(e);} }
 async function removerMembro(id,uid){ if(!confirm("Remover este jogador da mesa?"))return; try{ var r=await sb.from("mesa_membros").delete().eq("mesa_id",id).eq("user_id",uid); if(r.error)throw r.error; await renderMembros(id); }catch(e){erro(e);} }
+
+// ===== Área de usuários: busca + convites (mestre -> jogador) =====
+async function buscarJogadores(mesaId){
+  var termo=(val("me_busca")||"").trim(); var box=document.getElementById("me_resultados"); if(!box)return;
+  var comArroba=termo.indexOf("@")>=0;
+  if(termo.length<2 || (comArroba && termo.length<5)){ box.innerHTML='<p class="vis-leg">Digite ao menos 2 letras do apelido, ou o e-mail completo.</p>'; return; }
+  box.innerHTML='<p class="vis-leg">Buscando…</p>';
+  try{
+    var r=await sb.rpc("buscar_usuarios",{termo:termo}); if(r.error)throw r.error;
+    var us=(r.data||[]).filter(function(u){return u.id!==S.user.id;});
+    if(!us.length){ box.innerHTML='<p class="vis-leg">Ninguém encontrado. Confira o e-mail exato ou o apelido.</p>'; return; }
+    var ms=await membrosMesa(mesaId); var ja={}; ms.forEach(function(x){ja[x.user_id]=1;});
+    var pend=await sb.from("convites").select("convidado_id").eq("mesa_id",mesaId).eq("estado","pendente"); var pj={}; if(!pend.error)(pend.data||[]).forEach(function(x){pj[x.convidado_id]=1;});
+    box.innerHTML='<ul class="lista2">'+us.map(function(u){
+      var nm=(u.apelido&&u.apelido.trim())?u.apelido.trim():(u.nome||"Aventureiro");
+      var av=u.avatar_url?'<span class="avatar" style="background-image:url('+esc(u.avatar_url)+')"></span>':'<span class="avatar">'+esc((nm[0]||"?").toUpperCase())+'</span>';
+      var acao=ja[u.id]?'<span class="chip c-mesa">já é membro</span>':(pj[u.id]?'<span class="chip">convite enviado</span>':'<button class="btn mini" onclick="convidarJogador(\''+mesaId+'\',\''+u.id+'\')">✉ Convidar</button>');
+      return '<li class="li-clic" style="cursor:default;display:flex;align-items:center;gap:8px">'+av+'<span class="li-tit" style="flex:1">'+esc(nm)+'</span>'+acao+'</li>';
+    }).join("")+'</ul>';
+  }catch(e){ box.innerHTML='<p class="vis-leg">Erro na busca: '+esc(e.message||(""+e))+'</p>'; }
+}
+async function convidarJogador(mesaId,uid){
+  try{
+    var r=await sb.from("convites").upsert({mesa_id:mesaId,convidado_id:uid,criado_por:S.user.id,estado:"pendente"},{onConflict:"mesa_id,convidado_id"}); if(r.error)throw r.error;
+    var _me=(S.mesas||[]).find(function(x){return x.id===mesaId;}); var mn=(_me&&_me.nome)?_me.nome:"uma mesa";
+    notificar(uid,"convite","Você foi convidado para a mesa "+mn+".",null,null);
+    toast("Convite enviado.","ok"); buscarJogadores(mesaId); renderConvitesPendentes(mesaId);
+  }catch(e){ erro(e); }
+}
+async function renderConvitesPendentes(mesaId){
+  var box=document.getElementById("me_convites"); if(!box)return;
+  var r=await sb.from("convites").select("*").eq("mesa_id",mesaId).eq("estado","pendente").order("criado_em",{ascending:false});
+  var cs=r.error?[]:(r.data||[]); if(!cs.length){ box.innerHTML=""; return; }
+  var perf=await perfis(); var nm=function(uid){ var p=perf.find(function(x){return x.id===uid;}); return p?p.nome:"(usuário)"; };
+  box.innerHTML='<h4 style="margin:.9em 0 .3em;color:var(--sangue)">✉ Convites aguardando resposta ('+cs.length+')</h4><ul class="lista2">'+cs.map(function(c){ return '<li class="li-clic" style="cursor:default"><span class="li-tit">'+esc(nm(c.convidado_id))+'</span> <span class="chip">pendente</span> <button class="btn mini sec" onclick="cancelarConvite(\''+c.id+'\',\''+mesaId+'\')">cancelar</button></li>'; }).join("")+'</ul>';
+}
+async function cancelarConvite(cid,mesaId){ try{ var r=await sb.from("convites").delete().eq("id",cid); if(r.error)throw r.error; toast("Convite cancelado.","ok"); renderConvitesPendentes(mesaId); }catch(e){erro(e);} }
+async function telaConvites(){ if(!S.user){go("login");return;} layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Convites</div><h1>✉ Meus convites</h1><p class="vis-leg">Convites de mestres para você entrar em mesas.</p><div id="convites-lista"><p>Carregando…</p></div>'); renderMeusConvites(); }
+async function renderMeusConvites(){ var box=document.getElementById("convites-lista"); if(!box)return;
+  try{ var r=await sb.rpc("meus_convites"); if(r.error)throw r.error; var cs=r.data||[];
+    if(!cs.length){ box.innerHTML='<div class="empty">Você não tem convites pendentes.</div>'; return; }
+    box.innerHTML='<div class="cards">'+cs.map(function(c){ return '<div class="card" style="cursor:default"><h3>'+icon("crossed-swords")+' '+esc(c.mesa_nome||"Mesa")+'</h3><p class="res">Mundo: '+esc(c.mundo_nome||"—")+'</p><p class="vis-leg">Convite de '+esc(c.convidado_por||"um mestre")+' · '+tempoRel(c.criado_em)+'</p><p><button class="btn" onclick="aceitarConvite(\''+c.id+'\',\''+(c.criado_por||"")+'\')">✓ Aceitar</button> <button class="btn sec" onclick="recusarConvite(\''+c.id+'\')">Recusar</button></p></div>'; }).join("")+'</div>';
+  }catch(e){ box.innerHTML='<p class="vis-leg">Erro ao carregar convites: '+esc(e.message||(""+e))+'</p>'; }
+}
+async function aceitarConvite(cid,criadoPor){ try{ var r=await sb.rpc("aceitar_convite",{p_convite:cid}); if(r.error)throw r.error;
+  if(criadoPor){ var nmp=exib(S.profile)||"Um jogador"; notificar(criadoPor,"aprovado",nmp+" aceitou seu convite e entrou na mesa.",null,null); }
+  if(S.mundo) await carregarMesas(); S.perfis=null;
+  toast("Convite aceito! Você agora é membro da mesa.","ok"); renderMeusConvites();
+}catch(e){ erro(e); } }
+async function recusarConvite(cid){ try{ var r=await sb.from("convites").update({estado:"recusado"}).eq("id",cid); if(r.error)throw r.error; toast("Convite recusado.","ok"); renderMeusConvites(); }catch(e){erro(e);} }
+
 async function subirMundoFundo(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("m_fundo_st"); if(st)st.textContent="enviando…";
   try{ var u=await uploadArquivo(f); document.getElementById("m_fundo").value=u; if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
 
@@ -580,13 +636,14 @@ function telaPerfil(){ if(!S.user){go("login");return;} var p=S.profile||{};
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Editar perfil</div>'
   +'<div class="autor-cap">'+(p.avatar_url?'<div class="av" id="av_prev" style="background-image:url('+esc(p.avatar_url)+')"></div>':'<div class="av" id="av_prev">'+esc(((p.nome||"?")[0]||"?").toUpperCase())+'</div>')+'<div><h2 style="margin:0">'+esc(p.nome||"Aventureiro")+'</h2><p class="vis-leg" style="font-style:italic">'+esc(p.epiteto||"")+'</p></div></div>'
   +'<div class="form">'+fHead(icon("person"),'Editar perfil','')
-  +fGrupo('Quem é você','<label>Nome de aventureiro</label><input id="pf_nome" value="'+esc(p.nome||"")+'"><label>Epíteto / título</label><input id="pf_epiteto" value="'+esc(p.epiteto||"")+'" placeholder="ex.: o Errante, a Branca (opcional)">'+campoImagem('Foto de perfil','pf_avatar',(p.avatar_url||"")))
+  +fGrupo('Quem é você','<label>Apelido (como quer ser chamado — vira seu nome no site)</label><input id="pf_apelido" value="'+esc(p.apelido||"")+'" placeholder="ex.: Moisés, o Cronista (opcional)"><label>Nome de aventureiro</label><input id="pf_nome" value="'+esc(p.nome||"")+'"><label>Epíteto / título</label><input id="pf_epiteto" value="'+esc(p.epiteto||"")+'" placeholder="ex.: o Errante, a Branca (opcional)">'+campoImagem('Foto de perfil','pf_avatar',(p.avatar_url||"")))
+  +fGrupo('Como ser convidado para uma mesa','<p class="vis-leg" style="margin:.2em 0">Para um mestre te adicionar a uma mesa, passe a ele seu <b>e-mail</b> (<code>'+esc(S.user.email||"")+'</code>) ou seu <b>apelido</b>. Ele te encontra pela busca e envia um convite, que aparece aqui no site.</p>')
   +fGrupo('Sobre você','<label>Bio</label>'+mdEditor('pf_bio',p.bio||""))
   +fAcoes('Salvar perfil','salvarPerfil()',"go('autor','"+S.user.id+"')")+'</div>'); }
 async function subirAvatar(inp){ var f=inp.files&&inp.files[0]; if(!f)return; var st=document.getElementById("pf_avatar_st"); if(st)st.textContent="enviando…";
   try{ var u=await uploadArquivo(f); var c=document.getElementById("pf_avatar"); if(c)c.value=u; var pv=document.getElementById("av_prev"); if(pv){pv.style.backgroundImage="url("+u+")"; pv.textContent="";} if(st)st.textContent="enviado ✓"; }catch(e){ if(st)st.textContent="erro: "+(e.message||e); } }
-async function salvarPerfil(){ try{ var nome=val("pf_nome").trim()||"Aventureiro"; var upd={nome:nome, epiteto:(val("pf_epiteto").trim()||null), avatar_url:(val("pf_avatar").trim()||null), bio:val("pf_bio")};
-  var r=await sb.from("profiles").update(upd).eq("id",S.user.id).select().single(); if(r.error)throw r.error; S.profile=r.data; S.nomes[S.user.id]=r.data.nome; if(S.perfilCache)delete S.perfilCache[S.user.id]; go("autor",S.user.id); }catch(e){erro(e);} }
+async function salvarPerfil(){ try{ var nome=val("pf_nome").trim()||"Aventureiro"; var upd={nome:nome, apelido:(val("pf_apelido").trim()||null), epiteto:(val("pf_epiteto").trim()||null), avatar_url:(val("pf_avatar").trim()||null), bio:val("pf_bio")};
+  var r=await sb.from("profiles").update(upd).eq("id",S.user.id).select().single(); if(r.error)throw r.error; S.profile=r.data; S.nomes[S.user.id]=exib(r.data); if(S.perfilCache)delete S.perfilCache[S.user.id]; S.perfis=null; go("autor",S.user.id); }catch(e){erro(e);} }
 // ===== Personagens (entidade / hub) =====
 async function umPersonagem(id){ var r=await sb.from("personagens").select("*").eq("id",id).maybeSingle(); return r.data; }
 async function pubsDoPersonagem(id){ var r=await sb.from("publicacoes").select("*").eq("personagem_id",id).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
@@ -1169,6 +1226,7 @@ function render(){ window.__editDirty=false;
   else if(t==="mundoHome") telaMundoHome();
   else if(t==="favoritos") telaFavoritos();
   else if(t==="rascunhos") telaRascunhos();
+  else if(t==="convites") telaConvites();
   else telaHome();
 }
 // ===== Notificações =====
@@ -1180,7 +1238,7 @@ function bellHTML(){ var n=(S.notifs||[]).filter(function(x){return !x.lida;}).l
 async function toggleNotif(e){ if(e)e.stopPropagation(); var m=document.getElementById("sinomenu"); if(!m)return; var abrindo=!m.classList.contains("aberto"); m.classList.toggle("aberto"); if(abrindo){ try{ await carregarNotifs(); pintarSino(); }catch(_){} } }
 function pintarSino(){ var w=document.querySelector(".sino-wrap"); if(!w)return; var unread=(S.notifs||[]).filter(function(x){return !x.lida;}).length; var btn=w.querySelector(".sino-btn"); var ct=w.querySelector(".sino-ct"); if(unread){ if(ct){ ct.textContent=unread>9?"9+":unread; } else if(btn){ var sp=document.createElement("span"); sp.className="sino-ct"; sp.textContent=unread>9?"9+":unread; btn.appendChild(sp); } } else if(ct){ ct.remove(); } var menu=document.getElementById("sinomenu"); if(menu&&menu.classList.contains("aberto")){ menu.innerHTML=notifListHTML(); } }
 function iniciarPollNotifs(){ if(window.__notifPoll)return; window.__notifPoll=setInterval(function(){ if(!S.user)return; carregarNotifs().then(function(){ pintarSino(); }).catch(function(){}); }, 45000); }
-async function abrirNotif(id,lt,lid){ try{ await sb.from("notificacoes").update({lida:true}).eq("id",id); var nn=(S.notifs||[]).find(function(x){return x.id===id;}); if(nn)nn.lida=true; }catch(e){} pintarSino(); var n=(S.notifs||[]).find(function(x){return x.id===id;}); if(n&&n.tipo==="pedido"&&lt==="mundo"){ if(S.mundo&&S.mundo.id===lid){ go("editarMundo"); } else { toast("Abra o mundo correspondente e use Editar mundo para aprovar o pedido.","erro"); render(); } return; } var rt={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[lt]; if(rt&&lid){ go(rt,lid); } else { render(); } }
+async function abrirNotif(id,lt,lid){ try{ await sb.from("notificacoes").update({lida:true}).eq("id",id); var nn=(S.notifs||[]).find(function(x){return x.id===id;}); if(nn)nn.lida=true; }catch(e){} pintarSino(); var n=(S.notifs||[]).find(function(x){return x.id===id;}); if(n&&n.tipo==="convite"){ go("convites"); return; } if(n&&n.tipo==="pedido"&&lt==="mundo"){ if(S.mundo&&S.mundo.id===lid){ go("editarMundo"); } else { toast("Abra o mundo correspondente e use Editar mundo para aprovar o pedido.","erro"); render(); } return; } var rt={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[lt]; if(rt&&lid){ go(rt,lid); } else { render(); } }
 async function marcarTodasLidas(){ try{ await sb.from("notificacoes").update({lida:true}).eq("user_id",S.user.id).eq("lida",false); (S.notifs||[]).forEach(function(n){n.lida=true;}); pintarSino(); render(); }catch(e){} }
 async function donoDoAlvo(tipo,id){ try{ if(tipo==="mundo"){ var a=await sb.from("mundos").select("dono_id").eq("id",id).maybeSingle(); return a.data&&a.data.dono_id; } if(tipo==="mesa"){ var b=await sb.from("mesas").select("mestre_id").eq("id",id).maybeSingle(); return b.data&&b.data.mestre_id; } if(tipo==="personagem"){ var c=await sb.from("personagens").select("jogador_id").eq("id",id).maybeSingle(); return c.data&&c.data.jogador_id; } }catch(e){} return null; }
 // ===== Comentários =====

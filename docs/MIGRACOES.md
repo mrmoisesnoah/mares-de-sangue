@@ -45,3 +45,6 @@ Banco da plataforma (Postgres + RLS). Para montar do zero, rode **nesta ordem**.
 
 ## Permissão de personagem por mesa
 22. `migracao-personagem-membro.sql` — endurece `pers_insert`: personagem ligado a uma **mesa** exige `is_membro(mesa_id)` (antes qualquer autenticado criava personagem em qualquer mesa). Personagem livre no mundo (`mesa_id IS NULL`) mantém o comportamento. Idempotente.
+
+## Área de usuários — apelido, busca e convites
+23. `migracao-usuarios-convites.sql` — **Fase 1** coluna `profiles.apelido` (nome de exibição, com índice). **Fase 2** função `buscar_usuarios(termo)` (SECURITY DEFINER): e-mail é match **exato** e **nunca** retornado; apelido/nome por prefixo; `limit 20`; só autenticado. **Fase 3** tabela `convites` (mestre→jogador) + RLS, `aceitar_convite(p_convite)` (insere em `mesa_membros` via DEFINER, pois o jogador não pode), `meus_convites()` (lista pendentes já com nome de mesa/mundo/convidante). Termina com `notify pgrst, 'reload schema';`. Idempotente.
