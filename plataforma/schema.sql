@@ -310,18 +310,25 @@ drop policy if exists conv_delete on convites;
 create policy conv_delete on convites for delete using (
   is_mestre(mesa_id) or is_admin());
 
--- Busca (e-mail exato NUNCA retornado; apelido/nome por prefixo)
-create or replace function buscar_usuarios(termo text)
-returns table(id uuid, nome text, apelido text, avatar_url text)
+-- Busca abrangente e paginada (prefixo em apelido/nome/e-mail; e-mail só mascarado)
+drop function if exists buscar_usuarios(text);
+create or replace function buscar_usuarios(termo text, p_limit int default 10, p_offset int default 0)
+returns table(id uuid, nome text, apelido text, epiteto text, avatar_url text, email_mascara text, total bigint)
 language sql security definer stable set search_path = public as $$
-  select p.id, p.nome, p.apelido, p.avatar_url
-  from profiles p join auth.users u on u.id = p.id
-  where auth.uid() is not null and (
-    case when position('@' in termo) > 0
-      then lower(u.email) = lower(trim(termo))
-      else (p.apelido ilike trim(termo)||'%' or p.nome ilike trim(termo)||'%')
-    end)
-  order by p.apelido nulls last, p.nome limit 20
+  with base as (
+    select p.id, p.nome, p.apelido, p.epiteto, p.avatar_url, u.email
+    from profiles p join auth.users u on u.id = p.id
+    where auth.uid() is not null and p.id <> auth.uid() and (
+      coalesce(p.apelido,'') ilike trim(coalesce(termo,''))||'%'
+      or coalesce(p.nome,'') ilike trim(coalesce(termo,''))||'%'
+      or u.email             ilike trim(coalesce(termo,''))||'%')
+  )
+  select id, nome, apelido, epiteto, avatar_url,
+         case when position('@' in email)>0
+           then left(email,2)||'•••'||substr(email, position('@' in email)) else null end,
+         count(*) over()
+  from base order by apelido nulls last, nome
+  limit greatest(coalesce(p_limit,10),1) offset greatest(coalesce(p_offset,0),0)
 $$;
 
 create or replace function aceitar_convite(p_convite uuid)

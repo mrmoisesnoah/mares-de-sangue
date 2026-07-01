@@ -9,29 +9,40 @@ alter table profiles add column if not exists apelido text;
 create index if not exists idx_profiles_apelido on profiles (lower(apelido));
 
 -- ---------- Fase 2: busca de usuários pelo mestre ----------
--- Regras de privacidade:
---   * e-mail: só MATCH EXATO (você precisa já conhecê-lo) e NUNCA é retornado.
---   * apelido/nome: busca por prefixo (como um @usuário).
--- Retorna no máximo 20 e só para usuários autenticados.
-create or replace function buscar_usuarios(termo text)
-returns table(id uuid, nome text, apelido text, avatar_url text)
+-- Busca abrangente e PAGINADA (case-insensitive, por prefixo "começa com"):
+--   * casa em apelido, nome OU e-mail (digitar "moi" traz quem começa com "moi").
+--   * e-mail nunca é retornado inteiro — só uma MÁSCARA (ex.: mo•••@gmail.com)
+--     para o mestre confirmar a pessoa, sem expor o endereço completo.
+--   * termo vazio lista todos (paginado). Exclui o próprio usuário. Só autenticado.
+--   * cada linha traz `total` (count(*) over()) para paginar no front.
+drop function if exists buscar_usuarios(text);
+create or replace function buscar_usuarios(termo text, p_limit int default 10, p_offset int default 0)
+returns table(id uuid, nome text, apelido text, epiteto text, avatar_url text, email_mascara text, total bigint)
 language sql security definer stable set search_path = public as $$
-  select p.id, p.nome, p.apelido, p.avatar_url
-  from profiles p
-  join auth.users u on u.id = p.id
-  where auth.uid() is not null
-    and (
-      case when position('@' in termo) > 0
-        then lower(u.email) = lower(trim(termo))                          -- e-mail exato
-        else ( p.apelido ilike trim(termo) || '%'
-               or p.nome  ilike trim(termo) || '%' )                      -- prefixo
-      end
-    )
-  order by p.apelido nulls last, p.nome
-  limit 20
+  with base as (
+    select p.id, p.nome, p.apelido, p.epiteto, p.avatar_url, u.email
+    from profiles p
+    join auth.users u on u.id = p.id
+    where auth.uid() is not null
+      and p.id <> auth.uid()
+      and (
+        coalesce(p.apelido,'') ilike trim(coalesce(termo,'')) || '%'
+        or coalesce(p.nome,'') ilike trim(coalesce(termo,'')) || '%'
+        or u.email             ilike trim(coalesce(termo,'')) || '%'
+      )
+  )
+  select id, nome, apelido, epiteto, avatar_url,
+         case when position('@' in email) > 0
+           then left(email, 2) || '•••' || substr(email, position('@' in email))
+           else null end,
+         count(*) over()
+  from base
+  order by apelido nulls last, nome
+  limit  greatest(coalesce(p_limit, 10), 1)
+  offset greatest(coalesce(p_offset, 0), 0)
 $$;
-revoke all on function buscar_usuarios(text) from anon;
-grant execute on function buscar_usuarios(text) to authenticated;
+revoke all on function buscar_usuarios(text,int,int) from anon;
+grant execute on function buscar_usuarios(text,int,int) to authenticated;
 
 -- ---------- Fase 3: convites (mestre -> jogador) ----------
 create table if not exists convites (

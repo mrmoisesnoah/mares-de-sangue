@@ -555,23 +555,39 @@ async function addJogador(id){ var uid=val("me_addjog"); if(!uid)return; try{ va
 async function removerMembro(id,uid){ if(!confirm("Remover este jogador da mesa?"))return; try{ var r=await sb.from("mesa_membros").delete().eq("mesa_id",id).eq("user_id",uid); if(r.error)throw r.error; await renderMembros(id); }catch(e){erro(e);} }
 
 // ===== Área de usuários: busca + convites (mestre -> jogador) =====
-async function buscarJogadores(mesaId){
-  var termo=(val("me_busca")||"").trim(); var box=document.getElementById("me_resultados"); if(!box)return;
-  var comArroba=termo.indexOf("@")>=0;
-  if(termo.length<2 || (comArroba && termo.length<5)){ box.innerHTML='<p class="vis-leg">Digite ao menos 2 letras do apelido, ou o e-mail completo.</p>'; return; }
+async function buscarJogadores(mesaId, offset){
+  var box=document.getElementById("me_resultados"); if(!box)return;
+  var novo=(offset===undefined||offset===null);
+  var termo=novo?((val("me_busca")||"").trim()):((S._busca&&S._busca.termo)||"");
+  var size=8; var off=novo?0:(offset||0);
+  S._busca={mesaId:mesaId,termo:termo,offset:off,size:size};
   box.innerHTML='<p class="vis-leg">Buscando…</p>';
   try{
-    var r=await sb.rpc("buscar_usuarios",{termo:termo}); if(r.error)throw r.error;
-    var us=(r.data||[]).filter(function(u){return u.id!==S.user.id;});
-    if(!us.length){ box.innerHTML='<p class="vis-leg">Ninguém encontrado. Confira o e-mail exato ou o apelido.</p>'; return; }
+    var r=await sb.rpc("buscar_usuarios",{termo:termo,p_limit:size,p_offset:off}); if(r.error)throw r.error;
+    var rows=r.data||[]; var total=rows.length?Number(rows[0].total||0):0;
+    if(!rows.length){ box.innerHTML='<p class="vis-leg">'+(termo?'Ninguém encontrado para “'+esc(termo)+'”.':'Nenhum usuário.')+' Tente o começo do apelido, do nome ou o e-mail.</p>'; return; }
     var ms=await membrosMesa(mesaId); var ja={}; ms.forEach(function(x){ja[x.user_id]=1;});
     var pend=await sb.from("convites").select("convidado_id").eq("mesa_id",mesaId).eq("estado","pendente"); var pj={}; if(!pend.error)(pend.data||[]).forEach(function(x){pj[x.convidado_id]=1;});
-    box.innerHTML='<ul class="lista2">'+us.map(function(u){
+    var lis=rows.map(function(u){
       var nm=(u.apelido&&u.apelido.trim())?u.apelido.trim():(u.nome||"Aventureiro");
       var av=u.avatar_url?'<span class="avatar" style="background-image:url('+esc(u.avatar_url)+')"></span>':'<span class="avatar">'+esc((nm[0]||"?").toUpperCase())+'</span>';
+      var det=[];
+      if(u.epiteto&&u.epiteto.trim()) det.push('<i>'+esc(u.epiteto.trim())+'</i>');
+      if(u.nome&&u.nome.trim()&&u.nome.trim()!==nm) det.push(esc(u.nome.trim()));
+      if(u.email_mascara) det.push(esc(u.email_mascara));
+      var sub=det.length?'<span class="vis-leg" style="font-size:.82em;display:block;line-height:1.3">'+det.join(' · ')+'</span>':'';
       var acao=ja[u.id]?'<span class="chip c-mesa">já é membro</span>':(pj[u.id]?'<span class="chip">convite enviado</span>':'<button class="btn mini" onclick="convidarJogador(\''+mesaId+'\',\''+u.id+'\')">✉ Convidar</button>');
-      return '<li class="li-clic" style="cursor:default;display:flex;align-items:center;gap:8px">'+av+'<span class="li-tit" style="flex:1">'+esc(nm)+'</span>'+acao+'</li>';
-    }).join("")+'</ul>';
+      return '<li class="li-clic" style="cursor:default;display:flex;align-items:center;gap:10px"><span style="flex:0 0 auto">'+av+'</span><span style="flex:1;min-width:0"><span class="li-tit">'+esc(nm)+'</span>'+sub+'</span><span style="flex:0 0 auto">'+acao+'</span></li>';
+    }).join("");
+    var ini=off+1, fim=off+rows.length, nav='';
+    if(total>size||off>0){
+      nav='<div class="expbar" style="justify-content:space-between;align-items:center;margin-top:8px">'
+        +(off>0?'<button class="btn mini sec" onclick="buscarJogadores(\''+mesaId+'\','+(off-size)+')">‹ Anterior</button>':'<span></span>')
+        +'<span class="vis-leg">'+ini+'–'+fim+' de '+total+'</span>'
+        +((off+size<total)?'<button class="btn mini sec" onclick="buscarJogadores(\''+mesaId+'\','+(off+size)+')">Próxima ›</button>':'<span></span>')
+        +'</div>';
+    }
+    box.innerHTML='<ul class="lista2">'+lis+'</ul>'+nav;
   }catch(e){ box.innerHTML='<p class="vis-leg">Erro na busca: '+esc(e.message||(""+e))+'</p>'; }
 }
 async function convidarJogador(mesaId,uid){
@@ -579,7 +595,7 @@ async function convidarJogador(mesaId,uid){
     var r=await sb.from("convites").upsert({mesa_id:mesaId,convidado_id:uid,criado_por:S.user.id,estado:"pendente"},{onConflict:"mesa_id,convidado_id"}); if(r.error)throw r.error;
     var _me=(S.mesas||[]).find(function(x){return x.id===mesaId;}); var mn=(_me&&_me.nome)?_me.nome:"uma mesa";
     notificar(uid,"convite","Você foi convidado para a mesa "+mn+".",null,null);
-    toast("Convite enviado.","ok"); buscarJogadores(mesaId); renderConvitesPendentes(mesaId);
+    toast("Convite enviado.","ok"); buscarJogadores(mesaId,(S._busca?S._busca.offset:0)); renderConvitesPendentes(mesaId);
   }catch(e){ erro(e); }
 }
 async function renderConvitesPendentes(mesaId){
