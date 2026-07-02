@@ -790,3 +790,18 @@ body.foco-lock{ overflow:hidden; }
 .pager{display:flex;align-items:center;justify-content:center;gap:14px;margin:18px 0 4px}
 .pager-inf{font-size:13px;color:var(--tinta2)}
 .pager .btn[disabled]{opacity:.45;cursor:default;pointer-events:none}
+
+/* ===== Meu Espaço — refinamento (menos ícones, hierarquia mais clara) ===== */
+.nav-hub{padding:8px 12px;font-size:15px;margin:2px 0 8px}
+.nav-hub iconify-icon{font-size:18px}
+.nav-mini{margin:0}
+.nav-div{height:0;border-top:1px solid var(--borda);margin:9px 6px;opacity:.8}
+/* sub-cabeçalhos sem ícone: leves, só rótulo + contagem + seta */
+.nav-subh{color:var(--ouro);font-size:11.5px}
+.nav-subh:hover{color:var(--sangue)}
+/* itens das listas pessoais: sem ícone repetido, com marcador discreto */
+.nav-subbody{border-left:2px solid var(--ouro);opacity:1;padding-left:6px;margin:2px 0 6px 6px}
+.nav-leaf{position:relative;padding-left:18px!important}
+.nav-leaf::before{content:"";position:absolute;left:6px;top:50%;width:5px;height:5px;margin-top:-2px;border-radius:50%;background:var(--ouro);opacity:.7}
+.nav-leaf.on::before{background:#fff}
+.nav-subbody a[onclick*="novo"], .nav-subbody a[onclick*="nova"]{color:var(--sangue);font-weight:600}

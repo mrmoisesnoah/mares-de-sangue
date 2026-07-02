@@ -203,27 +203,31 @@ function subgrp(key,label,corpo,n){
   return '<div class="nav-subgrp'+(col?' col':'')+'" data-sub="'+key+'"><div class="nav-subh" onclick="toggleSub(\''+key+'\')"><span class="sub-ar">▸</span><span class="sub-lb">'+label+'</span>'+badge+'</div><div class="nav-subbody">'+corpo+'</div></div>';
 }
 function toggleSub(key){ var el=document.querySelector('.nav-subgrp[data-sub="'+key+'"]'); if(!el)return; var col=el.classList.toggle("col"); try{ localStorage.setItem("mds_sub:"+key, col?"1":"0"); }catch(e){} }
-function linkMesaNav(m){ return '<a'+(S.view.arg===m.id&&S.view.t==="mesa"?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">'+ic("mesa")+' '+esc(m.nome)+'</a>'; }
+function linkMesaNav(m){ return '<a class="nav-leaf'+(S.view.arg===m.id&&S.view.t==="mesa"?' on':'')+'" onclick="go(\'mesa\',\''+m.id+'\')">'+esc(m.nome)+'</a>'; }
 function linkPessoal(){
   var t=S.view.t;
-  var out='<a class="nav-hub'+(t==="tudoMeu"?' on':'')+'" onclick="go(\'tudoMeu\')">'+ic("mestre")+' <span>TUDO MEU!</span></a>';
-  out+='<a'+(t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a>';
-  out+='<a'+(t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a>';
+  var hub='<a class="nav-hub'+(t==="tudoMeu"?' on':'')+'" onclick="go(\'tudoMeu\')">'+icon("backpack")+' <span>TUDO MEU!</span></a>';
+  var quick='<div class="nav-mini">'
+    +'<a'+(t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a>'
+    +'<a'+(t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a></div>';
+  var out=hub+quick;
   if(S.mundo){
     var mestro=S.mesas.filter(function(m){return mestreDe(m)||S.papelMesa[m.id]==="mestre";});
     var participo=S.mesas.filter(function(m){return souMembroMesa(m.id)&&!(mestreDe(m)||S.papelMesa[m.id]==="mestre");});
     var pers=S.meusPers||[];
-    if(mestro.length){ out+=subgrp("mestro", ic("mestre")+' Mesas que mestro', mestro.map(linkMesaNav).join(""), mestro.length); }
-    if(participo.length){ out+=subgrp("participo", ic("persMes")+' Mesas que participo', participo.map(linkMesaNav).join(""), participo.length); }
-    if(pers.length){ out+=subgrp("meuspers", ic("persJog")+' Meus personagens', pers.map(function(c){return '<a'+(S.view.arg===c.id&&S.view.t==="personagem"?' class="on"':'')+' onclick="go(\'personagem\',\''+c.id+'\')">'+ic("persJog")+' '+esc(c.nome)+'</a>';}).join(""), pers.length); }
+    var lists='';
+    if(mestro.length){ lists+=subgrp("mestro","Mesas que mestro", mestro.map(linkMesaNav).join(""), mestro.length); }
+    if(participo.length){ lists+=subgrp("participo","Mesas que participo", participo.map(linkMesaNav).join(""), participo.length); }
+    if(pers.length){ lists+=subgrp("meuspers","Meus personagens", pers.map(function(c){return '<a class="nav-leaf'+(S.view.arg===c.id&&S.view.t==="personagem"?' on':'')+'" onclick="go(\'personagem\',\''+c.id+'\')">'+esc(c.nome)+'</a>';}).join(""), pers.length); }
     var criar='<a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a>'
       +'<a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a>'
       +'<a onclick="go(\'novoJornal\')">+ Jornal</a>'
       +'<a onclick="go(\'novaMesa\')">+ Mesa</a>'
       +'<a onclick="go(\'novoMundo\')">+ Criar mundo</a>';
-    out+=subgrp("criar", icon("quill-ink")+' Criar', criar);
+    lists+=subgrp("criar","Criar", criar);
+    out+='<div class="nav-div"></div>'+lists;
   } else {
-    out+=subgrp("criar", icon("quill-ink")+' Criar', '<a onclick="go(\'novoMundo\')">+ Criar mundo</a>');
+    out+='<div class="nav-div"></div>'+subgrp("criar","Criar",'<a onclick="go(\'novoMundo\')">+ Criar mundo</a>');
   }
   return out;
 }
