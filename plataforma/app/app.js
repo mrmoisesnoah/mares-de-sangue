@@ -1,6 +1,6 @@
 var sb = supabase.createClient(window.SUPA.url, window.SUPA.anon);
 var app = document.getElementById("app");
-var S = { user:null, profile:null, mundo:null, mundos:[], mesas:[], view:{t:"home"}, msg:"", pubAtual:null, nomes:{}, tags:{}, papelMesa:{},
+var S = { user:null, profile:null, mundo:null, mundos:[], mesas:[], view:{t:"home"}, msg:"", pubAtual:null, nomes:{}, tags:{}, papelMesa:{}, meusPers:[],
           expl:{pubs:[],q:"",cat:null}, modo:(localStorage.getItem("mds_modo")||"cards") };
 
 function esc(s){ s=(s==null?"":""+s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
@@ -160,7 +160,7 @@ async function carregarPublico(){
 }
 function mundoSalvo(){ try{ var id=localStorage.getItem("mds_mundo"); return id?S.mundos.find(function(w){return w.id===id;}):null; }catch(e){ return null; } }
 async function selecionarMundo(id){ S.mundo=S.mundos.find(function(w){return w.id===id;})||S.mundo; try{localStorage.setItem("mds_mundo",id);}catch(e){} await carregarMesas(); await carregarFavs(); go("mundoHome"); }
-async function carregarMesas(){ var r=await sb.from("mesas").select("*").eq("mundo_id",S.mundo.id).order("criado_em"); S.mesas=r.error?[]:(r.data||[]); }
+async function carregarMesas(){ var r=await sb.from("mesas").select("*").eq("mundo_id",S.mundo.id).order("criado_em"); S.mesas=r.error?[]:(r.data||[]); try{ S.meusPers=await meusPersonagens(); }catch(e){ S.meusPers=[]; } }
 async function carregarMinhasMesas(){ S.papelMesa={}; if(!S.user)return; try{ var r=await sb.from("mesa_membros").select("mesa_id,papel").eq("user_id",S.user.id); (r.data||[]).forEach(function(x){ S.papelMesa[x.mesa_id]=x.papel; }); }catch(e){} }
 function souMembroMesa(id){ return !!(S.papelMesa&&S.papelMesa[id]); }
 async function focarMundoDeConteudo(mundoId){ if(!mundoId)return false; if(S.mundo&&S.mundo.id===mundoId)return false; var w=(S.mundos||[]).find(function(x){return x.id===mundoId;}); if(!w)return false; S.mundo=w; try{localStorage.setItem("mds_mundo",mundoId);}catch(e){} aplicarTema(w.tema||"medieval"); await carregarMesas(); await carregarFavs(); return true; }
@@ -196,18 +196,35 @@ function telaLogin(novo){
 }
 function grp(key,titulo,corpo){ var col=false; try{ col=localStorage.getItem("mds_grp:"+key)==="1"; }catch(e){} return '<div class="nav-grp'+(col?' col':'')+'" data-grp="'+key+'"><h4 class="nav-h4" onclick="toggleGrp(\''+key+'\')">'+titulo+'<span class="grp-ar">▾</span></h4><div class="nav-grp-body">'+corpo+'</div></div>'; }
 function toggleGrp(key){ var el=document.querySelector('.nav-grp[data-grp="'+key+'"]'); if(!el)return; var col=el.classList.toggle("col"); try{ localStorage.setItem("mds_grp:"+key, col?"1":"0"); }catch(e){} }
+function subgrp(key,label,corpo,n){
+  var saved=null; try{ saved=localStorage.getItem("mds_sub:"+key); }catch(e){}
+  var col = (saved===null) ? true : (saved==="1");   // colapsado por padrão (compacto)
+  var badge=(n!=null)?'<span class="nav-count">'+n+'</span>':'';
+  return '<div class="nav-subgrp'+(col?' col':'')+'" data-sub="'+key+'"><div class="nav-subh" onclick="toggleSub(\''+key+'\')"><span class="sub-ar">▸</span><span class="sub-lb">'+label+'</span>'+badge+'</div><div class="nav-subbody">'+corpo+'</div></div>';
+}
+function toggleSub(key){ var el=document.querySelector('.nav-subgrp[data-sub="'+key+'"]'); if(!el)return; var col=el.classList.toggle("col"); try{ localStorage.setItem("mds_sub:"+key, col?"1":"0"); }catch(e){} }
+function linkMesaNav(m){ return '<a'+(S.view.arg===m.id&&S.view.t==="mesa"?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">'+ic("mesa")+' '+esc(m.nome)+'</a>'; }
 function linkPessoal(){
   var t=S.view.t;
-  var out='<a'+(t==="tudoMeu"?' class="on"':'')+' onclick="go(\'tudoMeu\')">'+ic("mestre")+' TUDO MEU!</a>';
+  var out='<a class="nav-hub'+(t==="tudoMeu"?' on':'')+'" onclick="go(\'tudoMeu\')">'+ic("mestre")+' <span>TUDO MEU!</span></a>';
   out+='<a'+(t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a>';
   out+='<a'+(t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a>';
   if(S.mundo){
-    out+='<a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a>';
-    out+='<a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a>';
-    out+='<a onclick="go(\'novoJornal\')">+ Jornal</a>';
-    out+='<a onclick="go(\'novaMesa\')">+ Mesa</a>';
+    var mestro=S.mesas.filter(function(m){return mestreDe(m)||S.papelMesa[m.id]==="mestre";});
+    var participo=S.mesas.filter(function(m){return souMembroMesa(m.id)&&!(mestreDe(m)||S.papelMesa[m.id]==="mestre");});
+    var pers=S.meusPers||[];
+    if(mestro.length){ out+=subgrp("mestro", ic("mestre")+' Mesas que mestro', mestro.map(linkMesaNav).join(""), mestro.length); }
+    if(participo.length){ out+=subgrp("participo", ic("persMes")+' Mesas que participo', participo.map(linkMesaNav).join(""), participo.length); }
+    if(pers.length){ out+=subgrp("meuspers", ic("persJog")+' Meus personagens', pers.map(function(c){return '<a'+(S.view.arg===c.id&&S.view.t==="personagem"?' class="on"':'')+' onclick="go(\'personagem\',\''+c.id+'\')">'+ic("persJog")+' '+esc(c.nome)+'</a>';}).join(""), pers.length); }
+    var criar='<a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a>'
+      +'<a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a>'
+      +'<a onclick="go(\'novoJornal\')">+ Jornal</a>'
+      +'<a onclick="go(\'novaMesa\')">+ Mesa</a>'
+      +'<a onclick="go(\'novoMundo\')">+ Criar mundo</a>';
+    out+=subgrp("criar", icon("quill-ink")+' Criar', criar);
+  } else {
+    out+=subgrp("criar", icon("quill-ink")+' Criar', '<a onclick="go(\'novoMundo\')">+ Criar mundo</a>');
   }
-  out+='<a onclick="go(\'novoMundo\')">+ Criar mundo</a>';
   return out;
 }
 function sidebar(){
@@ -284,6 +301,8 @@ async function telaTudoMeu(){
   var sel=S.mundos.length?'<div class="tm-worldsel"><label>Mundo em foco:</label><select onchange="trocarMundoTudoMeu(this.value)">'+S.mundos.map(function(w){return '<option value="'+esc(w.id)+'"'+(S.mundo&&w.id===S.mundo.id?' selected':'')+'>'+esc(w.nome)+'</option>';}).join("")+'</select></div>':'';
   var rec=await visitasValidas();
   var recHtml=rec.length?'<h2>↩ Continuar de onde parou</h2><p class="vis-leg" style="margin-top:-6px">De todos os seus mundos.</p><div class="cards">'+rec.map(function(v){return cardVisita(v,true);}).join("")+'</div>':'';
+  var _favr=await sb.from("favoritos").select("*").order("criado_em",{ascending:false}); var favRows=(_favr&&!_favr.error&&_favr.data)?_favr.data:[];
+  var favHtml=favRows.length?'<h2>'+ic("fav")+' Meus favoritos</h2><p class="vis-leg" style="margin-top:-6px">De todos os seus mundos.</p><div class="cards">'+favRows.map(cardFav).join("")+'</div>':'';
   var corpo='';
   if(S.mundo){
     var mestro=S.mesas.filter(function(m){return mestreDe(m)||S.papelMesa[m.id]==="mestre";});
@@ -296,16 +315,18 @@ async function telaTudoMeu(){
       +'<a class="btn sec" onclick="go(\'novoMundo\')">+ Mundo</a></div>';
     var secMestro='<h2>'+ic("mestre")+' Mesas que eu mestro</h2>'+(mestro.length?'<div class="cards">'+mestro.map(cardMesa).join("")+'</div>':'<div class="empty">Você não mestra nenhuma mesa neste mundo.</div>');
     var secPart='<h2>'+ic("persJog")+' Mesas que eu participo</h2>'+(participo.length?'<div class="cards">'+participo.map(cardMesa).join("")+'</div>':'<div class="empty">Você não participa de nenhuma mesa neste mundo como jogador.</div>');
+    var meusPers=(await personagensMundo()).filter(function(c){return c.jogador_id===S.user.id;});
+    var persHtml='<h2>'+ic("persJog")+' Meus personagens</h2>'+(meusPers.length?gridPersRound(meusPers):'<div class="empty">Você não tem personagens neste mundo.</div>');
     var mr=await meusRascunhos(); var lr=rascunhosLocais();
     var rasHtml='<h2>'+icon("quill-ink")+' Meus rascunhos</h2>'+((mr.length+lr.length)?'<div class="cards">'
        +mr.map(function(p){return '<div class="card clic" onclick="go(\'editar\',\''+p.id+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(p.titulo||"(sem título)")+'</h3><p class="res">rascunho · '+esc(p.tipo||"")+'</p></div>';}).join("")
        +lr.map(function(d){return '<div class="card clic" onclick="resumirRascunhoLocal(\''+d.hash+'\',\''+d.key+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(trechoHtml(d.html)||"(rascunho)")+'</h3><p class="res">não salvo neste navegador</p></div>';}).join("")
        +'</div>':'<div class="empty">Nenhum rascunho neste mundo.</div>');
-    corpo=criar+secMestro+secPart+rasHtml;
+    corpo=criar+secMestro+secPart+persHtml+rasHtml;
   } else {
     corpo='<div class="empty">Selecione ou crie um mundo para ver e criar conteúdo. <a onclick="go(\'novoMundo\')">+ Criar mundo</a></div>';
   }
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › TUDO MEU!</div>'+head+sel+recHtml+corpo);
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › TUDO MEU!</div>'+head+sel+recHtml+favHtml+corpo);
 }
 function botoesCriarMundo(){ if(!S.user) return '<a class="btn" onclick="go(\'login\')">Entrar para criar</a>'; return '<a class="btn" onclick="go(\'novaMesa\')">+ Criar Mesa</a> <a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:null})">+ Criar Personagem</a>'; }
 async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>Carregando…</p>');
@@ -1146,6 +1167,15 @@ function cardVisita(v, mostrarMundo){
   var selo=(mostrarMundo&&v.mundoNome)?'<span class="rec-mundo">'+icon("castle")+' '+esc(v.mundoNome)+'</span>':'';
   return '<div class="card clic" onclick="go(\''+rta+'\',\''+v.id+'\')"><div class="dash-ic">'+ica+'</div>'+selo+'<h3>'+esc(v.titulo||"(sem título)")+'</h3><p class="res">'+esc(v.tipo)+'</p></div>';
 }
+function cardFav(f){
+  var rt={mesa:"mesa",publicacao:"pub",personagem:"personagem",jornal:"jornal"};
+  var ico={mesa:icon("crossed-swords"),publicacao:icon("book-cover"),personagem:icon("hooded-figure"),jornal:icon("scroll-unfurled"),mundo:icon("castle")};
+  var alvo=rt[f.tipo];
+  var acao=alvo?"go('"+alvo+"','"+f.alvo_id+"')":"selecionarMundo('"+f.alvo_id+"')";
+  var wn=nomeMundo(f.mundo_id);
+  var selo=(f.tipo!=="mundo"&&wn)?'<span class="rec-mundo">'+icon("castle")+' '+esc(wn)+'</span>':'';
+  return '<div class="card clic" onclick="'+acao+'"><div class="dash-ic">'+(ico[f.tipo]||icon("round-star"))+'</div>'+selo+'<h3>'+esc(f.titulo||"(sem título)")+'</h3><p class="res">'+esc(f.tipo)+'</p></div>';
+}
 // Valida os itens de "continuar de onde parou" contra o banco (existe? não é rascunho?) e poda o localStorage.
 async function visitasValidas(mundoId){
   var arr; try{ arr=JSON.parse(localStorage.getItem("mds_recent")||"[]"); }catch(e){ arr=[]; }
@@ -1242,21 +1272,22 @@ function seletorTema(inputId,atual){ atual=atual||"medieval"; var temas=[["medie
 function guiaCard(ic,tit,txt){ return '<div class="guia-card"><div class="gc-ic">'+ic+'</div><h3>'+tit+'</h3><p>'+txt+'</p></div>'; }
 function telaGuia(){ layout(
  '<div class="bread"><a onclick="go(\'home\')">Início</a> › Guia de uso</div>'
- +hero("Guia de Uso","Aprenda a usar a plataforma — um guia rápido para mestres e jogadores", (S.mundo?S.mundo.fundo_url:null), "", icon("open-book"))
- +'<div class="secao"><div class="sec-head"><h2>① Primeiros passos</h2></div>'
+ +hero("Guia de Uso","O essencial para começar — o resto você descobre explorando", (S.mundo?S.mundo.fundo_url:null), "", icon("open-book"))
+ +'<div class="secao"><div class="sec-head"><h2>① Comece por aqui</h2></div>'
  +'<div class="guia-passos">'
-   +'<div class="gp"><span class="gp-n">1</span><div><b>Entrar</b><p>Crie sua conta ou entre. Sem conta você explora o conteúdo público; com conta você cria, comenta e favorita.</p></div></div>'
-   +'<div class="gp"><span class="gp-n">2</span><div><b>Escolher um mundo</b><p>Na Home, clique no card de um mundo para entrar nele.</p></div></div>'
-   +'<div class="gp"><span class="gp-n">3</span><div><b>Navegar</b><p>Pela barra lateral: Enciclopédia, Linha do tempo, Personagens, Jornais e Mapas. No topo, 🔎 busca e ☰/▦ alterna lista/cards.</p></div></div>'
+   +'<div class="gp"><span class="gp-n">1</span><div><b>Entre</b><p>Sem conta você explora o conteúdo público. Com conta você cria, comenta e favorita.</p></div></div>'
+   +'<div class="gp"><span class="gp-n">2</span><div><b>Escolha um mundo</b><p>Na Home, clique no card de um mundo para entrar. Troque de mundo quando quiser pela pílula no topo.</p></div></div>'
+   +'<div class="gp"><span class="gp-n">3</span><div><b>Explore</b><p>Na barra lateral, abra as seções (elas <b>recolhem/expandem</b>): <b>Explorar</b> (Enciclopédia, Mapas, Jornais, Linha do tempo, Personagens) e <b>Mesas do Mundo</b>. No topo há 🔎 busca e ☰/▦ para alternar lista/cards.</p></div></div>'
+   +'<div class="gp"><span class="gp-n">4</span><div><b>Abra o «TUDO MEU!»</b><p>É o seu painel pessoal (seção <b>Meu Espaço</b> na lateral): reúne suas mesas, seus personagens, rascunhos, favoritos e todos os botões de <b>criar</b>. Comece por aqui para produzir conteúdo.</p></div></div>'
  +'</div></div>'
  +'<div class="secao"><div class="sec-head"><h2>② O que dá para fazer</h2></div>'
  +'<div class="guia">'
-   +guiaCard("📝","Criar conteúdo","Escreva em <b>Markdown</b> (com barra de formatação e pré-visualização), cole imagens, anexe arquivos e use <code>[[Links]]</code> entre artigos.")
-   +guiaCard("🧝","Personagens & Fichas","Crie personagens com foto e história. Disponibilize a <b>ficha</b> em texto ou anexando o <b>PDF</b> — com visibilidade própria.")
-   +guiaCard("⚔","Mesas & Mestre","Cada campanha tem personagens, mapas, sessões e linha do tempo próprios. O mestre organiza tudo na <b>Área do Mestre</b>.")
-   +guiaCard("📰","Jornais & Linha do tempo","Publique notícias em jornais do mundo e registre a cronologia na linha do tempo, com eventos ligados aos artigos.")
-   +guiaCard("★","Favoritos","Salve conteúdos para acesso rápido pelo atalho <b>★ Favoritos</b> na lateral.")
-   +guiaCard("💬","Comentários & 🔔 Avisos","Comente em conteúdos; o <b>sino</b> avisa quando alguém comenta no seu conteúdo ou pede acesso.")
+   +guiaCard(ic("mestre"),"TUDO MEU! — seu painel","Seu ponto de partida: escolha o <b>mundo em foco</b>, veja <b>mesas que mestra/participa</b>, <b>seus personagens</b>, <b>rascunhos</b>, <b>favoritos</b> e continue de onde parou.")
+   +guiaCard("📝","Criar conteúdo","Escreva com o <b>editor</b> (negrito, títulos, listas), cole imagens e use <code>[[Links]]</code> entre artigos. O que fica pela metade vira <b>rascunho</b> automaticamente.")
+   +guiaCard("🧝","Personagens & Fichas","Crie personagens com foto e história e disponibilize a <b>ficha</b> (texto ou <b>PDF</b>), com visibilidade própria.")
+   +guiaCard("⚔","Mesas & Mestre","Cada campanha tem personagens, mapas, sessões e mural próprios. O mestre organiza os bastidores na <b>Área do Mestre</b> da mesa e convida jogadores.")
+   +guiaCard("📰","Jornais & Linha do tempo","Publique notícias em jornais do mundo e registre a cronologia na linha do tempo.")
+   +guiaCard("★","Favoritos & 🔔 Avisos","Salve conteúdos nos <b>Favoritos</b> e acompanhe o <b>sino</b>: avisa comentários, convites e pedidos de acesso.")
  +'</div></div>'
  +'<div class="secao"><div class="sec-head"><h2>③ Visibilidade — o segredo do mestre</h2></div>'
  +'<div class="guia-vis"><p>Todo conteúdo tem um <b>estado</b> e uma <b>visibilidade</b>. É assim que você prepara segredos e revela na hora certa:</p>'
@@ -1267,10 +1298,10 @@ function telaGuia(){ layout(
    +'<div class="gv-row">'+visChip("mestre")+'<span>bastidores — só o mestre da mesa</span></div>'
  +'</div></div>'
  +'<div class="secao"><div class="sec-head"><h2>④ Temas do mundo</h2></div>'
- +'<p class="guia-p">Ao <b>criar ou editar um mundo</b>, escolha um tema visual que muda cores, fontes e ícones do site: <b>Medieval, Horror, Lovecraft, Anos 80, Sci-fi</b> ou <b>Samurai</b>. Cada mundo guarda o seu.</p></div>'
+ +'<p class="guia-p">Ao <b>criar ou editar um mundo</b>, escolha um tema visual que muda cores, fontes e ícones: <b>Medieval, Horror, Lovecraft, Anos 80, Sci-fi</b> ou <b>Samurai</b>. Cada mundo guarda o seu.</p></div>'
  +'<div class="guia-dicas">'
-   +'<div class="gd"><h3>'+icon("drama-masks")+' Para mestres</h3><p>Prepare segredos em <b>rascunho</b> ou visibilidade <b>só mestre</b>; quando for a hora, troque para <b>público/mesa</b>. Use a <b>linha do tempo da mesa</b> e as <b>sessões</b> para registrar o que aconteceu e distribuir <b>recompensas</b> (XP, itens).</p></div>'
-   +'<div class="gd"><h3>🧝 Para jogadores</h3><p>Mantenha a página do seu personagem viva: adicione <b>histórias</b> e disponibilize sua <b>ficha</b>. <b>Comente</b> e <b>favorite</b> o que achar importante. Contribua com o mundo!</p></div>'
+   +'<div class="gd"><h3>'+icon("drama-masks")+' Para mestres</h3><p>Prepare segredos em <b>rascunho</b> ou visibilidade <b>só mestre</b> e revele trocando para <b>público/mesa</b>. Use <b>sessões</b> para registrar o jogo e distribuir <b>recompensas</b> (XP, itens); convide jogadores em <b>Jogadores da Mesa</b>.</p></div>'
+   +'<div class="gd"><h3>🧝 Para jogadores</h3><p>Mantenha seu personagem vivo com <b>histórias</b> e <b>ficha</b>. <b>Comente</b> e <b>favorite</b> o que importa. Aceite convites pelo <b>sino</b> ou em <b>Meus convites</b>.</p></div>'
  +'</div>'
  +'<p class="guia-cta"><a class="btn" onclick="go(\'home\')">Começar a explorar →</a></p>'
  ); }
