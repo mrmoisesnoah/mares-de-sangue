@@ -832,3 +832,25 @@ body.foco-lock{ overflow:hidden; }
 .autor-stat b{font-family:var(--font-head);font-size:23px;color:var(--sangue);line-height:1}
 .autor-stat span{font-size:11.5px;color:var(--tinta2);text-transform:uppercase;letter-spacing:.4px}
 .autor-criar{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 14px}
+
+/* Lateral — listas em texto limpo (miniaturas removidas p/ legibilidade e performance) */
+.nav-thumb,.nav-thumb-ph{display:none!important}
+.nav-leaf{display:block!important;padding:5px 10px!important}
+.nav-leaf::before{display:none!important}
+.nav-leaf-tx{all:unset}
+/* itens de "Criar" com aparência calma (sem tudo vermelho/negrito) */
+.nav-subbody a[onclick*="novo"], .nav-subbody a[onclick*="nova"]{color:var(--tinta2);font-weight:400}
+.nav-subbody a[onclick*="novo"]:hover, .nav-subbody a[onclick*="nova"]:hover{color:var(--sangue)}
+.nav-subbody{margin:2px 0 8px 8px}
+
+/* ===== Abas reutilizáveis (padrão do site) ===== */
+.abas{display:flex;flex-wrap:wrap;gap:2px;margin:16px 0 0;border-bottom:2px solid var(--borda);overflow-x:auto}
+.aba-btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:9px 16px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--tinta2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer;transition:color .12s}
+.aba-btn iconify-icon{font-size:17px}
+.aba-btn:hover{color:var(--sangue)}
+.aba-btn.on{color:var(--sangue);border-bottom-color:var(--sangue)}
+.aba-badge{background:var(--ouro);color:#3a2b12;font-size:11px;font-weight:700;border-radius:999px;padding:0 7px;min-width:18px;text-align:center}
+.aba-panels{padding-top:4px}
+.aba-panel{display:none}
+.aba-panel.on{display:block;animation:abaIn .18s ease}
+@keyframes abaIn{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
