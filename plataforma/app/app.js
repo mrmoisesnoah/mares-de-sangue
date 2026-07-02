@@ -1,7 +1,7 @@
 var sb = supabase.createClient(window.SUPA.url, window.SUPA.anon);
 var app = document.getElementById("app");
 var S = { user:null, profile:null, mundo:null, mundos:[], mesas:[], view:{t:"home"}, msg:"", pubAtual:null, nomes:{}, tags:{}, papelMesa:{}, meusPers:[],
-          expl:{pubs:[],q:"",cat:null}, modo:(localStorage.getItem("mds_modo")||"cards") };
+          expl:{pubs:[],q:"",cat:null}, persView:{q:"",tipo:"todos",page:0,_arg:undefined}, modo:(localStorage.getItem("mds_modo")||"cards") };
 
 function esc(s){ s=(s==null?"":""+s); return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
 function slug(s){ return (s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/[^\w\s-]/g,"").trim().replace(/[\s_-]+/g,"-")||("item-"+Date.now()); }
@@ -244,8 +244,7 @@ function sidebar(){
       +'<a'+on("mapas")+' onclick="go(\'mapas\')">'+ic("mapas")+' Mapas</a>'
       +'<a'+on("jornais")+' onclick="go(\'jornais\')">'+ic("jornais")+' Jornais</a>'
       +'<a'+(S.view.t==="linha"&&!S.view.arg?' class="on"':'')+' onclick="go(\'linha\')">'+ic("linha")+' Linha do tempo</a>'
-      +'<a onclick="go(\'pers\',\'jog\')">'+ic("persJog")+' Personagens dos Jogadores</a>'
-      +'<a onclick="go(\'pers\',\'mes\')">'+ic("persMes")+' Personagens do Mestre</a>';
+      +'<a'+(S.view.t==="pers"?' class="on"':'')+' onclick="go(\'pers\')">'+ic("persJog")+' Personagens</a>';
     nav+=grp("explorar", ic("enc")+' Explorar', expl);
     if(S.mesas.length){ nav+=grp("mesas", ic("mesa")+' Mesas do Mundo', S.mesas.map(function(m){return '<a'+(S.view.arg===m.id&&(S.view.t==="mesa"||S.view.t==="linha")?' class="on"':'')+' onclick="go(\'mesa\',\''+m.id+'\')">'+ic("mesa")+' '+esc(m.nome)+'</a>';}).join("")); }
     if(S.user){ nav+=grp("pessoal", ic("mestre")+' Meu Espaço', linkPessoal()); }
@@ -315,7 +314,7 @@ async function telaTudoMeu(){
       +'<a class="btn sec" onclick="go(\'novoMundo\')">+ Mundo</a></div>';
     var secMestro='<h2>'+ic("mestre")+' Mesas que eu mestro</h2>'+(mestro.length?'<div class="cards">'+mestro.map(cardMesa).join("")+'</div>':'<div class="empty">Você não mestra nenhuma mesa neste mundo.</div>');
     var secPart='<h2>'+ic("persJog")+' Mesas que eu participo</h2>'+(participo.length?'<div class="cards">'+participo.map(cardMesa).join("")+'</div>':'<div class="empty">Você não participa de nenhuma mesa neste mundo como jogador.</div>');
-    var meusPers=(await personagensMundo()).filter(function(c){return c.jogador_id===S.user.id;});
+    var _mp=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); var meusPers=(_mp&&!_mp.error&&_mp.data)?_mp.data:[];
     var persHtml='<h2>'+ic("persJog")+' Meus personagens</h2>'+(meusPers.length?gridPersRound(meusPers):'<div class="empty">Você não tem personagens neste mundo.</div>');
     var mr=await meusRascunhos(); var lr=rascunhosLocais();
     var rasHtml='<h2>'+icon("quill-ink")+' Meus rascunhos</h2>'+((mr.length+lr.length)?'<div class="cards">'
@@ -341,7 +340,7 @@ async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>C
     +(S.user&&!donoMundo()?'<p><a class="btn sec" onclick="pedirAcesso(\'mundo\',\''+S.mundo.id+'\')">🔑 Pedir acesso para colaborar</a></p>':'')+'<h2>Explorar o mundo</h2><div class="cards">'
       +dcard(ic("enc"),"Enciclopédia","Conhecimento público do mundo","go(\'lore\')")
       +dcard(ic("linha"),"Linha do tempo","A cronologia dos acontecimentos","go(\'linha\')")
-      +dcard(ic("persJog"),"Personagens","Heróis, NPCs e histórias","go(\'pers\',\'jog\')")
+      +dcard(ic("persJog"),"Personagens","Heróis, NPCs e histórias","go(\'pers\')")
       +dcard(ic("jornais"),"Jornais","Periódicos e notícias","go(\'jornais\')")
       +dcard(ic("mapas"),"Mapas","Cartografia do cenário","go(\'mapas\')")
       +dcard(ic("buscar"),"Buscar","Procurar em tudo","go(\'busca\',\'\')")
@@ -362,14 +361,43 @@ async function telaMapas(){ if(!S.mundo){go("mundos");return;} layout('<p>Carreg
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mapas</div><h1>'+icon("treasure-map")+' Mapas</h1>'
     +(S.user?'<p><a class="btn" onclick="go(\'nova\',{mesa:null,tipo:\'mapa\'})">+ Novo mapa</a></p>':'')
     +(mp.length?gridMapas(mp):'<div class="empty">Nenhum mapa visível ainda.</div>')); }
-async function telaPers(qual){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>');
-  var todos=await personagensMundo(); var dono=S.mundo.dono_id;
-  var lista=(qual==="mes")?todos.filter(function(c){return c.tipo==="npc";}):todos.filter(function(c){return c.tipo!=="npc";});
-  var titulo=(qual==="mes")?icon("drama-masks")+" Personagens do Mestre (NPCs)":icon("person")+" Personagens dos Jogadores";
-  var criar=S.user?'<p><a class="btn" onclick="go(\'novoPersonagem\',{mesa:null,tp:\''+(qual==="mes"?"npc":"jogador")+'\'})">+ Novo '+(qual==="mes"?"NPC":"personagem")+'</a></p>':'';
-  var cards=lista.length?gridPersRound(lista):'<div class="empty">Nenhum personagem ainda.</div>';
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Personagens</div><h1>'+titulo+'</h1>'
-    +'<p class="vis-leg">Clique num personagem para ver o perfil e todo o conteúdo ligado a ele.</p>'+criar+cards); }
+async function telaPers(arg){
+  if(!S.mundo){go("mundos");return;}
+  S.persView=S.persView||{q:"",tipo:"todos",page:0,_arg:undefined};
+  if(arg!==S.persView._arg){ S.persView.tipo=(arg==="mes")?"npc":(arg==="jog")?"jogadores":"todos"; S.persView.q=""; S.persView.page=0; S.persView._arg=arg; }
+  var pv=S.persView;
+  var chip=function(key,label){ return '<button class="pers-chip'+(pv.tipo===key?' on':'')+'" onclick="persFiltro(\''+key+'\')">'+label+'</button>'; };
+  var toolbar='<div class="pers-toolbar"><input class="pers-q" id="persq" placeholder="🔎 Buscar por nome ou epíteto…" value="'+esc(pv.q)+'" oninput="persBusca(this.value)"><div class="pers-chips">'
+    +chip("todos","✦ Todos")+chip("jogadores",icon("hooded-figure")+' Jogadores')+chip("npc",icon("drama-masks")+' NPCs (Mestre)')+'</div></div>';
+  var criar=S.user?'<p><a class="btn" onclick="go(\'novoPersonagem\',{mesa:null,tp:\''+(pv.tipo==="npc"?"npc":"jogador")+'\'})">+ Novo '+(pv.tipo==="npc"?"NPC":"personagem")+'</a></p>':'';
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Personagens</div><h1>'+icon("person")+' Personagens</h1>'
+    +'<p class="vis-leg">Busque pelo nome, filtre por tipo e clique num personagem para ver o perfil.</p>'+criar+toolbar+'<div id="pers-res"><p>Carregando…</p></div>');
+  renderPersRes();
+}
+async function buscarPersonagens(){
+  var pv=S.persView, size=24, from=pv.page*size, to=from+size-1;
+  var q=sb.from("personagens").select("*",{count:"exact"}).eq("mundo_id",S.mundo.id);
+  if(pv.tipo==="npc") q=q.eq("tipo","npc"); else if(pv.tipo==="jogadores") q=q.neq("tipo","npc");
+  var termo=(pv.q||"").trim().replace(/[,%()]/g,"");
+  if(termo){ q=q.or("nome.ilike.%"+termo+"%,epiteto.ilike.%"+termo+"%"); }
+  var r=await q.order("nome").range(from,to);
+  return { rows:r.error?[]:(r.data||[]), total:(r.count!=null?r.count:0) };
+}
+async function renderPersRes(){
+  var box=document.getElementById("pers-res"); if(!box)return;
+  var res; try{ res=await buscarPersonagens(); }catch(e){ box.innerHTML='<div class="empty">Erro ao buscar. Tente novamente.</div>'; return; }
+  var pv=S.persView, size=24, rows=res.rows, total=res.total, pages=Math.max(1,Math.ceil(total/size));
+  if(pv.page>0 && !rows.length){ pv.page=0; return renderPersRes(); }
+  if(!rows.length){ box.innerHTML='<div class="empty">Nenhum personagem'+(pv.q?' para "'+esc(pv.q)+'"':'')+'.</div>'; return; }
+  var ini=pv.page*size+1, fim=pv.page*size+rows.length;
+  var pager=(pages>1)
+    ? '<div class="pager"><button class="btn sec mini"'+(pv.page<=0?' disabled':'')+' onclick="persPagina(-1)">‹ Anterior</button><span class="pager-inf">'+ini+'–'+fim+' de '+total+'</span><button class="btn sec mini"'+(pv.page>=pages-1?' disabled':'')+' onclick="persPagina(1)">Próxima ›</button></div>'
+    : '<p class="vis-leg" style="text-align:center;margin-top:10px">'+total+' personagem'+(total===1?'':'s')+'</p>';
+  box.innerHTML=gridPersRound(rows)+pager;
+}
+function persBusca(v){ S.persView.q=v; S.persView.page=0; clearTimeout(window.__persT); window.__persT=setTimeout(renderPersRes,300); }
+function persFiltro(t){ if(S.persView.tipo===t)return; S.persView.tipo=t; S.persView.page=0; telaPers(S.persView._arg); }
+function persPagina(d){ S.persView.page=Math.max(0,S.persView.page+d); window.scrollTo(0,0); renderPersRes(); }
 async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.find(function(m){return m.id===id;});
   if(!mesa){ var _mf=await sb.from("mesas").select("*").eq("id",id).maybeSingle(); mesa=(_mf&&_mf.data)?_mf.data:null; }
   if(!mesa){ layout('<div class="aviso">Mesa não encontrada (ou você não é membro).</div>'); return; } await focarMundoDeConteudo(mesa.mundo_id); registrarVisita("mesa",id,mesa.nome,mesa.mundo_id);
