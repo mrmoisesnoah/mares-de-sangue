@@ -279,19 +279,32 @@ function layout(conteudo){
 function abas(gid, defs){
   defs=(defs||[]).filter(function(d){return d && d.html;});
   if(!defs.length) return "";
-  if(defs.length===1) return '<div class="aba-panels"><div class="aba-panel on">'+defs[0].html+'</div></div>';
-  var saved=null; try{ saved=localStorage.getItem("mds_aba:"+gid); }catch(e){}
-  var active=(saved && defs.some(function(d){return d.key===saved;}))?saved:defs[0].key;
-  var bar='<div class="abas" data-abas="'+gid+'" role="tablist">'+defs.map(function(d){
+  var single=(defs.length===1);
+  var saved=null; try{ if(!single) saved=localStorage.getItem("mds_aba:"+gid); }catch(e){}
+  var active=(!single && saved && defs.some(function(d){return d.key===saved;}))?saved:defs[0].key;
+  if(!S.__abas) S.__abas={};
+  S.__abas[gid]={defs:defs, done:{}};
+  function ph(d){ return (typeof d.html==="function")?d.html():d.html; }
+  var bar=single?"":'<div class="abas" data-abas="'+gid+'" role="tablist">'+defs.map(function(d){
     return '<button class="aba-btn'+(d.key===active?' on':'')+'" role="tab" aria-selected="'+(d.key===active?'true':'false')+'" data-aba="'+d.key+'" onclick="abaIr(\''+gid+'\',\''+d.key+'\')">'+d.label+(d.badge!=null&&d.badge!==""?' <span class="aba-badge">'+d.badge+'</span>':'')+'</button>';
   }).join("")+'</div>';
   var panels='<div class="aba-panels">'+defs.map(function(d){
-    return '<div class="aba-panel'+(d.key===active?' on':'')+'" data-abap="'+gid+'-'+d.key+'" role="tabpanel">'+d.html+'</div>';
+    var on=(d.key===active);
+    if(on) S.__abas[gid].done[d.key]=true;
+    return '<div class="aba-panel'+(on?' on':'')+'" data-abap="'+gid+'-'+d.key+'" role="tabpanel">'+(on?ph(d):'')+'</div>';
   }).join("")+'</div>';
+  setTimeout(function(){ abaRunAfter(gid, active); }, 0);
   return bar+panels;
 }
+function abaRunAfter(gid,key){ var reg=S.__abas&&S.__abas[gid]; if(!reg)return; var d=(reg.defs||[]).find(function(x){return x.key===key;}); if(d&&typeof d.after==="function"){ try{ d.after(); }catch(e){} } }
 function abaIr(gid,key){
   try{ localStorage.setItem("mds_aba:"+gid,key); }catch(e){}
+  var reg=S.__abas&&S.__abas[gid];
+  if(reg && !reg.done[key]){
+    var d=(reg.defs||[]).find(function(x){return x.key===key;});
+    var panel=document.querySelector('[data-abap="'+gid+'-'+key+'"]');
+    if(d&&panel){ panel.innerHTML=(typeof d.html==="function")?d.html():d.html; reg.done[key]=true; abaRunAfter(gid,key); }
+  }
   var bar=document.querySelector('.abas[data-abas="'+gid+'"]');
   if(bar){ var bs=bar.querySelectorAll('.aba-btn'); for(var i=0;i<bs.length;i++){ var on=bs[i].getAttribute('data-aba')===key; bs[i].classList.toggle('on',on); bs[i].setAttribute('aria-selected',on?'true':'false'); } }
   var ps=document.querySelectorAll('[data-abap^="'+gid+'-"]');
@@ -481,9 +494,9 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
     {key:"pers",label:icon("hooded-figure")+' Personagens',badge:(pers.length||null),html:secPers},
     {key:"mapas",label:icon("treasure-map")+' Mapas',badge:(mapas.length||null),html:secMapas},
     {key:"sessoes",label:icon("dice-twenty-faces-twenty")+' Sessões',badge:(sess.length||null),html:secSess},
-    {key:"outros",label:icon("book-cover")+' Outros',badge:(outros.length||null),html:secOutros}
+    {key:"outros",label:icon("book-cover")+' Outros',badge:(outros.length||null),html:secOutros,after:function(){ renderExpl(); }}
   ]);
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero(mesa.nome, mesa.descricao||"", mesa.fundo_url, acts, icon("crossed-swords"))+metaHtml+pedir+(ehM?'<div id="pedidosmesa-inline" class="secao-ped"></div>':'')+abasMesa); renderExpl(); if(ehM) renderPedidos("mesa",id,"pedidosmesa-inline"); }
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero(mesa.nome, mesa.descricao||"", mesa.fundo_url, acts, icon("crossed-swords"))+metaHtml+pedir+(ehM?'<div id="pedidosmesa-inline" class="secao-ped"></div>':'')+abasMesa); if(ehM) renderPedidos("mesa",id,"pedidosmesa-inline"); }
 async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>');
   var pf=await perfilDe(uid); var nome=pf.nome||"Autor";
   var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
@@ -889,19 +902,17 @@ var histTab=c.corpo?'<div class="corpo">'+md(c.corpo)+'</div>':'<div class="empt
   var defsPc=[
     {key:"historia",label:icon("scroll-unfurled")+' História',html:histTab},
     {key:"ficha",label:icon("tied-scroll")+' Ficha',html:fichaHtml},
-    {key:"relacionado",label:icon("book-cover")+' Relacionado',html:rel},
-    {key:"comentarios",label:'💬 Comentários',html:secaoComentarios("personagem",id,c.jogador_id)}
+    {key:"relacionado",label:icon("book-cover")+' Relacionado',html:rel,after:function(){ if(relPubs.length) renderExpl(); }},
+    {key:"comentarios",label:'💬 Comentários',html:secaoComentarios("personagem",id,c.jogador_id),after:function(){ renderComentarios("personagem",id); }}
   ];
-  if(podeEditar) defsPc.push({key:"gerencia",label:icon("drama-masks")+' Gerência',html:painel});
+  if(podeEditar) defsPc.push({key:"gerencia",label:icon("drama-masks")+' Gerência',html:painel,after:function(){ renderContribPers(id); renderPedidos("personagem",id,"pedidospers"); }});
   layout('<div class="bread"><a onclick="go(\'pers\')">‹ Personagens</a></div>'
     +'<div class="autor-cap">'+av+'<div><h1 style="margin:0">'+esc(c.nome)+'</h1>'
     +(c.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(c.epiteto)+'</p>':'')
     +'<p class="vis-leg">'+visChip(c.visibilidade)+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+' · por <a onclick="go(\'autor\',\''+c.jogador_id+'\')">'+esc(nomeAutor)+'</a>'+(mesaNome?' · <a onclick="go(\'mesa\',\''+c.mesa_id+'\')">⚔ '+esc(mesaNome)+'</a>':'')+'</p></div></div>'
     +(c.resumo?'<p class="pc-resumo">'+esc(c.resumo)+'</p>':'')
     +acoes
-    +abas("personagem",defsPc));
-  if(relPubs.length) renderExpl();
-  if(podeEditar){ renderContribPers(id); renderPedidos("personagem",id,"pedidospers"); } renderComentarios("personagem",id); }
+    +abas("personagem",defsPc)); }
 function formPersonagem(opts, c){
   var mesaId=c?c.mesa_id:(opts.mesa||null); var emMesa=!!opts.mesa;
   var visOpts=mesaId?[["publico","público (todos)"],["mesa","mesa (todos da campanha)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
@@ -1464,15 +1475,13 @@ async function telaAdmin(){
   var defs=[
     {key:"painel",label:"🛡 Painel",html:adminPainelHTML(st,sup)},
     {key:"site",label:"⚙ Site",html:adminSiteHTML()},
-    {key:"usuarios",label:"👥 Usuários",html:'<div id="adm-users"><p>Carregando usuários…</p></div>'},
-    {key:"mundos",label:icon("castle")+" Mundos",html:adminMundosHTML()},
-    {key:"mesas",label:icon("crossed-swords")+" Mesas",html:'<div id="adm-mesas"><p>Carregando mesas…</p></div>'}
+    {key:"usuarios",label:"👥 Usuários",html:'<div id="adm-users"><p>Carregando usuários…</p></div>',after:function(){ admUsuarios(0,""); }},
+    {key:"mundos",label:icon("castle")+" Mundos",html:adminMundosHTML(),after:function(){ admListarMundos(0); }},
+    {key:"mesas",label:icon("crossed-swords")+" Mesas",html:adminMesasHTML(),after:function(){ admListarMesas(0); }}
   ];
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Administração</div>'
     +'<h1>🛡 Administração</h1><p class="vis-leg">'+(sup?'Você é <b>super-admin</b> — controle total, inclusive gerir administradores e ações estruturais.':'Você é <b>admin</b> — pode moderar e editar o conteúdo do site; ações estruturais (gerir admins, excluir mundos/usuários) são do super-admin.')+'</p>'
     +abas("admin",defs));
-  admUsuarios(0,"");
-  admCarregarMesas();
 }
 function adminPainelHTML(st,sup){
   function cel(ic,n,lab){ return '<div class="adm-stat"><div class="adm-stat-ic">'+ic+'</div><div class="adm-stat-n">'+(n!=null?n:"—")+'</div><div class="adm-stat-l">'+lab+'</div></div>'; }
@@ -1533,21 +1542,56 @@ async function admDefinirPapel(uid,papel){
   try{ var r=await sb.rpc("admin_definir_papel",{p_user:uid,p_papel:papel}); if(r.error)throw r.error; toast("Papel atualizado.","ok"); var q=val("adm_q"); admListarUsuarios(0,(q||"").trim()); }catch(e){ toast(e.message||(""+e),"erro"); }
 }
 async function admEditarMundo(id){ var w=(S.mundos||[]).find(function(x){return x.id===id;}); if(w){ S.mundo=w; try{localStorage.setItem("mds_mundo",id);}catch(e){} try{ await carregarMesas(); }catch(_){} } go("editarMundo"); }
-function adminMundosHTML(){
-  var ws=S.mundos||[];
-  if(!ws.length) return '<div class="empty">Nenhum mundo.</div>';
-  var sup=ehSuperadmin();
-  return '<div class="adm-list">'+ws.map(function(w){
-    return '<div class="adm-row"><div class="adm-row-id"><b>'+esc(w.nome)+'</b> '+(w.publico?'<span class="adm-badge">público</span>':'<span class="adm-badge off">privado</span>')+'<div class="vis-leg">tema: '+esc(w.tema||"medieval")+'</div></div><div class="adm-row-ac"><a class="btn sec mini" onclick="selecionarMundo(\''+w.id+'\')">Abrir</a> <a class="btn sec mini" onclick="admEditarMundo(\''+w.id+'\')">Editar</a>'+(sup?' <button class="btn btn-perigo mini" onclick="excluirMundo(\''+w.id+'\')">Excluir</button>':'')+'</div></div>';
-  }).join("")+'</div>'+(sup?'':'<p class="vis-leg">A exclusão de mundos é exclusiva do super-admin.</p>');
+function admPag(offset,shown,total,fn,lim){ var ini=offset+1, fim=offset+shown; return '<div class="adm-nav"><button class="btn sec mini"'+(offset<=0?' disabled':'')+' onclick="'+fn+'('+Math.max(0,offset-lim)+')">‹ Anterior</button> <span class="vis-leg">'+ini+'–'+fim+' de '+total+'</span> <button class="btn sec mini"'+(fim>=total?' disabled':'')+' onclick="'+fn+'('+(offset+lim)+')">Próxima ›</button></div>'; }
+function adminMundosHTML(){ return '<div id="adm-mundos-wrap">'+admMundosInner()+'</div>'; }
+function admMundosInner(){
+  var st=S.admMundos||(S.admMundos={q:"",filtro:"todos"});
+  function chip(k,l){ return '<button class="adm-chip'+(st.filtro===k?' on':'')+'" onclick="admMundoFiltro(\''+k+'\')">'+l+'</button>'; }
+  return '<div class="adm-busca"><input id="adm_mq" placeholder="Buscar mundo por nome…" value="'+esc(st.q)+'" oninput="admMundoBusca(this.value)"></div>'
+    +'<div class="adm-filtros">'+chip("todos","Todos")+chip("publico","Públicos")+chip("privado","Privados")+'</div>'
+    +'<div id="adm-mundos-res"><p>Carregando…</p></div>';
 }
-async function admCarregarMesas(){
-  var box=document.getElementById("adm-mesas"); if(!box)return;
-  try{ var r=await sb.from("mesas").select("id,nome,mundo_id").order("criado_em",{ascending:false}).limit(100); if(r.error)throw r.error;
-    var ms=r.data||[]; if(!ms.length){ box.innerHTML='<div class="empty">Nenhuma mesa.</div>'; return; }
-    var sup=ehSuperadmin();
-    box.innerHTML='<div class="adm-list">'+ms.map(function(m){ return '<div class="adm-row"><div class="adm-row-id"><b>'+esc(m.nome)+'</b><div class="vis-leg">'+esc(nomeMundo(m.mundo_id)||"—")+'</div></div><div class="adm-row-ac"><a class="btn sec mini" onclick="go(\'mesa\',\''+m.id+'\')">Abrir</a>'+(sup?' <button class="btn btn-perigo mini" onclick="excluirMesa(\''+m.id+'\')">Excluir</button>':'')+'</div></div>'; }).join("")+'</div>';
-  }catch(e){ box.innerHTML='<div class="aviso">Erro ao listar mesas: '+esc(e.message||(""+e))+'</div>'; }
+function admMundoBusca(v){ if(!S.admMundos)S.admMundos={q:"",filtro:"todos"}; clearTimeout(window.__amdb); window.__amdb=setTimeout(function(){ S.admMundos.q=(v||"").trim(); admListarMundos(0); },300); }
+function admMundoFiltro(f){ if(!S.admMundos)S.admMundos={q:"",filtro:"todos"}; S.admMundos.filtro=f; var w=document.getElementById("adm-mundos-wrap"); if(w)w.innerHTML=admMundosInner(); admListarMundos(0); }
+async function admListarMundos(offset){
+  var res=document.getElementById("adm-mundos-res"); if(!res)return; res.innerHTML='<p>Carregando…</p>';
+  var st=S.admMundos||{q:"",filtro:"todos"}; var lim=12; var termo=(st.q||"").replace(/[%,()]/g,"");
+  try{
+    var q=sb.from("mundos").select("id,nome,publico,tema",{count:"exact"});
+    if(termo) q=q.ilike("nome","%"+termo+"%");
+    if(st.filtro==="publico") q=q.eq("publico",true); else if(st.filtro==="privado") q=q.eq("publico",false);
+    q=q.order("criado_em",{ascending:false}).range(offset,offset+lim-1);
+    var r=await q; if(r.error)throw r.error;
+    var ws=r.data||[]; var total=r.count||0; var sup=ehSuperadmin();
+    if(!ws.length){ res.innerHTML='<div class="empty">Nenhum mundo encontrado.</div>'; return; }
+    var lista=ws.map(function(w){ return '<div class="adm-row"><div class="adm-row-id"><b>'+esc(w.nome)+'</b> '+(w.publico?'<span class="adm-badge">público</span>':'<span class="adm-badge off">privado</span>')+'<div class="vis-leg">tema: '+esc(w.tema||"medieval")+'</div></div><div class="adm-row-ac"><a class="btn sec mini" onclick="selecionarMundo(\''+w.id+'\')">Abrir</a> <a class="btn sec mini" onclick="admEditarMundo(\''+w.id+'\')">Editar</a>'+(sup?' <button class="btn btn-perigo mini" onclick="excluirMundo(\''+w.id+'\')">Excluir</button>':'')+'</div></div>'; }).join("");
+    res.innerHTML='<div class="adm-list">'+lista+'</div>'+admPag(offset,ws.length,total,"admListarMundos",lim)+(sup?'':'<p class="vis-leg">A exclusão de mundos é exclusiva do super-admin.</p>');
+  }catch(e){ res.innerHTML='<div class="aviso">Erro ao listar mundos: '+esc(e.message||(""+e))+'</div>'; }
+}
+function adminMesasHTML(){ return '<div id="adm-mesas-wrap">'+admMesasInner()+'</div>'; }
+function admMesasInner(){
+  var st=S.admMesas||(S.admMesas={q:"",mundo:""});
+  var opts='<option value="">Todos os mundos</option>'+(S.mundos||[]).map(function(w){return '<option value="'+esc(w.id)+'"'+(st.mundo===w.id?' selected':'')+'>'+esc(w.nome)+'</option>';}).join("");
+  return '<div class="adm-busca"><input id="adm_meq" placeholder="Buscar mesa por nome…" value="'+esc(st.q)+'" oninput="admMesaBusca(this.value)"></div>'
+    +'<div class="adm-filtros"><label class="vis-leg" for="adm_me_mundo">Mundo:</label> <select id="adm_me_mundo" class="adm-sel" onchange="admMesaMundo(this.value)">'+opts+'</select></div>'
+    +'<div id="adm-mesas-res"><p>Carregando…</p></div>';
+}
+function admMesaBusca(v){ if(!S.admMesas)S.admMesas={q:"",mundo:""}; clearTimeout(window.__amedb); window.__amedb=setTimeout(function(){ S.admMesas.q=(v||"").trim(); admListarMesas(0); },300); }
+function admMesaMundo(id){ if(!S.admMesas)S.admMesas={q:"",mundo:""}; S.admMesas.mundo=id||""; admListarMesas(0); }
+async function admListarMesas(offset){
+  var res=document.getElementById("adm-mesas-res"); if(!res)return; res.innerHTML='<p>Carregando…</p>';
+  var st=S.admMesas||{q:"",mundo:""}; var lim=12; var termo=(st.q||"").replace(/[%,()]/g,"");
+  try{
+    var q=sb.from("mesas").select("id,nome,mundo_id",{count:"exact"});
+    if(termo) q=q.ilike("nome","%"+termo+"%");
+    if(st.mundo) q=q.eq("mundo_id",st.mundo);
+    q=q.order("criado_em",{ascending:false}).range(offset,offset+lim-1);
+    var r=await q; if(r.error)throw r.error;
+    var ms=r.data||[]; var total=r.count||0; var sup=ehSuperadmin();
+    if(!ms.length){ res.innerHTML='<div class="empty">Nenhuma mesa encontrada.</div>'; return; }
+    var lista=ms.map(function(m){ return '<div class="adm-row"><div class="adm-row-id"><b>'+esc(m.nome)+'</b><div class="vis-leg">'+esc(nomeMundo(m.mundo_id)||"—")+'</div></div><div class="adm-row-ac"><a class="btn sec mini" onclick="go(\'mesa\',\''+m.id+'\')">Abrir</a>'+(sup?' <button class="btn btn-perigo mini" onclick="excluirMesa(\''+m.id+'\')">Excluir</button>':'')+'</div></div>'; }).join("");
+    res.innerHTML='<div class="adm-list">'+lista+'</div>'+admPag(offset,ms.length,total,"admListarMesas",lim);
+  }catch(e){ res.innerHTML='<div class="aviso">Erro ao listar mesas: '+esc(e.message||(""+e))+'</div>'; }
 }
 
 function render(){ window.__editDirty=false;

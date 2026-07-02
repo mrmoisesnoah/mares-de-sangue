@@ -875,3 +875,9 @@ body.foco-lock{ overflow:hidden; }
 .adm-nav{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:12px}
 .aviso-global{background:var(--ouro);color:#241a08;border-radius:10px;padding:10px 14px;margin:0 0 14px;font-weight:600;text-align:center}
 @media(max-width:600px){ .adm-user,.adm-row{flex-wrap:wrap} .adm-user-ac,.adm-row-ac{width:100%;justify-content:flex-start} }
+
+/* filtros das abas de administração */
+.adm-filtros{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:0 0 12px}
+.adm-chip{font:inherit;font-size:13px;padding:5px 12px;border-radius:20px;border:1px solid var(--borda);background:var(--perg2);color:var(--tinta2);cursor:pointer}
+.adm-chip.on{background:var(--ouro);color:#241a08;border-color:var(--ouro);font-weight:600}
+.adm-sel{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--borda);background:var(--campo);color:var(--tinta);max-width:100%}
