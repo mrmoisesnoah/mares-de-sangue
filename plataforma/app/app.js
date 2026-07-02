@@ -203,7 +203,9 @@ function subgrp(key,label,corpo,n){
   return '<div class="nav-subgrp'+(col?' col':'')+'" data-sub="'+key+'"><div class="nav-subh" onclick="toggleSub(\''+key+'\')"><span class="sub-ar">▸</span><span class="sub-lb">'+label+'</span>'+badge+'</div><div class="nav-subbody">'+corpo+'</div></div>';
 }
 function toggleSub(key){ var el=document.querySelector('.nav-subgrp[data-sub="'+key+'"]'); if(!el)return; var col=el.classList.toggle("col"); try{ localStorage.setItem("mds_sub:"+key, col?"1":"0"); }catch(e){} }
-function linkMesaNav(m){ return '<a class="nav-leaf'+(S.view.arg===m.id&&S.view.t==="mesa"?' on':'')+'" onclick="go(\'mesa\',\''+m.id+'\')">'+esc(m.nome)+'</a>'; }
+function navThumb(img,ini){ return img?'<span class="nav-thumb" style="background-image:url('+esc(img)+')"></span>':'<span class="nav-thumb nav-thumb-ph">'+esc((ini||"?").toUpperCase())+'</span>'; }
+function linkMesaNav(m){ return '<a class="nav-leaf'+(S.view.arg===m.id&&S.view.t==="mesa"?' on':'')+'" onclick="go(\'mesa\',\''+m.id+'\')">'+navThumb(m.capa_url||m.fundo_url,(m.nome||"?")[0])+'<span class="nav-leaf-tx">'+esc(m.nome)+'</span></a>'; }
+function linkPersNav(c){ return '<a class="nav-leaf'+(S.view.arg===c.id&&S.view.t==="personagem"?' on':'')+'" onclick="go(\'personagem\',\''+c.id+'\')">'+navThumb(c.imagem_url,(c.nome||"?")[0])+'<span class="nav-leaf-tx">'+esc(c.nome)+'</span></a>'; }
 function linkPessoal(){
   var t=S.view.t;
   var hub='<a class="nav-hub'+(t==="tudoMeu"?' on':'')+'" onclick="go(\'tudoMeu\')">'+icon("backpack")+' <span>TUDO MEU!</span></a>';
@@ -218,7 +220,7 @@ function linkPessoal(){
     var lists='';
     if(mestro.length){ lists+=subgrp("mestro","Mesas que mestro", mestro.map(linkMesaNav).join(""), mestro.length); }
     if(participo.length){ lists+=subgrp("participo","Mesas que participo", participo.map(linkMesaNav).join(""), participo.length); }
-    if(pers.length){ lists+=subgrp("meuspers","Meus personagens", pers.map(function(c){return '<a class="nav-leaf'+(S.view.arg===c.id&&S.view.t==="personagem"?' on':'')+'" onclick="go(\'personagem\',\''+c.id+'\')">'+esc(c.nome)+'</a>';}).join(""), pers.length); }
+    if(pers.length){ lists+=subgrp("meuspers","Meus personagens", pers.map(linkPersNav).join(""), pers.length); }
     var criar='<a onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a>'
       +'<a onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a>'
       +'<a onclick="go(\'novoJornal\')">+ Jornal</a>'
@@ -297,41 +299,59 @@ async function trocarMundoTudoMeu(id){ var w=S.mundos.find(function(x){return x.
 async function telaTudoMeu(){
   if(!S.user){ go("login"); return; }
   layout('<p>Carregando…</p>');
+  S.tudoTab=S.tudoTab||"geral";
   var pf=S.profile||{};
   var av=pf.avatar_url?'<div class="tm-av" style="background-image:url('+esc(pf.avatar_url)+')"></div>':'<div class="tm-av">'+esc(((exib(pf)||"?")[0]||"?").toUpperCase())+'</div>';
-  var head='<div class="tm-head">'+av+'<div class="tm-id"><h1 style="margin:0">'+ic("mestre")+' TUDO MEU!</h1><p class="tm-nome">'+esc(exib(pf))+(pf.epiteto?' <span class="tm-ep">— '+esc(pf.epiteto)+'</span>':'')+'</p>'
-    +'<div class="tm-acts"><a class="btn sec mini" onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a> <a class="btn sec mini" onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a> <a class="btn sec mini" onclick="go(\'convites\')">✉ Meus convites</a></div></div></div>';
+  var head='<div class="tm-head">'+av+'<div class="tm-id"><h1 style="margin:0">'+icon("backpack")+' TUDO MEU!</h1><p class="tm-nome">'+esc(exib(pf))+(pf.epiteto?' <span class="tm-ep">— '+esc(pf.epiteto)+'</span>':'')+'</p><div class="tm-acts"><a class="btn sec mini" onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a> <a class="btn sec mini" onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a> <a class="btn sec mini" onclick="go(\'convites\')">✉ Meus convites</a></div></div></div>';
   var sel=S.mundos.length?'<div class="tm-worldsel"><label>Mundo em foco:</label><select onchange="trocarMundoTudoMeu(this.value)">'+S.mundos.map(function(w){return '<option value="'+esc(w.id)+'"'+(S.mundo&&w.id===S.mundo.id?' selected':'')+'>'+esc(w.nome)+'</option>';}).join("")+'</select></div>':'';
-  var rec=await visitasValidas();
-  var recHtml=rec.length?'<h2>↩ Continuar de onde parou</h2><p class="vis-leg" style="margin-top:-6px">De todos os seus mundos.</p><div class="cards">'+rec.map(function(v){return cardVisita(v,true);}).join("")+'</div>':'';
-  var _favr=await sb.from("favoritos").select("*").order("criado_em",{ascending:false}); var favRows=(_favr&&!_favr.error&&_favr.data)?_favr.data:[];
-  var favHtml=favRows.length?'<h2>'+ic("fav")+' Meus favoritos</h2><p class="vis-leg" style="margin-top:-6px">De todos os seus mundos.</p><div class="cards">'+favRows.map(cardFav).join("")+'</div>':'';
-  var corpo='';
-  if(S.mundo){
+  var nMestro=0,nParticipo=0;
+  if(S.mundo){ nMestro=S.mesas.filter(function(m){return mestreDe(m)||S.papelMesa[m.id]==="mestre";}).length; nParticipo=S.mesas.filter(function(m){return souMembroMesa(m.id)&&!(mestreDe(m)||S.papelMesa[m.id]==="mestre");}).length; }
+  var nPers=0; if(S.mundo){ try{ var pc=await sb.from("personagens").select("id",{count:"exact",head:true}).eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id); nPers=pc.count||0; }catch(e){} }
+  var mr=S.mundo?await meusRascunhos():[]; var lr=S.mundo?rascunhosLocais():[]; var nRasc=mr.length+lr.length;
+  var nFav=0; try{ var fc=await sb.from("favoritos").select("tipo",{count:"exact",head:true}); nFav=fc.count||0; }catch(e){}
+  function statCard(n,label,act){ return '<button class="tm-stat" onclick="'+act+'"><b>'+n+'</b><span>'+label+'</span></button>'; }
+  var stats='<div class="tm-stats">'
+    +statCard(nMestro+nParticipo,"mesas","tudoTab(\'mesas\')")
+    +statCard(nPers,"personagens","tudoTab(\'personagens\')")
+    +statCard(nRasc,"rascunhos","tudoTab(\'rascunhos\')")
+    +statCard(nFav,"favoritos","tudoTab(\'geral\')")+'</div>';
+  var criar=S.mundo
+    ? '<div class="tm-criar"><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a><a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a><a class="btn sec" onclick="go(\'novoJornal\')">+ Jornal</a><a class="btn sec" onclick="go(\'novaMesa\')">+ Mesa</a><a class="btn sec" onclick="go(\'novoMundo\')">+ Mundo</a></div>'
+    : '<div class="tm-criar"><a class="btn" onclick="go(\'novoMundo\')">+ Criar mundo</a></div>';
+  function tb(key,label){ return '<button class="tm-tab-btn'+(S.tudoTab===key?' on':'')+'" data-tab="'+key+'" onclick="tudoTab(\''+key+'\')">'+label+'</button>'; }
+  var tabs='<div class="tm-tabs">'+tb("geral","Visão geral")+tb("mesas","Minhas mesas")+tb("personagens","Personagens")+tb("rascunhos","Rascunhos")+'</div>';
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › TUDO MEU!</div>'+head+sel+stats+criar+tabs+'<div id="tm-tab"><p>Carregando…</p></div>');
+  renderTudoTab();
+}
+function tudoTab(t){ S.tudoTab=t; var bs=document.querySelectorAll(".tm-tab-btn"); for(var i=0;i<bs.length;i++){ bs[i].classList.toggle("on", bs[i].getAttribute("data-tab")===t); } window.scrollTo(0,0); renderTudoTab(); }
+async function renderTudoTab(){
+  var box=document.getElementById("tm-tab"); if(!box)return;
+  var tab=S.tudoTab;
+  if(tab==="geral"){
+    var rec=await visitasValidas();
+    var favr=[]; try{ var fr=await sb.from("favoritos").select("*").order("criado_em",{ascending:false}); favr=(fr&&!fr.error&&fr.data)?fr.data:[]; }catch(e){}
+    var h=(rec.length?'<h2>↩ Continuar de onde parou</h2><p class="vis-leg" style="margin-top:-6px">De todos os seus mundos.</p><div class="cards">'+rec.map(function(v){return cardVisita(v,true);}).join("")+'</div>':'')
+      +(favr.length?'<h2>'+ic("fav")+' Meus favoritos</h2><p class="vis-leg" style="margin-top:-6px">De todos os seus mundos.</p><div class="cards">'+favr.map(cardFav).join("")+'</div>':'');
+    box.innerHTML=h||'<div class="empty">Você ainda não visitou nem favoritou nada.</div>';
+  } else if(tab==="mesas"){
+    if(!S.mundo){ box.innerHTML='<div class="empty">Selecione um mundo.</div>'; return; }
     var mestro=S.mesas.filter(function(m){return mestreDe(m)||S.papelMesa[m.id]==="mestre";});
     var participo=S.mesas.filter(function(m){return souMembroMesa(m.id)&&!(mestreDe(m)||S.papelMesa[m.id]==="mestre");});
-    var criar='<h2>'+icon("quill-ink")+' Criar em '+esc(S.mundo.nome)+'</h2><div class="tm-criar">'
-      +'<a class="btn" onclick="go(\'nova\',{mesa:null})">+ Conteúdo do mundo</a>'
-      +'<a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a>'
-      +'<a class="btn sec" onclick="go(\'novoJornal\')">+ Jornal</a>'
-      +'<a class="btn sec" onclick="go(\'novaMesa\')">+ Mesa</a>'
-      +'<a class="btn sec" onclick="go(\'novoMundo\')">+ Mundo</a></div>';
-    var secMestro='<h2>'+ic("mestre")+' Mesas que eu mestro</h2>'+(mestro.length?'<div class="cards">'+mestro.map(cardMesa).join("")+'</div>':'<div class="empty">Você não mestra nenhuma mesa neste mundo.</div>');
-    var secPart='<h2>'+ic("persJog")+' Mesas que eu participo</h2>'+(participo.length?'<div class="cards">'+participo.map(cardMesa).join("")+'</div>':'<div class="empty">Você não participa de nenhuma mesa neste mundo como jogador.</div>');
-    var _mp=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); var meusPers=(_mp&&!_mp.error&&_mp.data)?_mp.data:[];
-    var persHtml='<h2>'+ic("persJog")+' Meus personagens</h2>'+(meusPers.length?gridPersRound(meusPers):'<div class="empty">Você não tem personagens neste mundo.</div>');
-    var mr=await meusRascunhos(); var lr=rascunhosLocais();
-    var rasHtml='<h2>'+icon("quill-ink")+' Meus rascunhos</h2>'+((mr.length+lr.length)?'<div class="cards">'
-       +mr.map(function(p){return '<div class="card clic" onclick="go(\'editar\',\''+p.id+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(p.titulo||"(sem título)")+'</h3><p class="res">rascunho · '+esc(p.tipo||"")+'</p></div>';}).join("")
-       +lr.map(function(d){return '<div class="card clic" onclick="resumirRascunhoLocal(\''+d.hash+'\',\''+d.key+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(trechoHtml(d.html)||"(rascunho)")+'</h3><p class="res">não salvo neste navegador</p></div>';}).join("")
-       +'</div>':'<div class="empty">Nenhum rascunho neste mundo.</div>');
-    corpo=criar+secMestro+secPart+persHtml+rasHtml;
-  } else {
-    corpo='<div class="empty">Selecione ou crie um mundo para ver e criar conteúdo. <a onclick="go(\'novoMundo\')">+ Criar mundo</a></div>';
+    box.innerHTML='<h2>'+ic("mestre")+' Mesas que eu mestro</h2>'+(mestro.length?'<div class="cards">'+mestro.map(cardMesa).join("")+'</div>':'<div class="empty">Você não mestra nenhuma mesa neste mundo.</div>')
+      +'<h2>'+icon("crossed-swords")+' Mesas que eu participo</h2>'+(participo.length?'<div class="cards">'+participo.map(cardMesa).join("")+'</div>':'<div class="empty">Você não participa de nenhuma mesa neste mundo como jogador.</div>');
+  } else if(tab==="personagens"){
+    if(!S.mundo){ box.innerHTML='<div class="empty">Selecione um mundo.</div>'; return; }
+    var mp=[]; try{ var r=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); mp=(r&&!r.error&&r.data)?r.data:[]; }catch(e){}
+    box.innerHTML='<h2>'+ic("persJog")+' Meus personagens</h2>'+(mp.length?gridPersRound(mp):'<div class="empty">Você não tem personagens neste mundo. <a onclick="go(\'novoPersonagem\',{mesa:null})">+ Criar</a></div>');
+  } else if(tab==="rascunhos"){
+    if(!S.mundo){ box.innerHTML='<div class="empty">Selecione um mundo.</div>'; return; }
+    var m2=await meusRascunhos(); var l2=rascunhosLocais();
+    box.innerHTML='<h2>'+icon("quill-ink")+' Meus rascunhos</h2>'+((m2.length+l2.length)?'<div class="cards">'
+      +m2.map(function(p){return '<div class="card clic" onclick="go(\'editar\',\''+p.id+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(p.titulo||"(sem título)")+'</h3><p class="res">rascunho · '+esc(p.tipo||"")+'</p></div>';}).join("")
+      +l2.map(function(d){return '<div class="card clic" onclick="resumirRascunhoLocal(\''+d.hash+'\',\''+d.key+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(trechoHtml(d.html)||"(rascunho)")+'</h3><p class="res">não salvo neste navegador</p></div>';}).join("")
+      +'</div>':'<div class="empty">Nenhum rascunho neste mundo.</div>');
   }
-  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › TUDO MEU!</div>'+head+sel+recHtml+favHtml+corpo);
 }
-function botoesCriarMundo(){ if(!S.user) return '<a class="btn" onclick="go(\'login\')">Entrar para criar</a>'; return '<a class="btn" onclick="go(\'novaMesa\')">+ Criar Mesa</a> <a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:null})">+ Criar Personagem</a>'; }
 async function telaMundoHome(){ if(!S.mundo){ go("home"); return; } layout('<p>Carregando…</p>');
   var lore=await loreDoMundo(); var recs=await recentes();
   var nMesas=S.mesas.length, nLore=lore.length, nMapas=lore.filter(function(p){return p.tipo==="mapa";}).length;
@@ -424,11 +444,23 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
   var secSess='<div class="secao">'+secHead(icon("dice-twenty-faces-twenty"),"Sessões",sess.length,(ehM?'<a class="btn mini sec" onclick="go(\'areaMestre\',\''+id+'\')">'+icon("drama-masks")+' Gerir sessões</a>':''))+(sess.length?'<div class="cards">'+sess.map(cardSessao).join("")+'</div>':'<div class="empty">Nenhuma sessão registrada ainda.</div>')+'</div>';
   var secOutros=outros.length?'<div class="secao">'+secHead(icon("book-cover"),"Outros conteúdos",outros.length,"")+exploradorHTML()+'</div>':'';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mesa</div>'+hero(mesa.nome, mesa.descricao||"", mesa.fundo_url, acts, icon("crossed-swords"))+metaHtml+pedir+(ehM?'<div id="pedidosmesa-inline" class="secao-ped"></div>':'')+secPers+secMural+secMapas+secSess+secOutros); renderExpl(); if(ehM) renderPedidos("mesa",id,"pedidosmesa-inline"); }
-async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>'); var pf=await perfilDe(uid); var nome=pf.nome||"Autor"; var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
+async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Carregando…</p>');
+  var pf=await perfilDe(uid); var nome=pf.nome||"Autor";
+  var pubs=await pubsDoAutor(uid); abrirExplorador(pubs);
+  var chars=[]; try{ var rc=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).eq("jogador_id",uid).order("nome"); chars=(rc&&!rc.error&&rc.data)?rc.data:[]; }catch(e){}
+  var mesasDele=(S.mesas||[]).filter(function(m){return m.mestre_id===uid;});
   var ehEu=(S.user&&uid===S.user.id);
+  var av=pf.avatar_url?'<div class="av" style="background-image:url('+esc(pf.avatar_url)+')"></div>':'<div class="av">'+esc((nome||"?")[0].toUpperCase())+'</div>';
+  function ac(n,l){ return '<div class="autor-stat"><b>'+n+'</b><span>'+l+'</span></div>'; }
+  var stats='<div class="autor-stats">'+ac(pubs.length,"publicações")+ac(chars.length,"personagens")+ac(mesasDele.length,"mesas que mestra")+'</div>';
+  var vitrine=chars.length?'<div class="secao"><div class="sec-head"><h2>'+icon("hooded-figure")+' Personagens'+(ehEu?' — seus':' de '+esc(nome))+'</h2></div>'+gridPersRound(chars.slice(0,12))+(chars.length>12?'<p class="vis-leg" style="margin-top:8px">e mais '+(chars.length-12)+'… <a onclick="go(\'pers\')">ver todos os personagens</a></p>':'')+'</div>':'';
   layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › '+(ehEu?"Minha página":"Autor")+'</div>'
-    +'<div class="autor-cap">'+(pf.avatar_url?'<div class="av" style="background-image:url('+esc(pf.avatar_url)+')"></div>':'<div class="av">'+esc((nome||"?")[0].toUpperCase())+'</div>')+'<div><h1 style="margin:0">'+esc(nome)+'</h1>'+(pf.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(pf.epiteto)+'</p>':'')+'<p class="vis-leg">'+pubs.length+' publicações visíveis neste mundo'+(ehEu?" · sua página de trabalho (vê também rascunhos e privados)":" · página pública")+(ehEu?' · <a onclick="go(\'perfil\')">'+icon("quill-ink")+' editar perfil</a>':'')+'</p></div></div>'+(pf.bio?'<div class="corpo" style="max-width:760px;margin:6px 0 14px">'+md(pf.bio)+'</div>':'')
-    +(ehEu?'<p><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a></p>':'')+exploradorHTML()); renderExpl(); }
+    +'<div class="autor-cap">'+av+'<div><h1 style="margin:0">'+esc(nome)+'</h1>'+(pf.epiteto?'<p class="vis-leg" style="font-style:italic;margin:.1em 0">'+esc(pf.epiteto)+'</p>':'')+'<p class="vis-leg">'+(ehEu?"sua página de trabalho (vê também rascunhos e privados)":"página pública")+(ehEu?' · <a onclick="go(\'perfil\')">'+icon("quill-ink")+' editar perfil</a>':'')+'</p></div></div>'
+    +(pf.bio?'<div class="corpo" style="max-width:760px;margin:6px 0 14px">'+md(pf.bio)+'</div>':'')
+    +stats
+    +(ehEu?'<p class="autor-criar"><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a> <a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a> <a class="btn sec" onclick="go(\'tudoMeu\')">'+icon("backpack")+' TUDO MEU!</a></p>':'')
+    +vitrine
+    +'<div class="secao"><div class="sec-head"><h2>'+icon("book-cover")+' Publicações</h2></div>'+exploradorHTML()+'</div>'); renderExpl(); }
 async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p; if(p){ await focarMundoDeConteudo(p.mundo_id); registrarVisita("publicacao",p.id,p.titulo,p.mundo_id); }
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
   var nomeAutor=await nomeDe(p.autor_id); var podeBaixar=meu(p)||donoMundo(); var anexo=p.arquivo_url?'<p class="anexo-bloco">📎 Arquivo anexado: <a class="btn mini" href="'+esc(p.arquivo_url)+'" target="_blank" rel="noopener">↗ Abrir / baixar</a>'+(p.arquivo_nome?' <span class="vis-leg">('+esc(p.arquivo_nome)+')</span>':'')+'</p>':'';
@@ -792,7 +824,7 @@ async function umPersonagem(id){ var r=await sb.from("personagens").select("*").
 async function pubsDoPersonagem(id){ var r=await sb.from("publicacoes").select("*").eq("personagem_id",id).order("titulo"); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function personagensDaMesa(id){ var r=await sb.from("personagens").select("*").eq("mesa_id",id).order("nome"); return r.error?[]:(r.data||[]); }
 async function personagensMundo(){ if(!S.mundo)return []; var r=await sb.from("personagens").select("*").eq("mundo_id",S.mundo.id).order("nome"); return r.error?[]:(r.data||[]); }
-async function meusPersonagens(){ if(!S.user||!S.mundo)return []; var r=await sb.from("personagens").select("id,nome").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
+async function meusPersonagens(){ if(!S.user||!S.mundo)return []; var r=await sb.from("personagens").select("id,nome,epiteto,imagem_url,tipo").eq("mundo_id",S.mundo.id).eq("jogador_id",S.user.id).order("nome"); return r.error?[]:(r.data||[]); }
 function cardPersonagem(c){ return '<div class="card clic cat-personagens" onclick="go(\'personagem\',\''+c.id+'\')">'+thumb(c.imagem_url,icon("hooded-figure"),c.nome)+'<h3>'+esc(c.nome)+'</h3>'+(c.epiteto?'<p class="res" style="font-style:italic">'+esc(c.epiteto)+'</p>':'')+'<p style="margin:.2em 0">'+visChip(c.visibilidade)+(c.tipo==="npc"?'<span class="tipo">NPC</span>':'')+(c.estado==="rascunho"?'<span class="chip-rascunho">'+icon("quill-ink")+' rascunho</span>':'')+'</p>'+(c.resumo?'<p class="res">'+esc(c.resumo)+'</p>':'')+'</div>'; }
 async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; } await focarMundoDeConteudo(c.mundo_id); registrarVisita("personagem",id,c.nome,c.mundo_id);
