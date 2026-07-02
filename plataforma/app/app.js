@@ -24,9 +24,9 @@ function md(s){ s=wikilinks(s||""); return (window.marked ? marked.parse(s) : es
 function mdToHtmlRaw(s){ return (window.marked ? marked.parse(s||"") : esc(s||"").replace(/\n/g,"<br>")); }
 function renderCorpo(corpo,formato){ return (formato==="html") ? wikilinks(corpo||"") : md(corpo); }
 function resumo(c){ var t=(c||"").replace(/<[^>]+>/g," ").replace(/[#*`>\[\]_]/g,"").replace(/\s+/g," ").trim(); return t.length>120?t.slice(0,120)+"…":t; }
-function meu(p){ return !!S.user && p && (p.autor_id===S.user.id || (S.profile&&S.profile.papel_global==="admin")); }
-function donoMundo(){ return !!S.user && S.mundo && (S.mundo.dono_id===S.user.id || (S.profile&&S.profile.papel_global==="admin")); }
-function mestreDe(m){ return !!S.user && m && (m.mestre_id===S.user.id || (S.profile&&S.profile.papel_global==="admin")); }
+function meu(p){ return !!S.user && p && (p.autor_id===S.user.id || ehAdmin()); }
+function donoMundo(){ return !!S.user && S.mundo && (S.mundo.dono_id===S.user.id || ehAdmin()); }
+function mestreDe(m){ return !!S.user && m && (m.mestre_id===S.user.id || ehAdmin()); }
 function temMesaPropria(){ return !!S.user && S.mesas.some(function(m){return m.mestre_id===S.user.id;}); }
 function regTags(pubs){ (pubs||[]).forEach(function(p){(p.tags||[]).forEach(function(t){S.tags[t]=1;});}); }
 function ehPersonagem(t){ t=(t||"").toLowerCase(); return t==="personagem"||t==="background"||t.indexOf("personagem")>=0; }
@@ -148,14 +148,14 @@ async function carregar(){
     var m=await sb.from("mundos").select("*").order("criado_em"); if(m.error)throw m.error;
     S.mundos=m.data||[]; S.mundo=mundoSalvo()||S.mundos[0]||null;
     if(S.mundo) await carregarMesas();
-    await carregarMinhasMesas(); await carregarFavs(); await carregarNotifs(); iniciarPollNotifs();
+    await carregarMinhasMesas(); await carregarFavs(); await carregarNotifs(); iniciarPollNotifs(); await carregarSiteConfig();
     rota();
   }catch(e){ erro(e); }
 }
 async function carregarPublico(){
   try{ S.user=null; S.profile=null; S.mesas=[]; S.favs={}; S.notifs=[];
     var m=await sb.from("mundos").select("*").eq("publico",true).order("criado_em");
-    S.mundos=m.data||[]; S.mundo=mundoSalvo()||S.mundos[0]||null; if(S.mundo) await carregarMesas(); rota();
+    S.mundos=m.data||[]; S.mundo=mundoSalvo()||S.mundos[0]||null; if(S.mundo) await carregarMesas(); await carregarSiteConfig(); rota();
   }catch(e){ erro(e); }
 }
 function mundoSalvo(){ try{ var id=localStorage.getItem("mds_mundo"); return id?S.mundos.find(function(w){return w.id===id;}):null; }catch(e){ return null; } }
@@ -265,7 +265,7 @@ function layout(conteudo){
     var av=(S.profile&&S.profile.avatar_url)?'<span class="avatar" style="background-image:url('+esc(S.profile.avatar_url)+')"></span>':'<span class="avatar">'+esc(((S.profile?exib(S.profile):"?")[0]||"?").toUpperCase())+'</span>';
     ub='<button class="user-btn" onclick="toggleUserMenu(event)">'+av+'<span class="user-nm">'+nm+'</span><span class="ws-ar">▾</span></button>'
       +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a><a onclick="go(\'convites\')">✉ Meus convites</a>'
-      +'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
+      +(ehAdmin()?'<div class="sep"></div><a onclick="go(\'admin\')">🛡 Administração</a>':"")+'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
     +'<div class="marca" onclick="go(\'home\')">'+temaIcone(S.mundo&&S.mundo.tema)+' <span class="marca-tx">Mares de Sangue</span></div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
@@ -305,7 +305,9 @@ function botoesCriar(){
 }
 async function telaHome(){
   layout('<p>Carregando…</p>');
-  var topo=hero("Mares de Sangue","Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", "https://niepiaiwusptmwepgmlq.supabase.co/storage/v1/object/public/midias/c3ed4547-f032-47f6-8650-360684451acc/1781893414276-gemini-25-flash-image-agora-faca-uma-ultima-versao-no-estilo-alan-lee-e-nao-deixe-um-brazao-no-bar-0jpg.jpg", (S.user?botoesCriar():'<a class="btn" onclick="go(\'login\')">Entrar</a>'));
+  var sc=S.site||{};
+  var topo=hero(sc.titulo||"Mares de Sangue", sc.descricao||"Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures", sc.imagem_url||"https://niepiaiwusptmwepgmlq.supabase.co/storage/v1/object/public/midias/c3ed4547-f032-47f6-8650-360684451acc/1781893414276-gemini-25-flash-image-agora-faca-uma-ultima-versao-no-estilo-alan-lee-e-nao-deixe-um-brazao-no-bar-0jpg.jpg", (S.user?botoesCriar():'<a class="btn" onclick="go(\'login\')">Entrar</a>'));
+  var avisoHtml=(sc.mensagem)?'<div class="aviso-global">'+esc(sc.mensagem)+'</div>':"";
   var mundoCards=S.mundos.map(cardMundo).join("");
   var mundosHtml='<h2>'+icon("castle")+' Escolha um mundo</h2><p class="vis-leg" style="margin-top:-6px">Clique em um mundo para entrar nele.</p>'+(mundoCards?'<div class="cards">'+mundoCards+'</div>':'<div class="empty">'+(S.user?'Nenhum mundo ainda — crie o primeiro acima.':'Nenhum mundo público disponível.')+'</div>');
   var rec=S.user?await visitasValidas():[];
@@ -314,7 +316,7 @@ async function telaHome(){
   var nov=await novidadesGlobais();
   var novHtml=nov.length?'<h2>'+icon("ringing-bell")+' Novidades na plataforma</h2><p class="vis-leg" style="margin-top:-6px">As publicações mais recentes que você tem permissão para ver.</p>'+listar(nov):'';
   var _mr=S.user?await meusRascunhos():[]; var _lr=S.user?rascunhosLocais():[]; var rasHtml=(_mr.length+_lr.length)?'<h2>'+icon("quill-ink")+' Seus rascunhos</h2><p class="vis-leg" style="margin-top:-6px">Continue de onde parou. <a onclick="go(\'rascunhos\')">ver todos</a></p><div class="cards">'+_mr.slice(0,3).map(function(p){return '<div class="card clic" onclick="go(\'editar\',\''+p.id+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(p.titulo||"(sem título)")+'</h3><p class="res">rascunho · '+esc(p.tipo||"")+'</p></div>';}).join("")+_lr.slice(0,3).map(function(d){return '<div class="card clic" onclick="resumirRascunhoLocal(\''+d.hash+'\',\''+d.key+'\')"><div class="dash-ic">'+icon("quill-ink")+'</div><h3>'+esc(trechoHtml(d.html)||"(rascunho)")+'</h3><p class="res">não salvo neste navegador</p></div>';}).join("")+'</div>':'';
-  layout(topo+favHtml+mundosHtml+contHtml+rasHtml+novHtml);
+  layout(avisoHtml+topo+favHtml+mundosHtml+contHtml+rasHtml+novHtml);
 }
 async function novidadesGlobais(){ var r=await sb.from("publicacoes").select("*").order("criado_em",{ascending:false}).limit(8); var d=r.error?[]:(r.data||[]); regTags(d); return d; }
 async function trocarMundoAutor(id,uid){ var w=S.mundos.find(function(x){return x.id===id;}); if(w){ S.mundo=w; try{localStorage.setItem("mds_mundo",id);}catch(e){} await carregarMesas(); await carregarFavs(); } go("autor",uid); }
@@ -868,7 +870,7 @@ function cardPersonagem(c){ return '<div class="card clic cat-personagens" oncli
 async function telaPersonagem(id){ layout('<p>Carregando…</p>');
   var c=await umPersonagem(id); if(!c){ layout('<div class="aviso">Personagem não encontrado ou sem permissão.</div>'); return; } await focarMundoDeConteudo(c.mundo_id); registrarVisita("personagem",id,c.nome,c.mundo_id);
   var nomeAutor=await nomeDe(c.jogador_id); var pubs=await pubsDoPersonagem(id);
-  var podeEditar=(S.user&&(c.jogador_id===S.user.id||(S.profile&&S.profile.papel_global==="admin")));
+  var podeEditar=(S.user&&(c.jogador_id===S.user.id||ehAdmin()));
   var contribs=await contribPersonagem(id); var souContrib=!!(S.user&&contribs.some(function(x){return x.user_id===S.user.id;}));
   var podeAdd=podeEditar||souContrib;
   var av=c.imagem_url?'<div class="av" style="width:152px;height:152px;cursor:zoom-in;background-image:url('+esc(c.imagem_url)+')" title="Ampliar" onclick="lightbox(\''+esc(c.imagem_url)+'\')"></div>':'<div class="av" style="width:152px;height:152px">'+esc((c.nome||"?")[0].toUpperCase())+'</div>';
@@ -905,7 +907,7 @@ function formPersonagem(opts, c){
   var visOpts=mesaId?[["publico","público (todos)"],["mesa","mesa (todos da campanha)"],["autor_mestre","autor + mestre"],["privado","privado (só eu)"],["mestre","só mestre"]]:[["publico","público (todos)"],["privado","privado (só eu)"]];
   var seletorMesa=(!emMesa && S.mesas.length)?'<label>Mesa (opcional)</label><select id="pc_mesa"><option value="">— sem mesa —</option>'+S.mesas.map(function(m){return '<option value="'+m.id+'"'+(c&&c.mesa_id===m.id?' selected':'')+'>'+esc(m.nome)+'</option>';}).join("")+'</select>':'';
   var tipoSel=c?(c.tipo||"jogador"):(opts.tp||"jogador");
-  var podeAtribuir=donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin");
+  var podeAtribuir=donoMundo()||temMesaPropria()||ehAdmin();
   var seletorTipo='<label>Tipo de personagem</label><select id="pc_tipo">'+opt([["jogador","Personagem de jogador"],["npc","NPC do mestre"]],tipoSel)+'</select>';
   var seletorAtrib=(podeAtribuir && S.perfis && S.perfis.length)?'<label>Dono do personagem (atribuir a um jogador)</label><select id="pc_jogador">'+S.perfis.map(function(u){return '<option value="'+u.id+'"'+(((c?c.jogador_id:S.user.id)===u.id)?' selected':'')+'>'+esc(u.nome)+(u.id===S.user.id?' (você)':'')+'</option>';}).join("")+'</select>':'';
   var head=fHead(icon("hooded-figure"),(c?'Editar personagem':'Novo personagem'), c?'Atualize a identidade do personagem.':'Crie o personagem — depois adicione textos, histórias e a ficha completa na página dele.');
@@ -916,8 +918,8 @@ function formPersonagem(opts, c){
   var acoes=fAcoes(c?'Salvar':'Criar personagem','salvarPersonagem('+(c?"'"+c.id+"'":"null")+')',(c?"go('personagem','"+c.id+"')":"go('pers','jog')"));
   return '<div class="bread">'+(c?'Editar personagem':'Novo personagem')+'</div><div class="form">'+head+gId+gVinc+gHist+gPub+acoes+'</div>';
 }
-async function telaNovoPersonagem(opts){ opts=opts||{}; if(donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin")) await perfis(); layout(formPersonagem(opts,null)); }
-async function telaEditarPersonagem(id){ layout('<p>Carregando…</p>'); var c=await umPersonagem(id); if(!c){layout('<div class="aviso">Sem permissão.</div>');return;} if(donoMundo()||temMesaPropria()||(S.profile&&S.profile.papel_global==="admin")) await perfis(); layout(formPersonagem({},c)); }
+async function telaNovoPersonagem(opts){ opts=opts||{}; if(donoMundo()||temMesaPropria()||ehAdmin()) await perfis(); layout(formPersonagem(opts,null)); }
+async function telaEditarPersonagem(id){ layout('<p>Carregando…</p>'); var c=await umPersonagem(id); if(!c){layout('<div class="aviso">Sem permissão.</div>');return;} if(donoMundo()||temMesaPropria()||ehAdmin()) await perfis(); layout(formPersonagem({},c)); }
 async function salvarPersonagem(editId){ try{
   var nome=val("pc_nome").trim(); if(!nome)return erro("Dê um nome ao personagem.");
   var mesaSel=document.getElementById("pc_mesa")?val("pc_mesa"):""; var jid=document.getElementById("pc_jogador")?(val("pc_jogador")||S.user.id):S.user.id;
@@ -965,7 +967,7 @@ async function telaJornais(){ if(!S.mundo){go("mundos");return;} layout('<p>Carr
   layout(hero("Jornais de "+S.mundo.nome,"Periódicos do mundo — notícias, crônicas e boatos publicados pelos jornais", S.mundo.fundo_url, criar, icon("scroll-unfurled"))+cards); }
 async function telaJornal(id){ layout('<p>Carregando…</p>'); var j=await umJornal(id); if(!j){ layout('<div class="aviso">Jornal não encontrado ou sem permissão.</div>'); return; } await focarMundoDeConteudo(j.mundo_id); registrarVisita("jornal",id,j.nome,j.mundo_id);
   var nomeDono=await nomeDe(j.dono_id); var noticias=await pubsDoJornal(id);
-  var podeEditar=(S.user&&(j.dono_id===S.user.id||(S.profile&&S.profile.papel_global==="admin")));
+  var podeEditar=(S.user&&(j.dono_id===S.user.id||ehAdmin()));
   var escr=await escritoresJornal(id); var souEscr=!!(S.user&&escr.some(function(x){return x.user_id===S.user.id;}));
   var podePublicar=podeEditar||souEscr;
   var logo=j.imagem_url?'<div class="av" style="width:120px;height:120px;border-radius:12px;background-image:url('+esc(j.imagem_url)+')"></div>':'<div class="av" style="width:120px;height:120px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:54px;color:var(--ouro)">'+icon("scroll-unfurled")+'</div>';
@@ -1431,7 +1433,8 @@ function pinarMural(pubId){ var mm=(S.mesas||[]).filter(mestreDe); if(!mm.length
 async function confirmarPin(pubId, mesaId, btn){ try{ var _c=await sb.from("mural_pins").select("id",{count:"exact",head:true}).eq("mesa_id",mesaId); if(!_c.error && _c.count>=6){ toast("Limite de 6 conteúdos fixados nesta mesa — remova um para fixar outro.","erro"); var _ov=btn.closest(".crop-ov"); if(_ov)_ov.remove(); return; } var r=await sb.from("mural_pins").insert({mesa_id:mesaId,tipo:"publicacao",alvo_id:pubId,fixado_por:(S.user?S.user.id:null)}); if(r.error&&!/duplicate|unique|already/i.test(r.error.message)) throw r.error; toast(r.error?"Esse conteúdo já está fixado nessa mesa.":"Fixado no mural! 📌","ok"); var ov=btn.closest(".crop-ov"); if(ov)ov.remove(); }catch(e){ toast(e.message||(""+e),"erro"); } }
 async function despinarMural(mesaId, alvoId, tipo){ tipo=tipo||"publicacao"; try{ await sb.from("mural_pins").delete().eq("mesa_id",mesaId).eq("tipo",tipo).eq("alvo_id",alvoId); toast("Removido do mural.","ok"); go("mesa",mesaId); }catch(e){ toast(e.message||(""+e),"erro"); } }
 
-function ehAdmin(){ return !!(S.profile&&S.profile.papel_global==="admin"); }
+function ehAdmin(){ return !!(S.profile&&(S.profile.papel_global==="admin"||S.profile.papel_global==="superadmin")); }
+function ehSuperadmin(){ return !!(S.profile&&S.profile.papel_global==="superadmin"); }
 async function excluirMundo(id){ if(!ehAdmin()){ toast("Apenas admin pode excluir mundos.","erro"); return; } var w=S.mundos.find(function(x){return x.id===id;})||{}; if(!confirm('EXCLUIR o mundo "'+(w.nome||"")+'" e TODO o conteúdo dentro dele (mesas, personagens, artigos, jornais, linha do tempo)?\n\nIsso é PERMANENTE e irreversível.')) return; if(!confirm('Última confirmação: excluir "'+(w.nome||"")+'" para sempre?')) return; try{ var r=await sb.rpc("excluir_mundo",{p_id:id}); if(r.error)throw r.error; S.mundos=S.mundos.filter(function(x){return x.id!==id;}); try{ if(localStorage.getItem("mds_mundo")===id) localStorage.removeItem("mds_mundo"); }catch(e){} S.mundo=mundoSalvo()||S.mundos[0]||null; if(S.mundo) await carregarMesas(); toast("Mundo excluído.","ok"); go("home"); }catch(e){ toast(e.message||(""+e),"erro"); } }
 async function excluirMesa(id){ if(!ehAdmin()){ toast("Apenas admin pode excluir mesas.","erro"); return; } var m=(S.mesas||[]).find(function(x){return x.id===id;})||{}; if(!confirm('EXCLUIR a mesa "'+(m.nome||"")+'" e seu conteúdo (sessões, mapas, personagens da mesa, fixados)?\n\nIsso é PERMANENTE.')) return; try{ var r=await sb.rpc("excluir_mesa",{p_id:id}); if(r.error)throw r.error; if(S.mundo) await carregarMesas(); toast("Mesa excluída.","ok"); go("mundoHome"); }catch(e){ toast(e.message||(""+e),"erro"); } }
 
@@ -1451,6 +1454,102 @@ async function moverEvento(id, dir, mesaId){
 }
 
 function lightbox(url){ if(!url)return; var ov=document.createElement("div"); ov.className="lightbox-ov"; ov.innerHTML='<img src="'+esc(url)+'" alt="">'; ov.onclick=function(){ ov.remove(); }; document.body.appendChild(ov); }
+// ===== Administração =====
+async function carregarSiteConfig(){ try{ var r=await sb.from("site_config").select("*").eq("id",1).maybeSingle(); S.site=r.data||null; }catch(e){ S.site=null; } }
+async function telaAdmin(){
+  if(!ehAdmin()){ layout('<div class="aviso">Acesso restrito à administração.</div>'); return; }
+  layout('<p>Carregando…</p>');
+  var st={}; try{ var r=await sb.rpc("admin_estatisticas"); if(!r.error) st=r.data||{}; }catch(e){}
+  var sup=ehSuperadmin();
+  var defs=[
+    {key:"painel",label:"🛡 Painel",html:adminPainelHTML(st,sup)},
+    {key:"site",label:"⚙ Site",html:adminSiteHTML()},
+    {key:"usuarios",label:"👥 Usuários",html:'<div id="adm-users"><p>Carregando usuários…</p></div>'},
+    {key:"mundos",label:icon("castle")+" Mundos",html:adminMundosHTML()},
+    {key:"mesas",label:icon("crossed-swords")+" Mesas",html:'<div id="adm-mesas"><p>Carregando mesas…</p></div>'}
+  ];
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Administração</div>'
+    +'<h1>🛡 Administração</h1><p class="vis-leg">'+(sup?'Você é <b>super-admin</b> — controle total, inclusive gerir administradores e ações estruturais.':'Você é <b>admin</b> — pode moderar e editar o conteúdo do site; ações estruturais (gerir admins, excluir mundos/usuários) são do super-admin.')+'</p>'
+    +abas("admin",defs));
+  admUsuarios(0,"");
+  admCarregarMesas();
+}
+function adminPainelHTML(st,sup){
+  function cel(ic,n,lab){ return '<div class="adm-stat"><div class="adm-stat-ic">'+ic+'</div><div class="adm-stat-n">'+(n!=null?n:"—")+'</div><div class="adm-stat-l">'+lab+'</div></div>'; }
+  return '<div class="adm-stats">'+cel("👥",st.usuarios,"Usuários")+cel("🛡",st.admins,"Admins")+cel(icon("castle"),st.mundos,"Mundos")+cel("🌍",st.mundos_pub,"Públicos")+cel(icon("crossed-swords"),st.mesas,"Mesas")+cel("📄",st.publicacoes,"Publicações")+cel(icon("hooded-figure"),st.personagens,"Personagens")+'</div>'
+    +'<div class="secao"><p class="vis-leg">Use as abas acima para gerir <b>usuários</b>, o <b>conteúdo do site</b>, <b>mundos</b> e <b>mesas</b>.</p></div>';
+}
+function adminSiteHTML(){
+  var s=S.site||{};
+  return '<div class="form">'+fHead("⚙","Identidade do site","Aparece na página inicial da plataforma.")
+    +fGrupo('Textos','<label>Título</label><input id="sc_titulo" value="'+esc(s.titulo||"")+'" placeholder="Mares de Sangue"><label>Descrição / subtítulo</label><textarea id="sc_descricao" rows="2">'+esc(s.descricao||"")+'</textarea>')
+    +fGrupo('Imagem de destaque (hero da página inicial)',campoImagem('Imagem','sc_imagem',(s.imagem_url||"")))
+    +fGrupo('Aviso global (opcional)','<p class="grupo-dica">Mensagem curta exibida na página inicial (ex.: manutenção, novidade). Deixe vazio para esconder.</p><input id="sc_msg" value="'+esc(s.mensagem||"")+'" placeholder="(sem aviso)">')
+    +fAcoes('Salvar site','salvarConfigSite()',"go('home')")+'</div>';
+}
+async function salvarConfigSite(){
+  try{
+    var upd={titulo:val("sc_titulo").trim()||null,descricao:val("sc_descricao").trim()||null,imagem_url:val("sc_imagem").trim()||null,mensagem:val("sc_msg").trim()||null,atualizado_em:new Date().toISOString()};
+    var r=await sb.from("site_config").update(upd).eq("id",1); if(r.error)throw r.error;
+    S.site=Object.assign({id:1},S.site||{},upd); toast("Identidade do site atualizada.","ok");
+  }catch(e){ toast(e.message||(""+e),"erro"); }
+}
+var __admDeb;
+function admBuscaDeb(v){ clearTimeout(__admDeb); __admDeb=setTimeout(function(){ admListarUsuarios(0,(v||"").trim()); },300); }
+function admUsuarios(offset,termo){
+  var box=document.getElementById("adm-users"); if(!box)return;
+  box.innerHTML='<div class="adm-busca"><input id="adm_q" placeholder="Buscar por apelido, nome ou e-mail…" value="'+esc(termo||"")+'" oninput="admBuscaDeb(this.value)"></div><div id="adm-users-res"><p>Carregando…</p></div>';
+  admListarUsuarios(offset,termo);
+}
+async function admListarUsuarios(offset,termo){
+  var res=document.getElementById("adm-users-res"); if(!res)return; res.innerHTML='<p>Carregando…</p>';
+  var lim=10; termo=termo||"";
+  try{
+    var r=await sb.rpc("admin_listar_usuarios",{termo:termo,p_limit:lim,p_offset:offset});
+    if(r.error)throw r.error; var rows=r.data||[]; var total=rows.length?Number(rows[0].total):0;
+    if(!rows.length){ res.innerHTML='<div class="empty">Nenhum usuário encontrado.</div>'; return; }
+    var sup=ehSuperadmin(); var meu=S.user?S.user.id:"";
+    var qesc=termo.replace(/[\\'"]/g,"");
+    var lista=rows.map(function(u){
+      var av=u.avatar_url?'<span class="adm-av" style="background-image:url('+esc(u.avatar_url)+')"></span>':'<span class="adm-av">'+esc(((u.apelido||u.nome||"?")[0]||"?").toUpperCase())+'</span>';
+      var badge=u.papel_global==="superadmin"?'<span class="adm-badge sup">super-admin</span>':(u.papel_global==="admin"?'<span class="adm-badge adm">admin</span>':'');
+      var sub=[]; if(u.epiteto)sub.push(esc(u.epiteto)); if(u.nome&&u.apelido&&u.nome!==u.apelido)sub.push(esc(u.nome)); if(u.email_mascara)sub.push(esc(u.email_mascara));
+      var acoes='';
+      if(sup && u.id!==meu && u.papel_global!=="superadmin"){
+        acoes = (u.papel_global==="admin")
+          ? ' <button class="btn sec mini" onclick="admDefinirPapel(\''+u.id+'\',\'usuario\')">Rebaixar</button>'
+          : ' <button class="btn sec mini" onclick="admDefinirPapel(\''+u.id+'\',\'admin\')">Tornar admin</button>';
+      }
+      return '<div class="adm-user">'+av+'<div class="adm-user-id"><b>'+esc(u.apelido||u.nome||"Aventureiro")+'</b> '+badge+'<div class="vis-leg">'+sub.join(" · ")+'</div></div><div class="adm-user-ac"><a class="btn sec mini" onclick="go(\'autor\',\''+u.id+'\')">Ver</a>'+acoes+'</div></div>';
+    }).join("");
+    var ini=offset+1, fim=offset+rows.length;
+    var nav='<div class="adm-nav"><button class="btn sec mini"'+(offset<=0?' disabled':'')+' onclick="admListarUsuarios('+Math.max(0,offset-lim)+',\''+qesc+'\')">‹ Anterior</button> <span class="vis-leg">'+ini+'–'+fim+' de '+total+'</span> <button class="btn sec mini"'+(fim>=total?' disabled':'')+' onclick="admListarUsuarios('+(offset+lim)+',\''+qesc+'\')">Próxima ›</button></div>';
+    res.innerHTML='<div class="adm-users-list">'+lista+'</div>'+nav;
+  }catch(e){ res.innerHTML='<div class="aviso">Erro ao listar usuários: '+esc(e.message||(""+e))+'</div>'; }
+}
+async function admDefinirPapel(uid,papel){
+  if(!ehSuperadmin()){ toast("Apenas super-admin pode alterar papéis.","erro"); return; }
+  if(!confirm(papel==="admin"?"Tornar este usuário ADMINISTRADOR? Ele poderá moderar e editar o site.":"Rebaixar este administrador a usuário comum?")) return;
+  try{ var r=await sb.rpc("admin_definir_papel",{p_user:uid,p_papel:papel}); if(r.error)throw r.error; toast("Papel atualizado.","ok"); var q=val("adm_q"); admListarUsuarios(0,(q||"").trim()); }catch(e){ toast(e.message||(""+e),"erro"); }
+}
+async function admEditarMundo(id){ var w=(S.mundos||[]).find(function(x){return x.id===id;}); if(w){ S.mundo=w; try{localStorage.setItem("mds_mundo",id);}catch(e){} try{ await carregarMesas(); }catch(_){} } go("editarMundo"); }
+function adminMundosHTML(){
+  var ws=S.mundos||[];
+  if(!ws.length) return '<div class="empty">Nenhum mundo.</div>';
+  var sup=ehSuperadmin();
+  return '<div class="adm-list">'+ws.map(function(w){
+    return '<div class="adm-row"><div class="adm-row-id"><b>'+esc(w.nome)+'</b> '+(w.publico?'<span class="adm-badge">público</span>':'<span class="adm-badge off">privado</span>')+'<div class="vis-leg">tema: '+esc(w.tema||"medieval")+'</div></div><div class="adm-row-ac"><a class="btn sec mini" onclick="selecionarMundo(\''+w.id+'\')">Abrir</a> <a class="btn sec mini" onclick="admEditarMundo(\''+w.id+'\')">Editar</a>'+(sup?' <button class="btn btn-perigo mini" onclick="excluirMundo(\''+w.id+'\')">Excluir</button>':'')+'</div></div>';
+  }).join("")+'</div>'+(sup?'':'<p class="vis-leg">A exclusão de mundos é exclusiva do super-admin.</p>');
+}
+async function admCarregarMesas(){
+  var box=document.getElementById("adm-mesas"); if(!box)return;
+  try{ var r=await sb.from("mesas").select("id,nome,mundo_id").order("criado_em",{ascending:false}).limit(100); if(r.error)throw r.error;
+    var ms=r.data||[]; if(!ms.length){ box.innerHTML='<div class="empty">Nenhuma mesa.</div>'; return; }
+    var sup=ehSuperadmin();
+    box.innerHTML='<div class="adm-list">'+ms.map(function(m){ return '<div class="adm-row"><div class="adm-row-id"><b>'+esc(m.nome)+'</b><div class="vis-leg">'+esc(nomeMundo(m.mundo_id)||"—")+'</div></div><div class="adm-row-ac"><a class="btn sec mini" onclick="go(\'mesa\',\''+m.id+'\')">Abrir</a>'+(sup?' <button class="btn btn-perigo mini" onclick="excluirMesa(\''+m.id+'\')">Excluir</button>':'')+'</div></div>'; }).join("")+'</div>';
+  }catch(e){ box.innerHTML='<div class="aviso">Erro ao listar mesas: '+esc(e.message||(""+e))+'</div>'; }
+}
+
 function render(){ window.__editDirty=false;
   aplicarTema(S.mundo&&S.mundo.tema?S.mundo.tema:"medieval");
   document.body.classList.toggle("modo-lista", S.modo==="lista");
@@ -1498,6 +1597,7 @@ function render(){ window.__editDirty=false;
   else if(t==="tudoMeu") telaTudoMeu();
   else if(t==="convites") telaConvites();
   else if(t==="jogadores") telaJogadores(S.view.arg);
+  else if(t==="admin") telaAdmin();
   else telaHome();
 }
 // ===== Notificações =====

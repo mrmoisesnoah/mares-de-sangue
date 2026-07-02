@@ -287,36 +287,43 @@ create policy rel_insert on publicacao_relacoes for insert with check (
 -- ============================================================
 create table if not exists convites (
   id            uuid primary key default gen_random_uuid(),
-  mesa_id       uuid not null references mesas(id) on delete cascade,
-  convidado_id  uuid not null references profiles(id) on delete cascade,
-  criado_por    uuid not null references profiles(id),
-  estado        text not null default 'pendente' check (estado in ('pendente','aceito','recusado')),
-  criado_em     timestamptz not null default now(),
-  unique (mesa_id, convidado_id)
-);
-create index if not exists idx_convites_convidado on convites(convidado_id);
-create index if not exists idx_convites_mesa on convites(mesa_id);
-alter table convites enable row level security;
-drop policy if exists conv_select on convites;
-create policy conv_select on convites for select using (
-  convidado_id = auth.uid() or is_mestre(mesa_id) or is_admin());
-drop policy if exists conv_insert on convites;
-create policy conv_insert on convites for insert with check (
-  criado_por = auth.uid() and (is_mestre(mesa_id) or is_admin()));
-drop policy if exists conv_update on convites;
-create policy conv_update on convites for update using (
-  convidado_id = auth.uid() or is_mestre(mesa_id) or is_admin());
-drop policy if exists conv_delete on convites;
-create policy conv_delete on convites for delete using (
-  is_mestre(mesa_id) or is_admin());
+  mesa_id       uuid not null refe
+-- =========================================================
+-- Administração: tiers de papel (super-admin) + site_config + RPCs
+-- (ver migracao-admin.sql). Idempotente.
+-- =========================================================
+alter table profiles drop constraint if exists profiles_papel_global_check;
+alter table profiles add constraint profiles_papel_global_check
+  check (papel_global in ('superadmin','admin','usuario'));
 
--- Busca abrangente e paginada (prefixo em apelido/nome/e-mail; e-mail só mascarado)
-drop function if exists buscar_usuarios(text);
-create or replace function buscar_usuarios(termo text, p_limit int default 10, p_offset int default 0)
-returns table(id uuid, nome text, apelido text, epiteto text, avatar_url text, email_mascara text, total bigint)
-language sql security definer stable set search_path = public as $$
-  with base as (
-    select p.id, p.nome, p.apelido, p.epiteto, p.avatar_url, u.email
+create or replace function is_superadmin() returns boolean
+language sql stable security definer set search_path=public as $$
+  select exists(select 1 from profiles p where p.id=auth.uid() and p.papel_global='superadmin');
+$$;
+
+create or replace function is_admin() returns boolean
+language sql stable security definer set search_path=public as $$
+  select exists(select 1 from profiles p where p.id=auth.uid() and p.papel_global in ('admin','superadmin'));
+$$;
+
+create table if not exists site_config (
+  id            int primary key default 1,
+  titulo        text,
+  descricao     text,
+  imagem_url    text,
+  mensagem      text,
+  atualizado_em timestamptz default now(),
+  constraint site_config_singleton check (id=1)
+);
+insert into site_config (id, titulo, descricao)
+  values (1, 'Mares de Sangue', 'Plataforma para Criação de Mundos — uma produção TOGA, The Older Gods Adventures')
+  on conflict (id) do nothing;
+alter table site_config enable row level security;
+drop policy if exists sc_select on site_config;
+create policy sc_select on site_config for select using (true);
+drop policy if exists sc_update on site_config;
+create policy sc_update on site_config for update using (is_admin());
+t p.id, p.nome, p.apelido, p.epiteto, p.avatar_url, u.email
     from profiles p join auth.users u on u.id = p.id
     where auth.uid() is not null and p.id <> auth.uid() and (
       coalesce(p.apelido,'') ilike trim(coalesce(termo,''))||'%'

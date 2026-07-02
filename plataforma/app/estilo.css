@@ -854,3 +854,24 @@ body.foco-lock{ overflow:hidden; }
 .aba-panel{display:none}
 .aba-panel.on{display:block;animation:abaIn .18s ease}
 @keyframes abaIn{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+/* ===== Administração ===== */
+.adm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin:6px 0 14px}
+.adm-stat{background:var(--perg2);border:1px solid var(--borda);border-radius:12px;padding:12px;text-align:center}
+.adm-stat-ic{font-size:20px;line-height:1}
+.adm-stat-n{font-family:var(--font-head);font-size:26px;font-weight:700;color:var(--tinta);margin-top:2px}
+.adm-stat-l{font-size:12px;color:var(--tinta2)}
+.adm-busca{margin:4px 0 12px}
+.adm-busca input{width:100%}
+.adm-users-list,.adm-list{display:flex;flex-direction:column;gap:8px}
+.adm-user,.adm-row{display:flex;align-items:center;gap:10px;background:var(--perg2);border:1px solid var(--borda);border-radius:10px;padding:8px 12px}
+.adm-user-id,.adm-row-id{flex:1 1 auto;min-width:0}
+.adm-user-ac,.adm-row-ac{flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.adm-av{width:38px;height:38px;flex:0 0 auto;border-radius:50%;background:var(--campo);background-size:cover;background-position:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--tinta)}
+.adm-badge{display:inline-block;font-size:11px;padding:1px 7px;border-radius:20px;background:var(--campo);border:1px solid var(--borda);color:var(--tinta2);vertical-align:middle}
+.adm-badge.adm{background:var(--ouro);color:#241a08;border-color:var(--ouro)}
+.adm-badge.sup{background:var(--sangue);color:#fff;border-color:var(--sangue)}
+.adm-badge.off{opacity:.7}
+.adm-nav{display:flex;align-items:center;gap:12px;justify-content:center;margin-top:12px}
+.aviso-global{background:var(--ouro);color:#241a08;border-radius:10px;padding:10px 14px;margin:0 0 14px;font-weight:600;text-align:center}
+@media(max-width:600px){ .adm-user,.adm-row{flex-wrap:wrap} .adm-user-ac,.adm-row-ac{width:100%;justify-content:flex-start} }
