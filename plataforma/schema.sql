@@ -414,3 +414,8 @@ create table if not exists mensagens (
   corpo text not null, criado_em timestamptz default now()
 );
 create index if not exists idx_msg_conversa on mensagens(conversa_id, criado_em);
+
+-- Gerenciamento de conversas (ver migracao-chat-gerenciar.sql). Idempotente.
+alter table conversa_membros add column if not exists arquivada boolean not null default false;
+alter table conversa_membros add column if not exists fixada    boolean not null default false;
+alter table conversa_membros add column if not exists oculta_em timestamptz;
