@@ -376,3 +376,41 @@ $$;
 -- insert into mesas (mundo_id, nome, slug, descricao, mestre_id)
 --   select id, 'Ecos na Cidade dos Corvos','ecos-na-cidade-dos-corvos','Campanha atual', 'SEU-USER-ID'
 --   from mundos where slug = 'mares-de-sangue';
+
+-- =========================================================
+-- Amigos + Chat (ver migracao-amigos.sql e migracao-chat.sql).
+-- Idempotente. RPCs completas estão nos arquivos de migração.
+-- =========================================================
+create table if not exists amizades (
+  id uuid primary key default gen_random_uuid(),
+  solicitante_id uuid not null references profiles(id) on delete cascade,
+  destinatario_id uuid not null references profiles(id) on delete cascade,
+  estado text not null default 'pendente' check (estado in ('pendente','aceita','recusada','bloqueada')),
+  criado_em timestamptz default now(), atualizado_em timestamptz default now(),
+  check (solicitante_id <> destinatario_id), unique (solicitante_id, destinatario_id)
+);
+alter table amizades enable row level security;
+drop policy if exists amiz_select on amizades;
+create policy amiz_select on amizades for select
+  using (solicitante_id = auth.uid() or destinatario_id = auth.uid() or is_admin());
+
+create table if not exists conversas (
+  id uuid primary key default gen_random_uuid(),
+  tipo text not null default 'dm' check (tipo in ('dm','grupo')),
+  mesa_id uuid references mesas(id) on delete cascade,
+  criado_em timestamptz default now()
+);
+create unique index if not exists idx_conversa_mesa on conversas(mesa_id) where mesa_id is not null;
+create table if not exists conversa_membros (
+  conversa_id uuid references conversas(id) on delete cascade,
+  user_id uuid references profiles(id) on delete cascade,
+  ultima_leitura timestamptz default now(),
+  primary key (conversa_id, user_id)
+);
+create table if not exists mensagens (
+  id uuid primary key default gen_random_uuid(),
+  conversa_id uuid not null references conversas(id) on delete cascade,
+  autor_id uuid not null references profiles(id) on delete cascade,
+  corpo text not null, criado_em timestamptz default now()
+);
+create index if not exists idx_msg_conversa on mensagens(conversa_id, criado_em);

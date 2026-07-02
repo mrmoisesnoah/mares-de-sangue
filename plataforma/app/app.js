@@ -148,7 +148,7 @@ async function carregar(){
     var m=await sb.from("mundos").select("*").order("criado_em"); if(m.error)throw m.error;
     S.mundos=m.data||[]; S.mundo=mundoSalvo()||S.mundos[0]||null;
     if(S.mundo) await carregarMesas();
-    await carregarMinhasMesas(); await carregarFavs(); await carregarNotifs(); iniciarPollNotifs(); await carregarSiteConfig();
+    await carregarMinhasMesas(); await carregarFavs(); await carregarNotifs(); iniciarPollNotifs(); await carregarSiteConfig(); atualizarBadgeMsgs();
     rota();
   }catch(e){ erro(e); }
 }
@@ -210,7 +210,7 @@ function linkPessoal(){
   var hub='<a class="nav-hub'+(t==="tudoMeu"?' on':'')+'" onclick="go(\'tudoMeu\')">'+icon("backpack")+' <span>TUDO MEU!</span></a>';
   var quick='<div class="nav-mini">'
     +'<a'+(t==="favoritos"?' class="on"':'')+' onclick="go(\'favoritos\')">'+ic("fav")+' Favoritos</a>'
-    +'<a'+(t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a></div>';
+    +'<a'+(t==="rascunhos"?' class="on"':'')+' onclick="go(\'rascunhos\')">'+icon("quill-ink")+' Rascunhos</a>'+'<a'+(t==="amigos"?' class="on"':'')+' onclick="go(\'amigos\')">👥 Amigos</a>'+'<a'+(t==="mensagens"?' class="on"':'')+' onclick="go(\'mensagens\')">💬 Mensagens</a></div>';
   var out=hub+quick;
   if(S.mundo){
     var mestro=S.mesas.filter(function(m){return mestreDe(m)||S.papelMesa[m.id]==="mestre";});
@@ -264,12 +264,12 @@ function layout(conteudo){
     var nm=esc(S.profile?exib(S.profile):S.user.email);
     var av=(S.profile&&S.profile.avatar_url)?'<span class="avatar" style="background-image:url('+esc(S.profile.avatar_url)+')"></span>':'<span class="avatar">'+esc(((S.profile?exib(S.profile):"?")[0]||"?").toUpperCase())+'</span>';
     ub='<button class="user-btn" onclick="toggleUserMenu(event)">'+av+'<span class="user-nm">'+nm+'</span><span class="ws-ar">▾</span></button>'
-      +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a><a onclick="go(\'convites\')">✉ Meus convites</a>'
+      +'<div class="user-menu" id="usermenu"><a onclick="go(\'autor\',\''+S.user.id+'\')">👤 Minha página</a><a onclick="go(\'perfil\')">'+icon("quill-ink")+' Editar perfil</a><a onclick="go(\'convites\')">✉ Meus convites</a><a onclick="go(\'amigos\')">👥 Amigos</a><a onclick="go(\'mensagens\')">💬 Mensagens'+((S.msgNaoLidas||0)>0?' <span class="menu-ct">'+(S.msgNaoLidas>9?"9+":S.msgNaoLidas)+'</span>':'')+'</a>'
       +(ehAdmin()?'<div class="sep"></div><a onclick="go(\'admin\')">🛡 Administração</a>':"")+'<div class="sep"></div><a onclick="go(\'mundos\')">🔄 Trocar de mundo</a><div class="sep"></div><a onclick="sair()">↩ Sair</a></div>';
   } else { ub='<button class="btn mini" onclick="go(\'login\')">Entrar</button>'; }
   app.innerHTML='<header class="topo"><button id="btn-menu" aria-label="Abrir menu" onclick="toggleMenu()">☰</button>'
     +'<div class="marca" onclick="go(\'home\')">'+temaIcone(S.mundo&&S.mundo.tema)+' <span class="marca-tx">Mares de Sangue</span></div>'+pill+(S.mundo?'<input class="topo-busca" placeholder="Buscar no mundo…" onkeydown="if(event.key===\'Enter\')go(\'busca\',this.value)">':'')
-    +'<div class="userbox">'+modoBtnHTML()+(S.user?bellHTML():'')+ub+'</div></header>'
+    +'<div class="userbox">'+modoBtnHTML()+(S.user?chatBtnHTML():'')+(S.user?bellHTML():'')+ub+'</div></header>'
     +'<div class="layout"><aside class="lateral">'+sidebar()+'</aside><main class="conteudo">'+S.msg+conteudo+'</main></div>'+'<footer class="rodape">© '+(new Date().getFullYear())+' <b>Moisés Noah</b> · uma produção <b>TOGA</b> — The Older Gods Adventures · <a onclick="go(\'guia\')">📖 Guia de uso</a> · <a onclick="go(\'creditos\')">Créditos & atribuições</a></footer>';
 }
 
@@ -478,7 +478,7 @@ async function telaMesa(id){ layout('<p>Carregando…</p>'); var mesa=S.mesas.fi
   if(S.user&&!ehM){ var _mb=await sb.from("mesa_membros").select("user_id").eq("mesa_id",id).eq("user_id",S.user.id).maybeSingle(); souMembro=!!(_mb&&_mb.data); if(!souMembro){ var _pq=await sb.from("pedidos_acesso").select("estado").eq("tipo","mesa").eq("alvo_id",id).eq("solicitante_id",S.user.id).order("criado_em",{ascending:false}).limit(1); meuPedido=(_pq&&_pq.data&&_pq.data[0])?_pq.data[0].estado:null; } }
   var podeCriar=ehM||souMembro;
   var acts=S.user?((podeCriar?'<a class="btn" onclick="go(\'nova\',{mesa:\''+id+'\'})">+ Conteúdo</a> ':'')
-    +'<a class="btn sec" onclick="go(\'linha\',\''+id+'\')">'+ic("linha")+' Linha do tempo</a>'
+    +'<a class="btn sec" onclick="go(\'linha\',\''+id+'\')">'+ic("linha")+' Linha do tempo</a>'+(podeCriar?' <a class="btn sec" onclick="abrirChatMesa(\''+id+'\')">💬 Chat da mesa</a>':'')
     +(ehM?' <a class="btn sec" onclick="go(\'areaMestre\',\''+id+'\')">'+icon("drama-masks")+' Área do Mestre</a> <a class="btn sec" onclick="go(\'jogadores\',\''+id+'\')">'+icon("hooded-figure")+' Jogadores da Mesa</a> <a class="btn sec" onclick="go(\'editarMesa\',\''+id+'\')">'+icon("quill-ink")+' Editar mesa</a>':'')+(S.user?' '+botaoFav("mesa",id,mesa.nome):'')):'';
   var metaHtml=(mesa.epoca||mesa.local)?'<p class="meta-mesa">'+(mesa.epoca?'🕰 '+esc(mesa.epoca):'')+(mesa.epoca&&mesa.local?' · ':'')+(mesa.local?'📍 '+esc(mesa.local):'')+'</p>':'';
   var pedir=""; if(S.user&&!ehM&&!souMembro){ pedir=(meuPedido==="pendente")?'<p><span class="btn sec" style="opacity:.65;cursor:default">⏳ Acesso solicitado — aguardando o mestre aprovar</span></p>':'<p><a class="btn sec" onclick="pedirAcesso(\'mesa\',\''+id+'\')">🔑 Pedir acesso a esta mesa</a></p>'; }
@@ -512,9 +512,10 @@ async function telaAutor(uid){ if(!S.mundo){go("mundos");return;} layout('<p>Car
     +(pf.bio?'<div class="corpo" style="max-width:760px;margin:6px 0 14px">'+md(pf.bio)+'</div>':'')
     +(S.mundos.length>1?'<div class="tm-worldsel"><label>Mundo em foco:</label><select onchange="trocarMundoAutor(this.value,\''+uid+'\')">'+S.mundos.map(function(w){return '<option value="'+esc(w.id)+'"'+(S.mundo&&w.id===S.mundo.id?' selected':'')+'>'+esc(w.nome)+'</option>';}).join("")+'</select></div>':'')
     +stats
+    +((S.user&&uid!==S.user.id)?'<p class="autor-criar" id="amizade-acao"></p>':'')
     +(ehEu?'<p class="autor-criar"><a class="btn" onclick="go(\'nova\',{mesa:null})">+ Novo conteúdo</a> <a class="btn sec" onclick="go(\'novoPersonagem\',{mesa:null})">+ Personagem</a> <a class="btn sec" onclick="go(\'tudoMeu\')">'+icon("backpack")+' TUDO MEU!</a></p>':'')
     +vitrine
-    +'<div class="secao"><div class="sec-head"><h2>'+icon("book-cover")+' Publicações</h2></div>'+exploradorHTML()+'</div>'); renderExpl(); }
+    +'<div class="secao"><div class="sec-head"><h2>'+icon("book-cover")+' Publicações</h2></div>'+exploradorHTML()+'</div>'); renderExpl(); if(S.user&&uid!==S.user.id) pintarAmizade(uid); }
 async function telaPub(id){ layout('<p>Carregando…</p>'); var p=await umaPub(id); S.pubAtual=p; if(p){ await focarMundoDeConteudo(p.mundo_id); registrarVisita("publicacao",p.id,p.titulo,p.mundo_id); }
   if(!p){ layout('<div class="aviso">Publicação não encontrada ou sem permissão.</div>'); return; }
   var nomeAutor=await nomeDe(p.autor_id); var podeBaixar=meu(p)||donoMundo(); var anexo=p.arquivo_url?'<p class="anexo-bloco">📎 Arquivo anexado: <a class="btn mini" href="'+esc(p.arquivo_url)+'" target="_blank" rel="noopener">↗ Abrir / baixar</a>'+(p.arquivo_nome?' <span class="vis-leg">('+esc(p.arquivo_nome)+')</span>':'')+'</p>':'';
@@ -1642,6 +1643,9 @@ function render(){ window.__editDirty=false;
   else if(t==="convites") telaConvites();
   else if(t==="jogadores") telaJogadores(S.view.arg);
   else if(t==="admin") telaAdmin();
+  else if(t==="amigos") telaAmigos();
+  else if(t==="mensagens") telaConversas();
+  else if(t==="conversa") telaConversa(S.view.arg);
   else telaHome();
 }
 // ===== Notificações =====
@@ -1652,8 +1656,8 @@ function notifListHTML(){ var ns=S.notifs||[]; var top='<div class="sino-top"><b
 function bellHTML(){ var n=(S.notifs||[]).filter(function(x){return !x.lida;}).length; return '<div class="sino-wrap"><button class="sino-btn" onclick="toggleNotif(event)" title="Notificações" aria-label="Notificações">'+icon("ringing-bell")+(n?'<span class="sino-ct">'+(n>9?"9+":n)+'</span>':'')+'</button><div class="sino-menu" id="sinomenu">'+notifListHTML()+'</div></div>'; }
 async function toggleNotif(e){ if(e)e.stopPropagation(); var m=document.getElementById("sinomenu"); if(!m)return; var abrindo=!m.classList.contains("aberto"); m.classList.toggle("aberto"); if(abrindo){ try{ await carregarNotifs(); pintarSino(); }catch(_){} } }
 function pintarSino(){ var w=document.querySelector(".sino-wrap"); if(!w)return; var unread=(S.notifs||[]).filter(function(x){return !x.lida;}).length; var btn=w.querySelector(".sino-btn"); var ct=w.querySelector(".sino-ct"); if(unread){ if(ct){ ct.textContent=unread>9?"9+":unread; } else if(btn){ var sp=document.createElement("span"); sp.className="sino-ct"; sp.textContent=unread>9?"9+":unread; btn.appendChild(sp); } } else if(ct){ ct.remove(); } var menu=document.getElementById("sinomenu"); if(menu&&menu.classList.contains("aberto")){ menu.innerHTML=notifListHTML(); } }
-function iniciarPollNotifs(){ if(window.__notifPoll)return; window.__notifPoll=setInterval(function(){ if(!S.user)return; carregarNotifs().then(function(){ pintarSino(); }).catch(function(){}); }, 45000); }
-async function abrirNotif(id,lt,lid){ try{ await sb.from("notificacoes").update({lida:true}).eq("id",id); var nn=(S.notifs||[]).find(function(x){return x.id===id;}); if(nn)nn.lida=true; }catch(e){} pintarSino(); var n=(S.notifs||[]).find(function(x){return x.id===id;}); if(n&&n.tipo==="convite"){ go("convites"); return; } if(n&&n.tipo==="pedido"&&lt==="mundo"){ if(S.mundo&&S.mundo.id===lid){ go("editarMundo"); } else { toast("Abra o mundo correspondente e use Editar mundo para aprovar o pedido.","erro"); render(); } return; } var rt={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[lt]; if(rt&&lid){ go(rt,lid); } else { render(); } }
+function iniciarPollNotifs(){ if(window.__notifPoll)return; window.__notifPoll=setInterval(function(){ if(!S.user)return; carregarNotifs().then(function(){ pintarSino(); }).catch(function(){}); atualizarBadgeMsgs(); }, 45000); }
+async function abrirNotif(id,lt,lid){ try{ await sb.from("notificacoes").update({lida:true}).eq("id",id); var nn=(S.notifs||[]).find(function(x){return x.id===id;}); if(nn)nn.lida=true; }catch(e){} pintarSino(); var n=(S.notifs||[]).find(function(x){return x.id===id;}); if(n&&(n.tipo==="amizade"||n.tipo==="amigo_aceito")){ go("amigos"); return; } if(n&&n.tipo==="mensagem"){ if(lid){ go("conversa",lid); } else { go("mensagens"); } return; } if(n&&n.tipo==="convite"){ go("convites"); return; } if(n&&n.tipo==="pedido"&&lt==="mundo"){ if(S.mundo&&S.mundo.id===lid){ go("editarMundo"); } else { toast("Abra o mundo correspondente e use Editar mundo para aprovar o pedido.","erro"); render(); } return; } var rt={publicacao:"pub",personagem:"personagem",jornal:"jornal",mesa:"mesa"}[lt]; if(rt&&lid){ go(rt,lid); } else { render(); } }
 async function marcarTodasLidas(){ try{ await sb.from("notificacoes").update({lida:true}).eq("user_id",S.user.id).eq("lida",false); (S.notifs||[]).forEach(function(n){n.lida=true;}); pintarSino(); render(); }catch(e){} }
 async function donoDoAlvo(tipo,id){ try{ if(tipo==="mundo"){ var a=await sb.from("mundos").select("dono_id").eq("id",id).maybeSingle(); return a.data&&a.data.dono_id; } if(tipo==="mesa"){ var b=await sb.from("mesas").select("mestre_id").eq("id",id).maybeSingle(); return b.data&&b.data.mestre_id; } if(tipo==="personagem"){ var c=await sb.from("personagens").select("jogador_id").eq("id",id).maybeSingle(); return c.data&&c.data.jogador_id; } }catch(e){} return null; }
 // ===== Comentários =====
@@ -1666,4 +1670,86 @@ async function excluirComentario(cid,tipo,id){ if(!confirm("Excluir este coment�
 function toggleUserMenu(e){ if(e)e.stopPropagation(); var m=document.getElementById("usermenu"); if(m) m.classList.toggle("aberto"); }
 function toggleWorldMenu(e){ if(e)e.stopPropagation(); var w=document.getElementById("worldmenu"); if(w) w.classList.toggle("aberto"); }
 document.addEventListener("click", function(e){ var wl=(e.target&&e.target.closest)?e.target.closest(".wikilink"):null; if(wl){ e.preventDefault(); irPorTitulo(wl.getAttribute("data-alvo")); } var m=document.getElementById("usermenu"); if(m) m.classList.remove("aberto"); var w=document.getElementById("worldmenu"); if(w) w.classList.remove("aberto"); var sn=document.getElementById("sinomenu"); if(sn) sn.classList.remove("aberto"); var lat=document.querySelector(".lateral.aberta"); if(lat){ var tg=e.target; var noBtn=tg&&tg.closest&&tg.closest("#btn-menu"); var noLat=tg&&tg.closest&&tg.closest(".lateral"); if(!noBtn&&!noLat) lat.classList.remove("aberta"); } });
+// ===== Amigos =====
+async function telaAmigos(){ if(!S.user){ go("login"); return; }
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Amigos</div><h1>👥 Amigos</h1><p class="vis-leg">Seus contatos do jogo — mestres e jogadores. Encontre pessoas, envie pedidos e abra conversas.</p><div id="amigos-abas"></div>');
+  var box=document.getElementById("amigos-abas"); if(!box)return;
+  box.innerHTML=abas("amigos",[
+    {key:"amigos",label:"👥 Amigos",html:'<div id="ab-amigos"><p class="vis-leg">Carregando…</p></div>',after:function(){ renderListaAmigos(); }},
+    {key:"pedidos",label:"✉ Pedidos",html:'<div id="ab-pedidos"><p class="vis-leg">Carregando…</p></div>',after:function(){ renderPedidosAmizade(); }},
+    {key:"buscar",label:"🔍 Buscar",html:'<div class="conv-box"><label style="font-weight:600">Encontrar pessoas</label><p class="vis-leg" style="margin:.2em 0 .5em">Digite o <b>e-mail exato</b>, o <b>apelido</b> ou o <b>nome</b>.</p><div class="expbar"><input id="am_busca" placeholder="e-mail, apelido ou nome" style="flex:1;min-width:170px;padding:8px;border:1px solid var(--ouro);border-radius:8px;background:#fffdf6" onkeydown="if(event.key===\'Enter\'){event.preventDefault();buscarAmigos();}" oninput="buscaAmigosDeb()"> <button class="btn mini" onclick="buscarAmigos()">Buscar</button></div><div id="am_resultados"></div></div>'}
+  ]);
+}
+function amigoLinha(u,acao){ var nm=(u.apelido&&u.apelido.trim())?u.apelido.trim():(u.nome||"Aventureiro"); var av=u.avatar_url?'<span class="avatar" style="background-image:url('+esc(u.avatar_url)+')"></span>':'<span class="avatar">'+esc((nm[0]||"?").toUpperCase())+'</span>'; var sub=(u.epiteto&&u.epiteto.trim())?'<span class="vis-leg" style="display:block;font-size:.82em"><i>'+esc(u.epiteto.trim())+'</i></span>':''; return '<li class="li-clic" style="cursor:default;display:flex;align-items:center;gap:10px"><span style="flex:0 0 auto">'+av+'</span><span style="flex:1;min-width:0"><a class="li-tit" onclick="go(\'autor\',\''+u.id+'\')">'+esc(nm)+'</a>'+sub+'</span><span style="flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+acao+'</span></li>'; }
+async function renderListaAmigos(){ var box=document.getElementById("ab-amigos"); if(!box)return;
+  try{ var r=await sb.rpc("listar_amigos"); if(r.error)throw r.error; var a=r.data||[];
+    if(!a.length){ box.innerHTML='<div class="empty">Você ainda não tem amigos. Use a aba <b>Buscar</b> para encontrar pessoas.</div>'; return; }
+    box.innerHTML='<ul class="lista2">'+a.map(function(u){ return amigoLinha(u,'<button class="btn mini" onclick="abrirDM(\''+u.id+'\')">💬 Conversar</button> <button class="btn mini sec" onclick="removerAmigo(\''+u.id+'\')">remover</button>'); }).join("")+'</ul>';
+  }catch(e){ box.innerHTML='<p class="vis-leg">Erro: '+esc(e.message||(""+e))+'</p>'; }
+}
+async function renderPedidosAmizade(){ var box=document.getElementById("ab-pedidos"); if(!box)return;
+  try{ var r=await sb.rpc("listar_pedidos_amizade"); if(r.error)throw r.error; var ps=r.data||[];
+    if(!ps.length){ box.innerHTML='<div class="empty">Nenhum pedido de amizade pendente.</div>'; return; }
+    box.innerHTML='<ul class="lista2">'+ps.map(function(u){ var uu={id:u.solicitante_id,nome:u.nome,apelido:u.apelido,epiteto:u.epiteto,avatar_url:u.avatar_url}; return amigoLinha(uu,'<button class="btn mini" onclick="responderAmizade(\''+u.id+'\',true)">✓ Aceitar</button> <button class="btn mini sec" onclick="responderAmizade(\''+u.id+'\',false)">Recusar</button>'); }).join("")+'</ul>';
+  }catch(e){ box.innerHTML='<p class="vis-leg">Erro: '+esc(e.message||(""+e))+'</p>'; }
+}
+function buscaAmigosDeb(){ if(window.__amTmr)clearTimeout(window.__amTmr); var termo=(val("am_busca")||"").trim(); var box=document.getElementById("am_resultados"); if(termo.length<1){ if(box)box.innerHTML=""; return; } window.__amTmr=setTimeout(function(){ buscarAmigos(); }, 300); }
+async function buscarAmigos(offset){ var box=document.getElementById("am_resultados"); if(!box)return;
+  var novo=(offset===undefined||offset===null); var termo=novo?((val("am_busca")||"").trim()):((S._amBusca&&S._amBusca.termo)||""); var size=8; var off=novo?0:(offset||0); S._amBusca={termo:termo,offset:off};
+  box.innerHTML='<p class="vis-leg">Buscando…</p>';
+  try{ var r=await sb.rpc("buscar_usuarios",{termo:termo,p_limit:size,p_offset:off}); if(r.error)throw r.error; var rows=r.data||[]; var total=rows.length?Number(rows[0].total||0):0;
+    if(!rows.length){ box.innerHTML='<p class="vis-leg">'+(termo?'Ninguém encontrado para “'+esc(termo)+'”.':'Nenhum usuário.')+'</p>'; return; }
+    var mine=await sb.from("amizades").select("solicitante_id,destinatario_id,estado"); var sm={};
+    if(!mine.error)(mine.data||[]).forEach(function(x){ var other=x.solicitante_id===S.user.id?x.destinatario_id:x.solicitante_id; var st; if(x.estado==="aceita")st="amigos"; else if(x.estado==="pendente")st=(x.solicitante_id===S.user.id)?"pendente_enviado":"pendente_recebido"; else st="nenhum"; sm[other]=st; });
+    var lis=rows.map(function(u){ var nm=(u.apelido&&u.apelido.trim())?u.apelido.trim():(u.nome||"Aventureiro"); var det=[]; if(u.epiteto&&u.epiteto.trim())det.push('<i>'+esc(u.epiteto.trim())+'</i>'); if(u.email_mascara)det.push(esc(u.email_mascara)); u.epiteto=u.epiteto; var uu={id:u.id,nome:u.nome,apelido:u.apelido,epiteto:(det.join(' · ')||''),avatar_url:u.avatar_url}; var st=sm[u.id]||"nenhum"; var acao; if(st==="amigos")acao='<span class="chip c-mesa">amigos ✓</span>'; else if(st==="pendente_enviado")acao='<span class="chip">pedido enviado</span>'; else if(st==="pendente_recebido")acao='<button class="btn mini" onclick="go(\'amigos\')">responder</button>'; else acao='<button class="btn mini" onclick="pedirAmizade(\''+u.id+'\')">+ Adicionar</button>'; return amigoLinhaHTML(uu,acao); }).join("");
+    var ini=off+1,fim=off+rows.length,nav=''; if(total>size||off>0){ nav='<div class="expbar" style="justify-content:space-between;margin-top:8px">'+(off>0?'<button class="btn mini sec" onclick="buscarAmigos('+(off-size)+')">‹ Anterior</button>':'<span></span>')+'<span class="vis-leg">'+ini+'–'+fim+' de '+total+'</span>'+((off+size<total)?'<button class="btn mini sec" onclick="buscarAmigos('+(off+size)+')">Próxima ›</button>':'<span></span>')+'</div>'; }
+    box.innerHTML='<ul class="lista2">'+lis+'</ul>'+nav;
+  }catch(e){ box.innerHTML='<p class="vis-leg">Erro: '+esc(e.message||(""+e))+'</p>'; }
+}
+function amigoLinhaHTML(u,acao){ var nm=(u.apelido&&u.apelido.trim())?u.apelido.trim():(u.nome||"Aventureiro"); var av=u.avatar_url?'<span class="avatar" style="background-image:url('+esc(u.avatar_url)+')"></span>':'<span class="avatar">'+esc((nm[0]||"?").toUpperCase())+'</span>'; var sub=(u.epiteto&&(''+u.epiteto).trim())?'<span class="vis-leg" style="display:block;font-size:.82em">'+u.epiteto+'</span>':''; return '<li class="li-clic" style="cursor:default;display:flex;align-items:center;gap:10px"><span style="flex:0 0 auto">'+av+'</span><span style="flex:1;min-width:0"><a class="li-tit" onclick="go(\'autor\',\''+u.id+'\')">'+esc(nm)+'</a>'+sub+'</span><span style="flex:0 0 auto;display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">'+acao+'</span></li>'; }
+async function pedirAmizade(uid){ try{ var r=await sb.rpc("pedir_amizade",{p_user:uid}); if(r.error)throw r.error; toast("Pedido de amizade enviado.","ok"); if(document.getElementById("am_resultados"))buscarAmigos((S._amBusca?S._amBusca.offset:0)); if(document.getElementById("amizade-acao"))pintarAmizade(uid); }catch(e){ erro(e); } }
+async function responderAmizade(id,aceitar){ try{ var r=await sb.rpc("responder_amizade",{p_id:id,p_aceitar:!!aceitar}); if(r.error)throw r.error; toast(aceitar?"Amizade aceita!":"Pedido recusado.","ok"); renderPedidosAmizade(); if(document.getElementById("ab-amigos"))renderListaAmigos(); }catch(e){ erro(e); } }
+async function removerAmigo(uid){ if(!confirm("Remover este amigo?"))return; try{ var r=await sb.rpc("remover_amizade",{p_user:uid}); if(r.error)throw r.error; toast("Amigo removido.","ok"); renderListaAmigos(); }catch(e){ erro(e); } }
+async function pintarAmizade(uid){ var box=document.getElementById("amizade-acao"); if(!box)return; try{ var r=await sb.rpc("amizade_status",{p_user:uid}); var st=r.error?"nenhum":(r.data||"nenhum"); var h; if(st==="amigos")h='<span class="chip c-mesa">👥 amigos</span> <button class="btn mini" onclick="abrirDM(\''+uid+'\')">💬 Conversar</button>'; else if(st==="pendente_enviado")h='<span class="chip">✉ pedido enviado</span>'; else if(st==="pendente_recebido")h='<button class="btn mini" onclick="go(\'amigos\')">✉ responder pedido</button>'; else if(st==="eu")h=''; else h='<button class="btn mini" onclick="pedirAmizade(\''+uid+'\')">+ Adicionar amigo</button>'; box.innerHTML=h; }catch(e){} }
+
+// ===== Chat =====
+function chatBtnHTML(){ var n=S.msgNaoLidas||0; return '<div class="msg-wrap"><button id="msgbtn" class="sino-btn" onclick="go(\'mensagens\')" title="Mensagens" aria-label="Mensagens">💬'+(n?'<span class="msg-ct">'+(n>9?"9+":n)+'</span>':'')+'</button></div>'; }
+async function atualizarBadgeMsgs(){ if(!S.user)return; try{ var r=await sb.rpc("nao_lidas_total"); S.msgNaoLidas=r.error?0:Number(r.data||0); pintarBadgeMsgs(); }catch(e){} }
+function pintarBadgeMsgs(){ var b=document.getElementById("msgbtn"); if(!b)return; var ct=b.querySelector(".msg-ct"); var n=S.msgNaoLidas||0; if(n){ if(ct)ct.textContent=n>9?"9+":n; else { var s=document.createElement("span"); s.className="msg-ct"; s.textContent=n>9?"9+":n; b.appendChild(s); } } else if(ct){ ct.remove(); } }
+async function abrirChatMesa(mesaId){ try{ var r=await sb.rpc("abrir_conversa_mesa",{p_mesa:mesaId}); if(r.error)throw r.error; go("conversa",r.data); }catch(e){ erro(e); } }
+async function abrirDM(uid){ try{ var r=await sb.rpc("abrir_conversa_dm",{p_user:uid}); if(r.error)throw r.error; go("conversa",r.data); }catch(e){ erro(e); } }
+async function telaConversas(){ if(!S.user){ go("login"); return; }
+  layout('<div class="bread"><a onclick="go(\'home\')">Início</a> › Mensagens</div><h1>💬 Mensagens</h1><p class="vis-leg">Conversas de mesa e mensagens diretas com seus amigos.</p><div id="conv-lista"><p class="vis-leg">Carregando…</p></div>');
+  renderConversas();
+}
+async function renderConversas(){ var box=document.getElementById("conv-lista"); if(!box)return;
+  try{ var r=await sb.rpc("listar_conversas"); if(r.error)throw r.error; var cs=r.data||[];
+    if(!cs.length){ box.innerHTML='<div class="empty">Nenhuma conversa ainda. Abra o <b>💬 Chat da mesa</b> numa mesa, ou converse com um <a onclick="go(\'amigos\')">amigo</a>.</div>'; return; }
+    box.innerHTML=cs.map(function(c){ var nm=c.titulo||"Conversa"; var ic0=c.tipo==="grupo"?'<span class="conv-ic grupo">'+icon("crossed-swords")+'</span>':(c.avatar_url?'<span class="conv-ic" style="background-image:url('+esc(c.avatar_url)+')"></span>':'<span class="conv-ic">'+esc((nm[0]||"?").toUpperCase())+'</span>'); var prev=c.ultima_msg?esc((''+c.ultima_msg).slice(0,90)):'<i>sem mensagens ainda</i>'; var un=Number(c.nao_lidas||0); return '<div class="conv-item" onclick="go(\'conversa\',\''+c.id+'\')"><span class="conv-av-wrap">'+ic0+'</span><span class="conv-body"><span class="conv-top"><b>'+esc(nm)+'</b>'+(c.tipo==="grupo"?' <span class="chip c-mesa">mesa</span>':'')+'<span class="conv-time">'+(c.ultima_em?tempoRel(c.ultima_em):'')+'</span></span><span class="conv-prev">'+prev+'</span></span>'+(un?'<span class="conv-badge">'+(un>9?"9+":un)+'</span>':'')+'</div>'; }).join("");
+  }catch(e){ box.innerHTML='<p class="vis-leg">Erro ao carregar conversas: '+esc(e.message||(""+e))+'</p>'; }
+}
+async function telaConversa(id){ if(!S.user){ go("login"); return; } if(!id){ go("mensagens"); return; }
+  layout('<div class="bread"><a onclick="go(\'mensagens\')">‹ Mensagens</a></div><div id="chat-topo"></div><div class="chat-wrap"><div class="chat-msgs" id="chat-msgs"><p class="vis-leg">Carregando…</p></div><form class="chat-input" onsubmit="enviarMsg(event,\''+id+'\')"><input id="chat_txt" autocomplete="off" placeholder="Escreva uma mensagem…" maxlength="4000"><button class="btn" type="submit">Enviar</button></form></div>');
+  S.chatConversa=id;
+  await carregarConversa(id, true);
+  try{ await sb.rpc("marcar_lida",{p_conversa:id}); atualizarBadgeMsgs(); }catch(e){}
+  iniciarPollConversa(id);
+}
+async function carregarConversa(id, primeiro){
+  if(primeiro){ try{ var cr=await sb.from("conversas").select("*").eq("id",id).maybeSingle(); var conv=cr.data; var titulo="Conversa"; if(conv){ if(conv.tipo==="grupo"&&conv.mesa_id){ var mm=await sb.from("mesas").select("nome").eq("id",conv.mesa_id).maybeSingle(); titulo=(mm.data&&mm.data.nome)?("💬 "+mm.data.nome):"Chat da mesa"; } else { var om=await sb.from("conversa_membros").select("user_id").eq("conversa_id",id).neq("user_id",S.user.id).maybeSingle(); if(om.data){ titulo="💬 "+await nomeDe(om.data.user_id); } } } var topo=document.getElementById("chat-topo"); if(topo)topo.innerHTML='<h1 style="margin:.1em 0 .3em">'+esc(titulo)+'</h1>'; }catch(e){} }
+  var box=document.getElementById("chat-msgs"); if(!box)return;
+  try{ var r=await sb.from("mensagens").select("*").eq("conversa_id",id).order("criado_em").limit(300); if(r.error)throw r.error; var ms=r.data||[];
+    var perf=await perfis(); var pf=function(uid){ return perf.find(function(x){return x.id===uid;})||{}; };
+    if(!ms.length){ box.innerHTML='<div class="empty">Nenhuma mensagem ainda. Diga olá!</div>'; return; }
+    var noFim=(box.scrollTop+box.clientHeight>=box.scrollHeight-60);
+    box.innerHTML=ms.map(function(m){ var mine=m.autor_id===S.user.id; var p=pf(m.autor_id); var nm=(p.apelido&&p.apelido.trim())?p.apelido.trim():(p.nome||"Alguém"); return '<div class="msg-row'+(mine?' mine':'')+'">'+(mine?'':'<span class="msg-nome">'+esc(nm)+'</span>')+'<span class="msg-bubble">'+renderMsgCorpo(m.corpo)+'<span class="msg-time">'+tempoRel(m.criado_em)+'</span></span></div>'; }).join("");
+    if(primeiro||noFim){ box.scrollTop=box.scrollHeight; }
+  }catch(e){ box.innerHTML='<p class="vis-leg">Erro: '+esc(e.message||(""+e))+'</p>'; }
+}
+function renderMsgCorpo(txt){ var e=esc(txt||""); e=e.replace(/(https?:\/\/[^\s]+)/g,function(u){ return '<a href="'+u+'" target="_blank" rel="noopener">'+u+'</a>'; }); e=e.replace(/(^|\s)(#\/[A-Za-z0-9\/_%\-]+)/g,function(all,sp,h){ return sp+'<a onclick="location.hash=\''+h.replace(/'/g,"")+'\'">'+h+'</a>'; }); return e.replace(/\n/g,"<br>"); }
+async function enviarMsg(ev,id){ if(ev)ev.preventDefault(); var inp=document.getElementById("chat_txt"); var t=(val("chat_txt")||"").trim(); if(!t)return; if(inp){ inp.value=""; inp.focus(); }
+  try{ var r=await sb.from("mensagens").insert({conversa_id:id,autor_id:S.user.id,corpo:t}); if(r.error)throw r.error; await carregarConversa(id,false); var box=document.getElementById("chat-msgs"); if(box)box.scrollTop=box.scrollHeight; try{ await sb.rpc("marcar_lida",{p_conversa:id}); }catch(e){} }catch(e){ erro(e); if(inp)inp.value=t; }
+}
+function iniciarPollConversa(id){ if(window.__chatPoll)clearInterval(window.__chatPoll); window.__chatPoll=setInterval(function(){ if(!(S.view&&S.view.t==="conversa"&&S.view.arg===id)){ clearInterval(window.__chatPoll); window.__chatPoll=null; return; } carregarConversa(id,false).then(function(){ sb.rpc("marcar_lida",{p_conversa:id}).catch(function(){}); atualizarBadgeMsgs(); }).catch(function(){}); }, 6000); }
+
 init();

@@ -48,3 +48,7 @@ Banco da plataforma (Postgres + RLS). Para montar do zero, rode **nesta ordem**.
 
 ## Painel de Administração + tiers de admin (super-admin)
 24. `migracao-admin.sql` — tiers de papel `superadmin`/`admin`/`usuario` (constraint atualizada; Moisés vira `superadmin`); `is_superadmin()` (novo) e `is_admin()` passa a abranger admin **e** superadmin; tabela **`site_config`** (linha única: título/descrição/imagem/aviso do site, RLS: todos leem, `is_admin()` edita); RPCs `admin_estatisticas()`, `admin_listar_usuarios(termo,limit,offset)` (e-mail sempre **mascarado**) e `admin_definir_papel(user,papel)` (**super-admin apenas**; não altera a si nem outro super-admin). Termina com `notify pgrst,'reload schema';`.
+
+## Área de usuários — Amigos + Chat
+25. `migracao-amigos.sql` — tabela `amizades` (pendente/aceita/recusada/bloqueada) + RLS + RPCs `pedir_amizade`, `responder_amizade`, `remover_amizade`, `listar_amigos`, `listar_pedidos_amizade`, `amizade_status`. Notifica pedido/aceite pelo sino (`tipo` `amizade`/`amigo_aceito`). Termina com `notify pgrst,'reload schema';`.
+26. `migracao-chat.sql` — `conversas` (dm|grupo, `mesa_id` p/ chat de mesa), `conversa_membros` (read-state), `mensagens` + `is_membro_conversa()` + RLS. RPCs `abrir_conversa_dm` (só entre amigos), `abrir_conversa_mesa` (membros da mesa, reaproveita `mesa_membros`), `marcar_lida`, `nao_lidas_total` (badge), `listar_conversas`. Front usa polling (sem Realtime). Rodar DEPOIS de `migracao-amigos.sql`. Termina com `notify pgrst,'reload schema';`.

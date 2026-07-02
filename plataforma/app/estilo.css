@@ -844,8 +844,9 @@ body.foco-lock{ overflow:hidden; }
 .nav-subbody{margin:2px 0 8px 8px}
 
 /* ===== Abas reutilizáveis (padrão do site) ===== */
-.abas{display:flex;flex-wrap:wrap;gap:2px;margin:16px 0 0;border-bottom:2px solid var(--borda);overflow-x:auto}
-.aba-btn{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;padding:9px 16px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--tinta2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer;transition:color .12s}
+.abas{display:flex;flex-wrap:nowrap;gap:2px;margin:16px 0 0;border-bottom:2px solid var(--borda);overflow-x:auto;overflow-y:hidden;scrollbar-width:none;scroll-snap-type:x proximity;-webkit-overflow-scrolling:touch}
+.abas::-webkit-scrollbar{height:0;display:none}
+.aba-btn{display:inline-flex;flex:0 0 auto;scroll-snap-align:start;align-items:center;gap:6px;white-space:nowrap;padding:9px 16px;background:none;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;color:var(--tinta2);font-family:var(--font-head);font-size:15px;font-weight:600;cursor:pointer;transition:color .12s}
 .aba-btn iconify-icon{font-size:17px}
 .aba-btn:hover{color:var(--sangue)}
 .aba-btn.on{color:var(--sangue);border-bottom-color:var(--sangue)}
@@ -881,3 +882,46 @@ body.foco-lock{ overflow:hidden; }
 .adm-chip{font:inherit;font-size:13px;padding:5px 12px;border-radius:20px;border:1px solid var(--borda);background:var(--perg2);color:var(--tinta2);cursor:pointer}
 .adm-chip.on{background:var(--ouro);color:#241a08;border-color:var(--ouro);font-weight:600}
 .adm-sel{font:inherit;padding:6px 10px;border-radius:8px;border:1px solid var(--borda);background:var(--campo);color:var(--tinta);max-width:100%}
+
+/* ===== Amigos / Chat ===== */
+.menu-ct{display:inline-block;background:var(--sangue);color:#fff;font-size:11px;font-weight:700;border-radius:999px;padding:0 6px;margin-left:4px;vertical-align:middle}
+.msg-wrap{position:relative;display:inline-block}
+#msgbtn{position:relative}
+.msg-ct{position:absolute;top:-3px;right:-3px;background:var(--sangue);color:#fff;font-size:10px;line-height:1;font-weight:700;padding:2px 4px;border-radius:10px}
+.conv-item{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid var(--borda);border-radius:12px;background:var(--perg2);margin-bottom:8px;cursor:pointer;transition:border-color .15s}
+.conv-item:hover{border-color:var(--ouro)}
+.conv-av-wrap{flex:0 0 auto}
+.conv-ic{display:inline-flex;align-items:center;justify-content:center;width:42px;height:42px;border-radius:50%;background:var(--papel) center/cover no-repeat;border:2px solid var(--ouro);color:var(--sangue);font-weight:700;font-family:var(--font-head)}
+.conv-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.conv-top{display:flex;align-items:center;gap:8px}
+.conv-top b{font-family:var(--font-head)}
+.conv-time{margin-left:auto;font-size:.76em;color:var(--tinta2);white-space:nowrap}
+.conv-prev{color:var(--tinta2);font-size:.9em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.conv-badge{flex:0 0 auto;background:var(--sangue);color:#fff;border-radius:12px;padding:2px 8px;font-size:.8em;font-weight:700}
+.chat-wrap{display:flex;flex-direction:column;height:min(62vh,560px);border:1px solid var(--borda);border-radius:12px;background:var(--perg2);overflow:hidden;margin-top:6px}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}
+.msg-row{display:flex;flex-direction:column;align-items:flex-start;max-width:80%}
+.msg-row.mine{align-self:flex-end;align-items:flex-end}
+.msg-nome{font-size:.75em;color:var(--tinta2);margin:0 0 1px 8px;font-weight:600}
+.msg-bubble{background:var(--papel);border:1px solid var(--borda);border-radius:14px;padding:7px 11px;word-break:break-word;line-height:1.42}
+.msg-row.mine .msg-bubble{background:var(--ouro);border-color:var(--ouro);color:#2a1e0c}
+.msg-bubble a{color:var(--sangue);text-decoration:underline}
+.msg-row.mine .msg-bubble a{color:#3a1410}
+.msg-time{display:block;font-size:.66em;opacity:.6;margin-top:3px;text-align:right}
+.chat-input{display:flex;gap:8px;padding:10px;border-top:1px solid var(--borda);background:var(--perg)}
+.chat-input input{flex:1;min-width:0;padding:9px 13px;border:1px solid var(--ouro);border-radius:20px;background:#fffdf6;font-family:var(--font-body)}
+
+/* ===== Responsividade — abas roláveis + header limpo no celular ===== */
+@media(max-width:600px){
+  .abas{gap:0;margin-top:12px}
+  .aba-btn{padding:9px 13px;font-size:13.5px}
+  .aba-btn iconify-icon{font-size:15px}
+  .aba-badge{font-size:10px;padding:0 5px;min-width:15px}
+  .userbox .modo-btn{display:none}   /* remove o botão de modo (parecia 2º menu) */
+  .msg-wrap{display:none}            /* chat vai pelo menu do usuário (com contador) */
+  .hero2 .in{padding:22px 16px}
+  .hero2 .acts{gap:6px}
+  .hero2 .acts .btn{padding:7px 11px;font-size:12.5px}
+  .chat-wrap{height:70vh}
+  .msg-row{max-width:90%}
+}
